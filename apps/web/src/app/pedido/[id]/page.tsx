@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createSupabaseClient } from '../../../lib/supabase-client'
+import { orderStatusLabel } from '../../../lib/order-labels'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -18,9 +19,18 @@ export default function PedidoStatusPage({ params }: Props) {
     const supabase = createSupabaseClient()
     const channel = supabase
       .channel(`order-${orderId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'Order', filter: `id=eq.${orderId}` }, (payload) => {
-        setStatus(String(payload.new.status))
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Order',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          setStatus(String(payload.new.status))
+        }
+      )
       .subscribe()
 
     return () => {
@@ -30,11 +40,15 @@ export default function PedidoStatusPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-2xl p-4">
-      <h1 className="text-2xl font-bold text-fuchsia-100">Acompanhamento do pedido</h1>
-      <p className="mt-3 text-sm text-acai-300">Pedido: {orderId}</p>
-      <div className="mt-4 rounded-xl border border-acai-600 bg-acai-800/90 p-5">
-        <p className="text-sm text-acai-300">Status atual</p>
-        <p className="text-3xl font-bold text-fuchsia-400">{status}</p>
+      <h1 className="text-2xl font-bold text-fuchsia-100">
+        Acompanhamento do pedido
+      </h1>
+      <p className="text-acai-300 mt-3 text-sm">Pedido: {orderId}</p>
+      <div className="border-acai-600 bg-acai-800/90 mt-4 rounded-xl border p-5">
+        <p className="text-acai-300 text-sm">Status atual</p>
+        <p className="text-3xl font-bold text-fuchsia-400">
+          {orderStatusLabel(status)}
+        </p>
       </div>
     </main>
   )
