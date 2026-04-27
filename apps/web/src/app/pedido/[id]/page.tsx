@@ -30,11 +30,11 @@ export default function PedidoStatusPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-2xl p-4">
-      <h1 className="text-2xl font-bold text-fuchsia-950">Acompanhamento do pedido</h1>
-      <p className="mt-3 text-sm text-slate-600">Pedido: {orderId}</p>
-      <div className="mt-4 rounded-xl bg-fuchsia-50 p-5">
-        <p className="text-sm text-slate-700">Status atual</p>
-        <p className="text-3xl font-bold text-fuchsia-800">{status}</p>
+      <h1 className="text-2xl font-bold text-fuchsia-100">Acompanhamento do pedido</h1>
+      <p className="mt-3 text-sm text-acai-300">Pedido: {orderId}</p>
+      <div className="mt-4 rounded-xl border border-acai-600 bg-acai-800/90 p-5">
+        <p className="text-sm text-acai-300">Status atual</p>
+        <p className="text-3xl font-bold text-fuchsia-400">{status}</p>
       </div>
     </main>
   )

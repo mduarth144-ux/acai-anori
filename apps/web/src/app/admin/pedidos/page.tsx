@@ -33,15 +33,15 @@ export default function AdminPedidosPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-4">
-      <h1 className="mb-4 text-2xl font-bold text-fuchsia-950">Pedidos em tempo real</h1>
+      <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">Pedidos em tempo real</h1>
       <div className="space-y-3">
         {orders.map((order) => (
-          <article key={order.id} className="rounded-xl bg-white p-4 shadow">
-            <p className="text-sm text-slate-500">#{order.id}</p>
-            <p className="font-semibold">{order.type} - R$ {Number(order.total).toFixed(2)}</p>
+          <article key={order.id} className="rounded-xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg">
+            <p className="text-sm text-acai-400">#{order.id}</p>
+            <p className="font-semibold text-acai-100">{order.type} - R$ {Number(order.total).toFixed(2)}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'].map((status) => (
-                <button key={status} onClick={() => setStatus(order.id, status)} className="rounded-md bg-fuchsia-100 px-3 py-1 text-xs text-fuchsia-900">
+                <button key={status} type="button" onClick={() => setStatus(order.id, status)} className="rounded-md border border-acai-600 bg-acai-900 px-3 py-1 text-xs text-fuchsia-200 hover:border-fuchsia-600 hover:bg-acai-800">
                   {status}
                 </button>
               ))}
