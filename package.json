@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "menu:sync-ifood": "node --env-file=.env scripts/sync-ifood-menu.mjs",
+    "menu:upload-product-images": "node --env-file=.env scripts/upload-product-images-to-supabase.mjs",
     "catalog:download": "node scripts/download-catalog-images.mjs",
     "catalog:upload": "node --env-file=.env scripts/upload-catalog-to-supabase.mjs",
     "sync-db-types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > apps/web/src/lib/database.types.ts",

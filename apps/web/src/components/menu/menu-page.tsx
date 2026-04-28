@@ -51,11 +51,24 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         {tableCode ? <p className="mt-3 text-sm text-acai-100">Pedido em mesa: <b>{tableCode}</b></p> : null}
       </header>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <button className={`rounded-full px-4 py-2 text-sm transition-colors ${activeCategory === 'all' ? 'bg-fuchsia-600 text-white shadow-md' : 'border border-acai-600 bg-acai-800 text-fuchsia-200 hover:border-fuchsia-700 hover:bg-acai-700'}`} onClick={() => setActiveCategory('all')}>Todos</button>
-        {categories.map((category) => (
-          <button key={category.id} className={`rounded-full px-4 py-2 text-sm transition-colors ${activeCategory === category.slug ? 'bg-fuchsia-600 text-white shadow-md' : 'border border-acai-600 bg-acai-800 text-fuchsia-200 hover:border-fuchsia-700 hover:bg-acai-700'}`} onClick={() => setActiveCategory(category.slug)}>{category.name}</button>
-        ))}
+      <div className="mb-4">
+        <label htmlFor="category-filter" className="mb-2 block text-sm font-medium text-fuchsia-200/90">
+          Categoria
+        </label>
+        <select
+          id="category-filter"
+          value={activeCategory}
+          onChange={(e) => setActiveCategory(e.target.value)}
+          className="w-full appearance-none rounded-xl border border-acai-600 bg-acai-800 py-3 pl-3 pr-10 text-fuchsia-100 shadow-sm ring-1 ring-acai-700/50 focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e879f9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25rem' }}
+        >
+          <option value="all">Todas</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.slug}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" className="mb-6 w-full rounded-xl p-3" />

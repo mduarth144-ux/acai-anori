@@ -14,6 +14,12 @@
  *   --dry-run     só lista categorias/produtos, não grava no banco nem baixa imagens
  *   --no-images   importa sem baixar imagens (imageUrl aponta para CDN do iFood)
  *   --all-sections  inclui seções de marketing (bem-vindo, entrega grátis, favorito)
+ *
+ * Fluxo em produção (Vercel + Next/Image):
+ *   1. Rode este script com imagens locais (sem --no-images) para popular apps/web/public/products/…
+ *   2. npm run menu:upload-product-images — cria o bucket `products` no Supabase se faltar, envia os
+ *      ficheiros e atualiza Product/Category.imageUrl para URLs públicas do Storage (já permitidas
+ *      em next.config.js).
  */
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join, basename } from 'node:path'
