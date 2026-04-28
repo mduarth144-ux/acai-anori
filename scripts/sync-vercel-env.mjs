@@ -8,12 +8,13 @@
  * Uso:
  *   node scripts/sync-vercel-env.mjs
  *
- * Ambientes (por omissão: production,preview,development):
- *   SYNC_VERCEL_ENVS=production,preview node scripts/sync-vercel-env.mjs
+ * Ambientes (por omissão: production,development — preview falha em alguns projetos sem branch).
+ *   SYNC_VERCEL_ENVS=production,preview,development
+ * Preview com branch explícita (ex. main):
+ *   VERCEL_PREVIEW_GIT_BRANCH=main SYNC_VERCEL_ENVS=production,preview,development node scripts/sync-vercel-env.mjs
  *
  * Nota: em `development`, a Vercel não aceita --sensitive; o script envia o mesmo valor
- * sem essa flag (limitação da plataforma). Para não gravar segredos em Development,
- * usa SYNC_VERCEL_ENVS=production,preview
+ * sem essa flag (limitação da plataforma).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -22,6 +23,7 @@ import { spawnSync } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
+const vercelBin = path.join(root, 'node_modules', 'vercel', 'dist', 'vc.js')
 
 /** @type {{ key: string, sensitive?: boolean }[]} */
 const ALLOWLIST = [
@@ -59,19 +61,31 @@ function parseEnvFile(filePath) {
   return out
 }
 
-function vercelEnvAdd(key, vercelTarget, value, sensitive) {
-  const args = ['vercel', 'env', 'add', key, vercelTarget, '--yes', '--force']
+function vercelEnvUpsert(key, vercelTarget, value, sensitive) {
+  const previewBranch = process.env.VERCEL_PREVIEW_GIT_BRANCH?.trim()
+  const branchSuffix =
+    vercelTarget === 'preview' && previewBranch ? [previewBranch] : []
+
   // Na Vercel, --sensitive só é permitido em production e preview (não em development).
   const allowSensitive = sensitive && vercelTarget !== 'development'
-  if (allowSensitive) args.push('--sensitive')
-  const r = spawnSync('npx', args, {
-    cwd: root,
-    input: value,
-    encoding: 'utf8',
-    shell: true,
-    stdio: ['pipe', 'inherit', 'inherit'],
-  })
-  return r.status === 0
+
+  const run = (args) =>
+    spawnSync(process.execPath, args, {
+      cwd: root,
+      encoding: 'utf8',
+      shell: false,
+      stdio: 'inherit',
+    })
+
+  // Preferir add --force (evita erro da API em update de variável sensitive).
+  const addArgs = [vercelBin, 'env', 'add', key, vercelTarget, ...branchSuffix, '--value', value, '--yes', '--force']
+  if (allowSensitive) addArgs.push('--sensitive')
+  const added = run(addArgs)
+  if (added.status === 0) return true
+
+  const updateArgs = [vercelBin, 'env', 'update', key, vercelTarget, ...branchSuffix, '--value', value, '--yes']
+  if (allowSensitive) updateArgs.push('--sensitive')
+  return run(updateArgs).status === 0
 }
 
 const projectJson = path.join(root, '.vercel', 'project.json')
@@ -85,11 +99,18 @@ const envPath = path.join(root, '.env')
 const parsed = parseEnvFile(envPath)
 
 const targets = (
-  process.env.SYNC_VERCEL_ENVS || 'production,preview,development'
+  process.env.SYNC_VERCEL_ENVS || 'production,development'
 )
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean)
+
+if (targets.includes('preview') && !process.env.VERCEL_PREVIEW_GIT_BRANCH?.trim()) {
+  console.error(
+    'Para ambiente preview, define VERCEL_PREVIEW_GIT_BRANCH (ex.: main) ou remove preview de SYNC_VERCEL_ENVS.'
+  )
+  process.exit(1)
+}
 
 let ok = 0
 let skipped = 0
@@ -110,7 +131,7 @@ for (const { key, sensitive } of ALLOWLIST) {
   }
   for (const vercelTarget of targets) {
     process.stdout.write(`→ ${key} (${vercelTarget})… `)
-    const success = vercelEnvAdd(key, vercelTarget, value, Boolean(sensitive))
+    const success = vercelEnvUpsert(key, vercelTarget, value, Boolean(sensitive))
     if (success) {
       console.log('ok')
       ok++

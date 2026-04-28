@@ -17,10 +17,9 @@ export default function Error({
         conexão com o banco (variáveis{' '}
         <code className="bg-acai-900 rounded px-1">DATABASE_URL</code> /{' '}
         <code className="bg-acai-900 rounded px-1">DIRECT_URL</code> na Vercel).
-        Em Supabase + Prisma na Vercel, use o host{' '}
-        <code className="bg-acai-900 rounded px-1">
-          aws-0-…-pooler.supabase.com
-        </code>{' '}
+        Em Supabase + Prisma na Vercel, use o host do Connect (ex.{' '}
+        <code className="bg-acai-900 rounded px-1">aws-1-us-west-2.pooler…</code>
+        ){' '}
         com utilizador{' '}
         <code className="bg-acai-900 rounded px-1">
           postgres.seu-project-ref
