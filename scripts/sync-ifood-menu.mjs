@@ -47,6 +47,93 @@ const DEFAULT_SKIP_CATEGORY = (name) => {
   return false
 }
 
+const FROZEN_ACCOMPANIMENT_MAP = [
+  { regex: /\bkit[\s-]?kat\b/gi, label: 'KitKat' },
+  { regex: /\bleite\s*ninho\b/gi, label: 'Leite Ninho' },
+  { regex: /\bninho\b/gi, label: 'Leite Ninho' },
+  { regex: /\bcastanha(?:s)?(?:\s+de\s+caju)?\b/gi, label: 'Castanha' },
+  { regex: /\boreo\b/gi, label: 'Oreo' },
+]
+
+function normalizeFrozenBaseName(name) {
+  let base = name
+  for (const { regex } of FROZEN_ACCOMPANIMENT_MAP) {
+    base = base.replace(regex, '')
+  }
+  return base
+    .replace(/\b(c\/|com)\b/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/[-–|/]+$/g, '')
+    .replace(/^[-–|/]+/g, '')
+    .trim()
+}
+
+function detectFrozenAccompaniments(text) {
+  const found = new Set()
+  for (const item of FROZEN_ACCOMPANIMENT_MAP) {
+    if (item.regex.test(text)) found.add(item.label)
+    item.regex.lastIndex = 0
+  }
+  return Array.from(found)
+}
+
+function normalizeFrozenCategoryProducts(products) {
+  const grouped = new Map()
+  const passthrough = []
+
+  for (const product of products) {
+    const accompaniments = detectFrozenAccompaniments(
+      `${product.name} ${product.description ?? ''}`
+    )
+    if (accompaniments.length === 0) {
+      passthrough.push(product)
+      continue
+    }
+
+    const baseName = normalizeFrozenBaseName(product.name)
+    if (!baseName) {
+      passthrough.push(product)
+      continue
+    }
+
+    const key = `${baseName}::${product.price.toFixed(2)}`
+    const existing = grouped.get(key)
+    if (!existing) {
+      grouped.set(key, {
+        ...product,
+        name: baseName,
+        available: true,
+        accompaniments: new Set(accompaniments),
+      })
+      continue
+    }
+
+    accompaniments.forEach((name) => existing.accompaniments.add(name))
+    existing.available = existing.available || product.available
+  }
+
+  const mergedFrozen = Array.from(grouped.values()).map((product, idx) => ({
+    ...product,
+    order: idx,
+    customizations: [
+      {
+        label: 'Acompanhamentos',
+        required: true,
+        options: Array.from(product.accompaniments)
+          .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+          .map((name) => ({ name, priceModifier: 0 })),
+      },
+    ],
+  }))
+
+  const merged = [...mergedFrozen, ...passthrough].map((product, idx) => ({
+    ...product,
+    order: idx,
+  }))
+
+  return merged
+}
+
 function parseArgs(argv) {
   const out = { url: null, merchant: null, fromHtml: null, dryRun: false, noImages: false, allSections: false }
   for (let i = 2; i < argv.length; i++) {
@@ -249,15 +336,19 @@ async function main() {
         order: products.length,
         available: item.enabled !== false && item.availability === 'AVAILABLE',
         imageUrl,
+        customizations: [],
       })
     }
     if (products.length === 0) continue
+    const isFrozenCategory = /a[çc]a[ií]\s*frozen/i.test(sectionName)
     categories.push({
       name: sectionName.replace(/\s+/g, ' ').trim(),
       slug: slugify(sectionName, usedSlugs),
       order: categories.length,
       imageUrl: products[0]?.imageUrl ?? null,
-      products,
+      products: isFrozenCategory
+        ? normalizeFrozenCategoryProducts(products)
+        : products,
     })
   }
 
@@ -299,6 +390,20 @@ async function main() {
             order: p.order,
             available: p.available,
             imageUrl: p.imageUrl,
+            customizations: p.customizations?.length
+              ? {
+                  create: p.customizations.map((customization) => ({
+                    label: customization.label,
+                    required: customization.required,
+                    options: {
+                      create: customization.options.map((option) => ({
+                        name: option.name,
+                        priceModifier: option.priceModifier ?? 0,
+                      })),
+                    },
+                  })),
+                }
+              : undefined,
           })),
         },
       },

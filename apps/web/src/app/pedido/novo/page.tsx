@@ -195,6 +195,7 @@ export default function NovoPedidoPage() {
           </h2>
           <div className="divide-acai-600 flex flex-col divide-y">
             {cart.map((item) => {
+              const itemId = item.id ?? item.productId
               const itemTotal =
                 (item.unitPrice +
                   (item.choices?.reduce(
@@ -205,7 +206,7 @@ export default function NovoPedidoPage() {
                 item.quantity
               return (
                 <div
-                  key={item.productId}
+                  key={itemId}
                   className="flex items-center justify-between py-2 text-sm"
                 >
                   <span className="text-acai-200">

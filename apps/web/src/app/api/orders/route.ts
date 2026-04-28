@@ -23,7 +23,24 @@ export async function POST(request: Request) {
       address: body.address,
       notes: body.notes,
       tableId: table?.id,
-      total: body.items.reduce((acc: number, item: { unitPrice: number; quantity: number }) => acc + item.unitPrice * item.quantity, 0),
+      total: body.items.reduce(
+        (
+          acc: number,
+          item: {
+            unitPrice: number
+            quantity: number
+            choices?: Array<{ priceModifier?: number }>
+          }
+        ) =>
+          acc +
+          (item.unitPrice +
+            (item.choices?.reduce(
+              (sum, choice) => sum + Number(choice.priceModifier ?? 0),
+              0
+            ) ?? 0)) *
+            item.quantity,
+        0
+      ),
       pixProvider: null,
       externalRefs: { integrationReady: { pix: true, ifood: true, food99: true } },
       items: {

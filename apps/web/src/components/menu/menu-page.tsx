@@ -12,9 +12,16 @@ type Product = {
   price: number
   imageUrl: string | null
   category: { id: string; name: string; slug: string }
+  customizations: ProductCustomization[]
 }
 
 type Category = { id: string; name: string; slug: string }
+type ProductCustomization = {
+  id: string
+  label: string
+  required: boolean
+  options: Array<{ id: string; name: string; priceModifier: number }>
+}
 
 type Props = {
   categories: Category[]
@@ -25,6 +32,10 @@ type Props = {
 export function MenuPage({ categories, products, tableCode }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [query, setQuery] = useState('')
+  const [wizardProduct, setWizardProduct] = useState<Product | null>(null)
+  const [wizardStep, setWizardStep] = useState(0)
+  const [selectedChoicesByCustomization, setSelectedChoicesByCustomization] = useState<Record<string, string[]>>({})
+  const [wizardError, setWizardError] = useState<string | null>(null)
   const addItem = useCartStore((state) => state.addItem)
   const items = useCartStore((state) => state.items)
   const total = useCartStore((state) => state.total)
@@ -37,6 +48,96 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       return categoryMatch && queryMatch
     })
   }, [activeCategory, products, query])
+
+  const currentCustomization = wizardProduct?.customizations[wizardStep]
+
+  const selectedOptionsForCurrentStep = useMemo(() => {
+    if (!currentCustomization) return []
+    const selectedIds = new Set(selectedChoicesByCustomization[currentCustomization.id] ?? [])
+    return currentCustomization.options.filter((option) => selectedIds.has(option.id))
+  }, [currentCustomization, selectedChoicesByCustomization])
+
+  function closeWizard() {
+    setWizardProduct(null)
+    setWizardStep(0)
+    setWizardError(null)
+    setSelectedChoicesByCustomization({})
+  }
+
+  function addSimpleItem(product: Product) {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      quantity: 1,
+      unitPrice: product.price,
+      imageUrl: product.imageUrl,
+      description: product.description,
+    })
+  }
+
+  function startWizard(product: Product) {
+    if (!product.customizations || product.customizations.length === 0) {
+      addSimpleItem(product)
+      return
+    }
+    setWizardProduct(product)
+    setWizardStep(0)
+    setWizardError(null)
+    setSelectedChoicesByCustomization({})
+  }
+
+  function toggleChoice(customizationId: string, optionId: string) {
+    setSelectedChoicesByCustomization((prev) => {
+      const selected = new Set(prev[customizationId] ?? [])
+      if (selected.has(optionId)) {
+        selected.delete(optionId)
+      } else {
+        selected.add(optionId)
+      }
+      return {
+        ...prev,
+        [customizationId]: Array.from(selected),
+      }
+    })
+    if (wizardError) setWizardError(null)
+  }
+
+  function validateCurrentStep() {
+    if (!currentCustomization) return true
+    if (!currentCustomization.required) return true
+    const selected = selectedChoicesByCustomization[currentCustomization.id] ?? []
+    if (selected.length > 0) return true
+    setWizardError('Este passo é obrigatório. Selecione pelo menos uma opção para continuar.')
+    return false
+  }
+
+  function nextWizardStep() {
+    if (!wizardProduct) return
+    if (!validateCurrentStep()) return
+    if (wizardStep < wizardProduct.customizations.length - 1) {
+      setWizardStep((s) => s + 1)
+      setWizardError(null)
+      return
+    }
+
+    const allChoices = wizardProduct.customizations.flatMap((customization) => {
+      const selectedIds = new Set(selectedChoicesByCustomization[customization.id] ?? [])
+      return customization.options
+        .filter((option) => selectedIds.has(option.id))
+        .map((option) => ({ name: option.name, priceModifier: option.priceModifier }))
+    })
+
+    addItem({
+      productId: wizardProduct.id,
+      name: wizardProduct.name,
+      quantity: 1,
+      unitPrice: wizardProduct.price,
+      imageUrl: wizardProduct.imageUrl,
+      description: wizardProduct.description,
+      choices: allChoices,
+    })
+    closeWizard()
+  }
 
   return (
     <main className="mx-auto max-w-6xl p-4">
@@ -84,10 +185,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
             <div className="flex items-center justify-between">
               <span className="font-bold text-fuchsia-300">R$ {product.price.toFixed(2)}</span>
               <button
-                onClick={() => addItem({ productId: product.id, name: product.name, quantity: 1, unitPrice: product.price, imageUrl: product.imageUrl, description: product.description })}
+                onClick={() => startWizard(product)}
                 className="rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
               >
-                Adicionar
+                {product.customizations.length > 0 ? 'Personalizar' : 'Adicionar'}
               </button>
             </div>
           </article>
@@ -116,6 +217,74 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           </div>
         </div>
       )}
+
+      {wizardProduct && currentCustomization ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 md:items-center">
+          <div className="w-full max-w-xl rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl">
+            <div className="mb-4">
+              <p className="text-xs uppercase tracking-wide text-fuchsia-300">
+                Etapa {wizardStep + 1} de {wizardProduct.customizations.length}
+              </p>
+              <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
+              <p className="mt-1 text-sm text-acai-300">{currentCustomization.label}</p>
+              <p className="mt-1 text-xs text-acai-400">
+                {currentCustomization.required ? 'Obrigatório' : 'Opcional'} • {selectedOptionsForCurrentStep.length} selecionado(s)
+              </p>
+            </div>
+
+            <div className="max-h-72 space-y-2 overflow-auto pr-1">
+              {currentCustomization.options.map((option) => {
+                const selected = (selectedChoicesByCustomization[currentCustomization.id] ?? []).includes(option.id)
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => toggleChoice(currentCustomization.id, option.id)}
+                    className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                      selected
+                        ? 'border-fuchsia-400 bg-fuchsia-950/40 text-fuchsia-100'
+                        : 'border-acai-600 bg-acai-800 text-acai-100 hover:bg-acai-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm">{option.name}</span>
+                      <span className="text-xs text-fuchsia-300">
+                        {option.priceModifier > 0 ? `+ R$ ${option.priceModifier.toFixed(2)}` : 'Sem custo'}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {wizardError ? <p className="mt-3 text-sm text-amber-400">{wizardError}</p> : null}
+
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (wizardStep === 0) {
+                    closeWizard()
+                    return
+                  }
+                  setWizardStep((s) => Math.max(0, s - 1))
+                  setWizardError(null)
+                }}
+                className="flex-1 rounded-lg border border-acai-500 px-4 py-2 text-sm font-medium text-acai-100 hover:bg-acai-800"
+              >
+                {wizardStep === 0 ? 'Cancelar' : 'Voltar'}
+              </button>
+              <button
+                type="button"
+                onClick={nextWizardStep}
+                className="flex-1 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-500"
+              >
+                {wizardStep === wizardProduct.customizations.length - 1 ? 'Adicionar ao pedido' : 'Próximo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

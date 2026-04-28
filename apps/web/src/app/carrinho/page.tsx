@@ -56,13 +56,14 @@ export default function CarrinhoPage() {
 
       <div className="flex flex-col gap-3">
         {items.map((item) => {
+          const itemId = item.id ?? item.productId
           const itemTotal =
             (item.unitPrice + (item.choices?.reduce((c, x) => c + x.priceModifier, 0) ?? 0)) *
             item.quantity
 
           return (
             <div
-              key={item.productId}
+              key={itemId}
               className="flex gap-4 rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20"
             >
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-acai-900">
@@ -85,7 +86,7 @@ export default function CarrinhoPage() {
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-semibold text-fuchsia-100">{item.name}</h2>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(itemId)}
                     className="shrink-0 rounded-lg p-1 text-acai-400 hover:bg-red-950/50 hover:text-red-400"
                     aria-label="Remover item"
                   >
@@ -115,7 +116,7 @@ export default function CarrinhoPage() {
                 <div className="mt-auto flex items-center justify-between">
                   <div className="flex items-center gap-2 rounded-xl border border-acai-600 bg-acai-900/80 p-1">
                     <button
-                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                      onClick={() => updateQuantity(itemId, item.quantity - 1)}
                       className="flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800 disabled:opacity-30"
                       aria-label="Diminuir"
                     >
@@ -125,7 +126,7 @@ export default function CarrinhoPage() {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      onClick={() => updateQuantity(itemId, item.quantity + 1)}
                       className="flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800"
                       aria-label="Aumentar"
                     >
