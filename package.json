@@ -15,7 +15,12 @@
     "db:seed": "prisma db seed",
     "catalog:download": "node scripts/download-catalog-images.mjs",
     "catalog:upload": "node --env-file=.env scripts/upload-catalog-to-supabase.mjs",
-    "sync-db-types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > apps/web/src/lib/database.types.ts"
+    "sync-db-types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > apps/web/src/lib/database.types.ts",
+    "vercel:link": "vercel link",
+    "vercel:env:sync": "node scripts/sync-vercel-env.mjs",
+    "vercel:env:pull": "vercel env pull apps/web/.env.vercel.pull --yes",
+    "supabase:login": "supabase login",
+    "supabase:link": "supabase link"
   },
   "private": true,
   "prisma": {
@@ -87,12 +92,13 @@
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "prisma": "^6.19.3",
-    "supabase": "^2.6.8",
+    "supabase": "^2.95.5",
     "tailwindcss": "3.4.3",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
     "typescript": "~5.6.2",
-    "typescript-eslint": "^8.13.0"
+    "typescript-eslint": "^8.13.0",
+    "vercel": "^52.0.0"
   }
 }

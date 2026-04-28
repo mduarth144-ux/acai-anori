@@ -47,6 +47,9 @@ out
 .env
 !.env.example
 .env.local
+apps/web/.env.vercel.pull
 
 #others
 hold.md
+.vercel
+.env*.local
