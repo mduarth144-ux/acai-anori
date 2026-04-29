@@ -195,7 +195,7 @@ export function AdminAreaGate({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
-      {children}
+      <div className="mx-auto w-full max-w-6xl p-4">{children}</div>
     </div>
   )
 }

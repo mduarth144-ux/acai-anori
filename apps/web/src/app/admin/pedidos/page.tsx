@@ -55,7 +55,7 @@ export default function AdminPedidosPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-4">
+    <main className="w-full">
       <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">
         Pedidos em tempo real
       </h1>

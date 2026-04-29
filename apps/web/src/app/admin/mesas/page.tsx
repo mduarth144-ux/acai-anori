@@ -22,7 +22,7 @@ export default function AdminMesasPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl p-4">
+    <main className="w-full">
       <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">Mesas e QR Codes</h1>
       <form onSubmit={onSubmit} className="mb-4 flex gap-2 rounded-xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg">
         <input required value={number} onChange={(e) => setNumber(e.target.value)} className="flex-1 rounded-lg p-2" placeholder="Número da mesa" />

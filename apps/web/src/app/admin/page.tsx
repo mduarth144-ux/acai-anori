@@ -138,7 +138,7 @@ export default function AdminPage() {
   const maxMini = Math.max(...miniTrend)
 
   return (
-    <main className="mx-auto max-w-6xl space-y-5 p-4">
+    <main className="w-full space-y-5">
       <header className="border-acai-700/70 bg-acai-900/70 rounded-2xl border p-5">
         <h1 className="text-xl font-bold text-fuchsia-100 md:text-2xl">
           Dashboard administrativo
