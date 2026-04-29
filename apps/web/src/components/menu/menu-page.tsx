@@ -2,10 +2,11 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { CheckCircle2, ChefHat, Clock3, Plus, Truck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
+import { orderStatusLabel } from '../../lib/order-labels'
 
 type Product = {
   id: string
@@ -34,6 +35,20 @@ type Props = {
 }
 
 const PRODUCTS_BATCH_SIZE = 8
+const ORDERS_STORAGE_KEY = 'orders.history.v1'
+const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
+const ACTIVE_ORDER_STATUS = new Set(['PENDING', 'CONFIRMED', 'PREPARING', 'READY'])
+const TIMELINE_STEPS = [
+  { id: 'PENDING', label: 'Pedido recebido', shortLabel: 'Pedido', Icon: Clock3 },
+  { id: 'PREPARING', label: 'Pedido em preparo', shortLabel: 'Preparo', Icon: ChefHat },
+  { id: 'READY', label: 'Saiu para entrega', shortLabel: 'Caminho', Icon: Truck },
+  { id: 'DELIVERED', label: 'Entregue', shortLabel: 'Entregue', Icon: CheckCircle2 },
+] as const
+
+type ActiveOrder = {
+  id: string
+  status: string
+}
 
 export function MenuPage({ categories, products, tableCode }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
@@ -42,6 +57,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
   const [wizardProduct, setWizardProduct] = useState<Product | null>(null)
   const [selectedChoicesByCustomization, setSelectedChoicesByCustomization] = useState<Record<string, string[]>>({})
   const [wizardError, setWizardError] = useState<string | null>(null)
+  const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const addItem = useCartStore((state) => state.addItem)
   const items = useCartStore((state) => state.items)
@@ -127,6 +143,52 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     return () => observer.disconnect()
   }, [filtered.length, hasMoreProducts, visibleCount])
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadActiveOrder() {
+      if (typeof window === 'undefined') return
+      try {
+        const rawCheckout = window.localStorage.getItem(CHECKOUT_PROFILE_STORAGE_KEY)
+        const checkout = rawCheckout
+          ? (JSON.parse(rawCheckout) as { customerPhone?: string; customerEmail?: string })
+          : {}
+
+        const params = new URLSearchParams()
+        if (checkout.customerPhone?.trim()) params.set('phone', checkout.customerPhone.trim())
+        if (checkout.customerEmail?.trim()) params.set('email', checkout.customerEmail.trim())
+
+        const url = params.size > 0 ? `/api/orders?${params.toString()}` : '/api/orders'
+        const response = await fetch(url)
+        if (!response.ok) return
+        const serverOrders = (await response.json()) as Array<{ id: string; status: string }>
+
+        const rawHistory = window.localStorage.getItem(ORDERS_STORAGE_KEY)
+        const historyIds = rawHistory
+          ? (JSON.parse(rawHistory) as Array<{ id: string }>).map((item) => String(item.id))
+          : []
+
+        const candidateOrders = historyIds.length
+          ? historyIds
+              .map((id) => serverOrders.find((order) => order.id === id))
+              .filter((order): order is { id: string; status: string } => Boolean(order))
+          : serverOrders
+
+        const found = candidateOrders.find((order) => ACTIVE_ORDER_STATUS.has(String(order.status)))
+        if (isMounted) {
+          setActiveOrder(found ? { id: String(found.id), status: String(found.status) } : null)
+        }
+      } catch {
+        if (isMounted) setActiveOrder(null)
+      }
+    }
+
+    void loadActiveOrder()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   function closeWizard() {
     setWizardProduct(null)
     setWizardError(null)
@@ -210,6 +272,12 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     closeWizard()
   }
 
+  const timelineIndex = (() => {
+    if (!activeOrder) return -1
+    if (activeOrder.status === 'CONFIRMED') return 1
+    return Math.max(TIMELINE_STEPS.findIndex((step) => step.id === activeOrder.status), 0)
+  })()
+
   return (
     <main className="mx-auto max-w-6xl p-4">
       <header className="mb-6 rounded-2xl bg-gradient-to-br from-fuchsia-950 via-purple-950 to-acai-950 p-6 text-acai-50 shadow-lg ring-1 ring-fuchsia-900/40">
@@ -230,6 +298,69 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </div>
         {tableCode ? <p className="mt-3 text-sm text-acai-100">Pedido em mesa: <b>{tableCode}</b></p> : null}
       </header>
+
+      {activeOrder ? (
+        <section className="border-acai-600 bg-acai-800/90 mb-6 rounded-2xl border p-4 shadow-lg ring-1 ring-fuchsia-900/30">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-fuchsia-200 text-sm font-semibold">Pedido em andamento</p>
+              <p className="text-acai-300 mt-1 text-xs">
+                Acompanhe seu pedido #{activeOrder.id} - {orderStatusLabel(activeOrder.status)}
+              </p>
+
+              <ol className="mt-4 flex items-start gap-0 overflow-x-auto px-1 py-1">
+                {TIMELINE_STEPS.map((step, index) => {
+                  const done = index <= timelineIndex
+                  const active = index === timelineIndex
+                  return (
+                    <li key={step.id} className="relative flex min-w-[76px] flex-col items-center">
+                      <div className="relative z-10 flex w-full justify-center">
+                        <span
+                          className={[
+                            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border',
+                            done
+                              ? 'border-fuchsia-500 bg-fuchsia-600 text-white'
+                              : 'border-acai-600 bg-acai-900 text-acai-400',
+                            active ? 'ring-2 ring-fuchsia-300/70' : '',
+                          ].join(' ')}
+                          title={step.label}
+                          aria-label={step.label}
+                        >
+                          <step.Icon className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+                      {index < TIMELINE_STEPS.length - 1 ? (
+                        <span
+                          className={[
+                            'absolute top-4 left-1/2 ml-4 h-[2px] w-[calc(100%-2rem)] rounded-full',
+                            index < timelineIndex ? 'bg-fuchsia-500' : 'bg-acai-700',
+                          ].join(' ')}
+                        />
+                      ) : null}
+                      <span
+                        className={[
+                          'mt-1 text-[10px] leading-none',
+                          done ? 'text-acai-200' : 'text-acai-400',
+                          active ? 'font-semibold text-fuchsia-300' : '',
+                        ].join(' ')}
+                      >
+                        {step.shortLabel}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+
+            <Link
+              href={`/pedido/${activeOrder.id}`}
+              className="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-semibold text-white hover:bg-fuchsia-500 lg:w-auto"
+            >
+              Voltar ao acompanhamento
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <div className="mb-4">
         <label htmlFor="category-filter" className="mb-2 block text-sm font-medium text-fuchsia-200/90">

@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { ThemedSelect } from '../../../components/ui/themed-select'
 
 type Category = { id: string; name: string }
@@ -22,6 +22,7 @@ type Product = {
   name: string
   price: number
   description: string | null
+  available: boolean
   category: { id: string; name: string }
   parentRelations: ProductRelation[]
 }
@@ -38,26 +39,57 @@ export default function AdminProdutosPage() {
   const [categoryId, setCategoryId] = useState('')
   const [available, setAvailable] = useState(true)
   const [relatedItems, setRelatedItems] = useState<PendingRelation[]>([])
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [loadingBootstrap, setLoadingBootstrap] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
 
-  async function load() {
+  const load = useCallback(async () => {
     const [categoriesResp, productsResp] = await Promise.all([
       fetch('/api/categories').then((res) => res.json()),
       fetch('/api/products?admin=1').then((res) => res.json()),
     ])
     setCategories(categoriesResp)
     setProducts(productsResp)
-    if (!categoryId && categoriesResp.length > 0) setCategoryId(categoriesResp[0].id)
+    if (categoriesResp.length > 0) {
+      setCategoryId((current) => current || categoriesResp[0].id)
+    }
+  }, [])
+
+  useEffect(() => { void load() }, [load])
+
+  function resetForm() {
+    setName('')
+    setDescription('')
+    setPrice('')
+    setAvailable(true)
+    setRelatedItems([])
+    setEditingProductId(null)
   }
 
-  useEffect(() => { load() }, [])
+  function startEdit(product: Product) {
+    setEditingProductId(product.id)
+    setName(product.name)
+    setDescription(product.description ?? '')
+    setPrice(String(Number(product.price)))
+    setCategoryId(product.category.id)
+    setAvailable(product.available)
+    setRelatedItems(
+      product.parentRelations.map((relation) => ({
+        childProductId: relation.child.id,
+        isPaid: relation.isPaid,
+      }))
+    )
+    setFeedback(null)
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setFeedback(null)
+    setIsSaving(true)
     const payload = {
       name,
       description: description || null,
@@ -70,22 +102,23 @@ export default function AdminProdutosPage() {
         order: index,
       })),
     }
-    const response = await fetch('/api/products', {
-      method: 'POST',
+    const response = await fetch(
+      editingProductId ? `/api/products?id=${editingProductId}` : '/api/products',
+      {
+      method: editingProductId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    })
+      }
+    )
     if (!response.ok) {
       setFeedback('Não foi possível salvar o produto.')
+      setIsSaving(false)
       return
     }
-    setName('')
-    setDescription('')
-    setPrice('')
-    setAvailable(true)
-    setRelatedItems([])
-    setFeedback('Produto salvo com sucesso.')
+    resetForm()
+    setFeedback(editingProductId ? 'Produto atualizado com sucesso.' : 'Produto salvo com sucesso.')
     await load()
+    setIsSaving(false)
   }
 
   function addRelatedItem() {
@@ -121,6 +154,24 @@ export default function AdminProdutosPage() {
     setLoadingBootstrap(false)
   }
 
+  async function deleteProduct(product: Product) {
+    const confirmDelete = window.confirm(`Excluir o produto "${product.name}"?`)
+    if (!confirmDelete) return
+
+    setIsDeletingId(product.id)
+    setFeedback(null)
+    const response = await fetch(`/api/products?id=${product.id}`, { method: 'DELETE' })
+    if (!response.ok) {
+      setFeedback('Não foi possível excluir o produto.')
+      setIsDeletingId(null)
+      return
+    }
+    if (editingProductId === product.id) resetForm()
+    setFeedback('Produto excluído com sucesso.')
+    await load()
+    setIsDeletingId(null)
+  }
+
   const possibleChildren = products
 
   return (
@@ -140,6 +191,20 @@ export default function AdminProdutosPage() {
       </div>
 
       <form onSubmit={onSubmit} className="mb-4 space-y-3 rounded-xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium text-fuchsia-200">
+            {editingProductId ? 'Editando produto' : 'Cadastro de produto'}
+          </p>
+          {editingProductId ? (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-md border border-acai-500 px-3 py-1 text-xs text-acai-100 hover:bg-acai-700/60"
+            >
+              Cancelar edição
+            </button>
+          ) : null}
+        </div>
         <div className="grid gap-2 md:grid-cols-2">
           <input required value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg p-2" placeholder="Nome" />
           <input required value={price} onChange={(e) => setPrice(e.target.value)} className="rounded-lg p-2" placeholder="Preço" />
@@ -208,7 +273,13 @@ export default function AdminProdutosPage() {
           </div>
         </div>
 
-        <button type="submit" className="rounded-lg bg-fuchsia-600 p-2 text-white hover:bg-fuchsia-500">Salvar</button>
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="rounded-lg bg-fuchsia-600 p-2 text-white hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSaving ? 'Salvando...' : editingProductId ? 'Atualizar produto' : 'Salvar'}
+        </button>
       </form>
       {feedback ? <p className="mb-3 text-sm text-fuchsia-200">{feedback}</p> : null}
       <div className="space-y-2">
@@ -222,6 +293,23 @@ export default function AdminProdutosPage() {
               <span className="rounded-md bg-acai-700 px-2 py-1 text-xs">
                 {p.parentRelations.length} relacionado(s)
               </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => startEdit(p)}
+                className="rounded-md border border-fuchsia-500 px-2 py-1 text-xs text-fuchsia-200 hover:bg-fuchsia-500/10"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingId === p.id}
+                onClick={() => deleteProduct(p)}
+                className="rounded-md border border-red-500 px-2 py-1 text-xs text-red-300 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeletingId === p.id ? 'Excluindo...' : 'Excluir'}
+              </button>
             </div>
             {p.parentRelations.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">

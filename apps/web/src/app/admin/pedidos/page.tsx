@@ -12,6 +12,8 @@ type Order = { id: string; status: string; type: string; total: string }
 
 export default function AdminPedidosPage() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [savingOrderId, setSavingOrderId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/orders').then(async (res) => setOrders(await res.json()))
@@ -35,13 +37,21 @@ export default function AdminPedidosPage() {
   }, [])
 
   async function setStatus(id: string, status: string) {
-    await fetch(`/api/orders?id=${id}`, {
+    setSavingOrderId(id)
+    setError(null)
+    const response = await fetch(`/api/orders?id=${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     })
+    if (!response.ok) {
+      setError('Não foi possível atualizar o status do pedido.')
+      setSavingOrderId(null)
+      return
+    }
     const list = await fetch('/api/orders').then((res) => res.json())
     setOrders(list)
+    setSavingOrderId(null)
   }
 
   return (
@@ -49,6 +59,7 @@ export default function AdminPedidosPage() {
       <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">
         Pedidos em tempo real
       </h1>
+      {error ? <p className="mb-3 text-sm text-amber-400">{error}</p> : null}
       <div className="space-y-3">
         {orders.map((order) => (
           <article
@@ -70,8 +81,9 @@ export default function AdminPedidosPage() {
                 <button
                   key={value}
                   type="button"
+                  disabled={savingOrderId === order.id || order.status === value}
                   onClick={() => setStatus(order.id, value)}
-                  className="border-acai-600 bg-acai-900 hover:bg-acai-800 rounded-md border px-3 py-1 text-xs text-fuchsia-200 hover:border-fuchsia-600"
+                  className="border-acai-600 bg-acai-900 hover:bg-acai-800 rounded-md border px-3 py-1 text-xs text-fuchsia-200 hover:border-fuchsia-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {label}
                 </button>
