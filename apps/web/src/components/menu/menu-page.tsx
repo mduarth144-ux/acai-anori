@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
 
@@ -33,12 +33,16 @@ type Props = {
   tableCode?: string
 }
 
+const PRODUCTS_BATCH_SIZE = 8
+
 export function MenuPage({ categories, products, tableCode }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [query, setQuery] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_BATCH_SIZE)
   const [wizardProduct, setWizardProduct] = useState<Product | null>(null)
   const [selectedChoicesByCustomization, setSelectedChoicesByCustomization] = useState<Record<string, string[]>>({})
   const [wizardError, setWizardError] = useState<string | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const addItem = useCartStore((state) => state.addItem)
   const items = useCartStore((state) => state.items)
   const total = useCartStore((state) => state.total)
@@ -95,6 +99,33 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         .filter((product): product is Product => Boolean(product)),
     [products]
   )
+  const visibleProducts = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount]
+  )
+  const hasMoreProducts = visibleCount < filtered.length
+
+  useEffect(() => {
+    setVisibleCount(PRODUCTS_BATCH_SIZE)
+  }, [activeCategory, query])
+
+  useEffect(() => {
+    const observerTarget = loadMoreRef.current
+    if (!observerTarget || !hasMoreProducts) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        setVisibleCount((current) =>
+          Math.min(current + PRODUCTS_BATCH_SIZE, filtered.length)
+        )
+      },
+      { rootMargin: '240px 0px' }
+    )
+
+    observer.observe(observerTarget)
+    return () => observer.disconnect()
+  }, [filtered.length, hasMoreProducts, visibleCount])
 
   function closeWizard() {
     setWizardProduct(null)
@@ -254,7 +285,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        {filtered.map((product) => (
+        {visibleProducts.map((product) => (
           <article key={product.id} className="flex h-full flex-col rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
             <div className="mb-3 h-40 overflow-hidden rounded-xl bg-acai-900">
               {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} width={600} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-acai-400">Sem imagem</div>}
@@ -273,6 +304,12 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           </article>
         ))}
       </div>
+      <div ref={loadMoreRef} className="h-4 w-full" />
+      {hasMoreProducts ? (
+        <p className="mt-2 text-center text-sm text-acai-400">
+          Carregando mais coisas deliciosas...
+        </p>
+      ) : null}
 
       {itemCount > 0 && (
         <div className="sticky bottom-2 mt-8 rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl shadow-black/40 ring-1 ring-fuchsia-900/30">
