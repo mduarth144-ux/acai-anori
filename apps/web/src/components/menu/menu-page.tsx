@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
 
 type Product = {
@@ -187,20 +188,19 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         <label htmlFor="category-filter" className="mb-2 block text-sm font-medium text-fuchsia-200/90">
           Categoria
         </label>
-        <select
+        <ThemedSelect
           id="category-filter"
           value={activeCategory}
-          onChange={(e) => setActiveCategory(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-acai-600 bg-acai-800 py-3 pl-3 pr-10 text-fuchsia-100 shadow-sm ring-1 ring-acai-700/50 focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40"
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e879f9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25rem' }}
-        >
-          <option value="all">Todas</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.slug}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+          onChange={(nextValue) => setActiveCategory(nextValue)}
+          className="w-full"
+          options={[
+            { value: 'all', label: 'Todas' },
+            ...categories.map((category) => ({
+              value: category.slug,
+              label: category.name,
+            })),
+          ]}
+        />
       </div>
 
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" className="mb-6 w-full rounded-xl p-3" />

@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
+import { ThemedSelect } from '../../../components/ui/themed-select'
 
 type Category = { id: string; name: string }
 type RelatedProduct = {
@@ -140,9 +141,12 @@ export default function AdminProdutosPage() {
         <div className="grid gap-2 md:grid-cols-2">
           <input required value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg p-2" placeholder="Nome" />
           <input required value={price} onChange={(e) => setPrice(e.target.value)} className="rounded-lg p-2" placeholder="Preço" />
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="rounded-lg p-2">
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <ThemedSelect
+            value={categoryId}
+            onChange={(nextValue) => setCategoryId(nextValue)}
+            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            className="w-full"
+          />
           <label className="flex items-center gap-2 rounded-lg border border-acai-600 px-3 text-sm text-acai-100">
             <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
             Disponível para venda
@@ -169,27 +173,31 @@ export default function AdminProdutosPage() {
             ) : null}
             {relatedItems.map((relation, index) => (
               <div key={`${relation.childProductId}-${index}`} className="grid gap-2 md:grid-cols-[1fr_140px_110px]">
-                <select
+                <ThemedSelect
                   value={relation.childProductId}
-                  onChange={(e) => updateRelatedItem(index, { childProductId: e.target.value })}
-                  className="rounded-md p-2"
-                  required
-                >
-                  <option value="">Selecione um item filho</option>
-                  {possibleChildren.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} ({product.category.name})
-                    </option>
-                  ))}
-                </select>
-                <select
+                  onChange={(nextValue) =>
+                    updateRelatedItem(index, { childProductId: nextValue })
+                  }
+                  options={[
+                    { value: '', label: 'Selecione um item filho' },
+                    ...possibleChildren.map((product) => ({
+                      value: product.id,
+                      label: `${product.name} (${product.category.name})`,
+                    })),
+                  ]}
+                  className="w-full"
+                />
+                <ThemedSelect
                   value={relation.isPaid ? 'paid' : 'free'}
-                  onChange={(e) => updateRelatedItem(index, { isPaid: e.target.value === 'paid' })}
-                  className="rounded-md p-2"
-                >
-                  <option value="free">Gratuito</option>
-                  <option value="paid">Pago</option>
-                </select>
+                  onChange={(nextValue) =>
+                    updateRelatedItem(index, { isPaid: nextValue === 'paid' })
+                  }
+                  options={[
+                    { value: 'free', label: 'Gratuito' },
+                    { value: 'paid', label: 'Pago' },
+                  ]}
+                  className="w-full"
+                />
                 <button type="button" onClick={() => removeRelatedItem(index)} className="rounded-md border border-red-500 px-2 text-red-300 hover:bg-red-500/10">
                   Remover
                 </button>

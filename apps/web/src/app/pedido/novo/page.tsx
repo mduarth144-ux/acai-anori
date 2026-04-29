@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { MapPin, Smartphone } from 'lucide-react'
+import { ThemedSelect } from '../../../components/ui/themed-select'
 import { useCartStore } from '../../../store/cart-store'
 import {
   buildDeliveryAddressLine,
@@ -12,6 +14,14 @@ import {
 
 type GeoStatus = 'idle' | 'pending' | 'ok' | 'denied' | 'error' | 'unavailable'
 const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
+const ORDERS_STORAGE_KEY = 'app.orders.v1'
+
+function formatPhoneDisplay(input: string) {
+  const digits = input.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
 
 export default function NovoPedidoPage() {
   const router = useRouter()
@@ -39,6 +49,14 @@ export default function NovoPedidoPage() {
   const [cepLoading, setCepLoading] = useState(false)
   const [cepNotFound, setCepNotFound] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [phoneCaptureStatus, setPhoneCaptureStatus] = useState<
+    'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported' | 'error'
+  >('idle')
+  const [phoneCaptureMessage, setPhoneCaptureMessage] = useState<string | null>(
+    null
+  )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirmDataTitle, setShowConfirmDataTitle] = useState(false)
   const lastViaCepFetch = useRef('')
 
   useEffect(() => {
@@ -55,11 +73,19 @@ export default function NovoPedidoPage() {
         neighborhood?: string
       }
       if (saved.customerName) setCustomerName(saved.customerName)
-      if (saved.customerPhone) setCustomerPhone(saved.customerPhone)
+      if (saved.customerPhone) setCustomerPhone(formatPhoneDisplay(saved.customerPhone))
       if (saved.cepDigits) setCepDigits(onlyDigits(saved.cepDigits, 8))
       if (saved.street) setStreet(saved.street)
       if (saved.number) setNumber(saved.number)
       if (saved.neighborhood) setNeighborhood(saved.neighborhood)
+      const hasCompleteSavedProfile =
+        (saved.customerName?.trim().length ?? 0) >= 3 &&
+        onlyDigits(saved.customerPhone ?? '', 11).length === 11 &&
+        onlyDigits(saved.cepDigits ?? '', 8).length === 8 &&
+        (saved.street?.trim().length ?? 0) > 0 &&
+        (saved.number?.trim().length ?? 0) > 0 &&
+        (saved.neighborhood?.trim().length ?? 0) > 0
+      setShowConfirmDataTitle(hasCompleteSavedProfile)
     } catch {
       // Ignore invalid storage payloads and continue with empty form.
     }
@@ -180,8 +206,72 @@ export default function NovoPedidoPage() {
     return () => clearTimeout(tid)
   }, [cepDigits, lookupCep])
 
+  async function capturePhoneFromContacts() {
+    setPhoneCaptureMessage(null)
+    setSubmitError(null)
+
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      setPhoneCaptureStatus('unsupported')
+      setPhoneCaptureMessage(
+        'Seu dispositivo não suporta captura automática de contatos.'
+      )
+      return
+    }
+
+    const contactsApi = (
+      navigator as Navigator & {
+        contacts?: {
+          select: (
+            properties: string[],
+            options?: { multiple?: boolean }
+          ) => Promise<Array<{ tel?: string[] }>>
+        }
+      }
+    ).contacts
+
+    if (!contactsApi?.select) {
+      setPhoneCaptureStatus('unsupported')
+      setPhoneCaptureMessage(
+        'Captura automática de telefone não disponível neste navegador.'
+      )
+      return
+    }
+
+    setPhoneCaptureStatus('requesting')
+    try {
+      const contacts = await contactsApi.select(['tel'], { multiple: false })
+      const tel = contacts?.[0]?.tel?.[0] ?? ''
+      const masked = formatPhoneDisplay(tel)
+      if (!masked) {
+        setPhoneCaptureStatus('error')
+        setPhoneCaptureMessage(
+          'Não encontramos número de telefone no contato selecionado.'
+        )
+        return
+      }
+      setCustomerPhone(masked)
+      setPhoneCaptureStatus('granted')
+      setPhoneCaptureMessage('Telefone importado com sucesso.')
+    } catch (error) {
+      const errorName =
+        error instanceof DOMException ? error.name : 'UnknownError'
+      if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+        setPhoneCaptureStatus('denied')
+        setPhoneCaptureMessage(
+          'Permissão negada. Você pode preencher o telefone manualmente.'
+        )
+        return
+      }
+      setPhoneCaptureStatus('error')
+      setPhoneCaptureMessage(
+        'Não foi possível capturar o telefone automaticamente.'
+      )
+    }
+  }
+
   async function submitOrder() {
     setSubmitError(null)
+    if (isSubmitting) return
     if (type !== 'TABLE' && paymentTab === 'ONLINE') {
       setSubmitError(
         'Pagamento online ainda não está disponível. Selecione a aba "Na entrega".'
@@ -199,39 +289,78 @@ export default function NovoPedidoPage() {
       return
     }
 
+    if (!isCustomerDataValid) {
+      setSubmitError(
+        'Preencha nome e telefone válidos antes de confirmar o pedido.'
+      )
+      return
+    }
+
     if (type === 'DELIVERY') {
       const d = onlyDigits(cepDigits, 8)
-      if (d.length !== 8 || !street.trim() || !neighborhood.trim()) {
+      if (
+        d.length !== 8 ||
+        !street.trim() ||
+        !number.trim() ||
+        !neighborhood.trim()
+      ) {
         setSubmitError(
-          'Para entrega, preencha o CEP (8 dígitos), a rua e o bairro.'
+          'Para entrega, preencha CEP (8 dígitos), rua, número e bairro.'
         )
         return
       }
     }
 
-    const response = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type,
-        tableCode: computedTableCode,
-        paymentMethod: type === 'TABLE' ? 'PIX' : paymentMethod,
-        changeFor:
-          type !== 'TABLE' && paymentMethod === 'CASH'
-            ? Number(changeFor || 0)
-            : undefined,
-        customerName,
-        customerPhone,
-        address: type === 'DELIVERY' ? address : undefined,
-        notes,
-        items: cart,
-      }),
-    })
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          tableCode: computedTableCode,
+          paymentMethod: type === 'TABLE' ? 'PIX' : paymentMethod,
+          changeFor:
+            type !== 'TABLE' && paymentMethod === 'CASH'
+              ? Number(changeFor || 0)
+              : undefined,
+          customerName,
+          customerPhone,
+          address: type === 'DELIVERY' ? address : undefined,
+          notes,
+          items: cart,
+        }),
+      })
 
-    if (!response.ok) return
-    const data = await response.json()
-    clearCart()
-    router.push(`/pedido/${data.id}`)
+      if (!response.ok) {
+        setSubmitError('Não foi possível confirmar o pedido. Tente novamente.')
+        return
+      }
+      const data = await response.json()
+      if (typeof window !== 'undefined') {
+        try {
+          const current = JSON.parse(
+            window.localStorage.getItem(ORDERS_STORAGE_KEY) ?? '[]'
+          ) as Array<{ id: string; createdAt: string; status: string; total?: number }>
+          const next = [
+            {
+              id: String(data.id),
+              createdAt: new Date().toISOString(),
+              status: 'Pendente',
+              total: Number(total().toFixed(2)),
+            },
+            ...current.filter((order) => order.id !== String(data.id)),
+          ].slice(0, 20)
+          window.localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(next))
+        } catch {
+          // Ignore storage failures to avoid blocking order confirmation.
+        }
+      }
+      clearCart()
+      router.push(`/pedido/${data.id}`)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const geoMessage = (() => {
@@ -250,6 +379,24 @@ export default function NovoPedidoPage() {
         return null
     }
   })()
+
+  const phoneDigits = customerPhone.replace(/\D/g, '')
+  const cepDigitsOnly = onlyDigits(cepDigits, 8)
+  const isCustomerDataValid =
+    customerName.trim().length >= 3 && phoneDigits.length === 11
+  const isDeliveryAddressValid =
+    cepDigitsOnly.length === 8 &&
+    street.trim().length > 0 &&
+    number.trim().length > 0 &&
+    neighborhood.trim().length > 0
+  const isTableValid = tableNumber.trim().length > 0
+  const canContinueToPayment =
+    isCustomerDataValid &&
+    (type === 'DELIVERY'
+      ? isDeliveryAddressValid
+      : type === 'TABLE'
+        ? isTableValid
+        : true)
 
   return (
     <main className="mx-auto max-w-3xl p-4">
@@ -328,45 +475,68 @@ export default function NovoPedidoPage() {
         </div>
       )}
 
-      <div className="border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
-          Seus dados
-        </h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          <input
-            className="rounded-lg p-3"
-            placeholder="Nome"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-          />
-          <input
-            className="rounded-lg p-3"
-            placeholder="Telefone"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-          />
-        </div>
+      {checkoutStep === 1 ? (
+        <div className="border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+            {showConfirmDataTitle ? 'Confirme Seus dados' : 'Confirme Seus dados'}
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            <input
+              className="rounded-lg p-3"
+              placeholder="Nome"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              required
+            />
+            <div className="relative">
+              <input
+                className="w-full rounded-lg p-3 pr-12"
+                placeholder="Celular"
+                value={customerPhone}
+                onChange={(e) =>
+                  setCustomerPhone(formatPhoneDisplay(e.target.value))
+                }
+                inputMode="tel"
+                required
+              />
+              <button
+                type="button"
+                onClick={capturePhoneFromContacts}
+                disabled={phoneCaptureStatus === 'requesting' || isSubmitting}
+                title="Captura o número do chip atual"
+                aria-label="Captura o número do chip atual"
+                className="border-acai-500 hover:bg-acai-700 absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border text-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Smartphone size={16} />
+              </button>
+            </div>
+          </div>
+          <p className="text-acai-300 mt-2 text-xs">Formato: (92) 98475-9201</p>
+          {phoneCaptureMessage ? (
+            <p className="mt-1 text-xs text-fuchsia-300">{phoneCaptureMessage}</p>
+          ) : null}
+          {customerPhone.length > 0 && phoneDigits.length !== 11 ? (
+            <p className="mt-1 text-xs text-amber-400">
+              Informe um telefone válido com DDD (11 dígitos).
+            </p>
+          ) : null}
 
-        <h2 className="mb-3 mt-5 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
-          Etapa {checkoutStep} de 2
-        </h2>
-
-        {checkoutStep === 1 ? (
           <>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
               Tipo de entrega
             </h3>
-            <select
-              className="w-full rounded-lg p-3"
+            <ThemedSelect
+              className="w-full"
               value={type}
-              onChange={(e) =>
-                setType(e.target.value as 'TABLE' | 'DELIVERY' | 'PICKUP')
+              onChange={(nextValue) =>
+                setType(nextValue as 'TABLE' | 'DELIVERY' | 'PICKUP')
               }
-            >
-              <option value="TABLE">Mesa</option>
-              <option value="DELIVERY">Entrega</option>
-              <option value="PICKUP">Retirada</option>
-            </select>
+              options={[
+                { value: 'TABLE', label: 'Mesa' },
+                { value: 'DELIVERY', label: 'Entrega' },
+                { value: 'PICKUP', label: 'Retirada' },
+              ]}
+            />
             {type === 'TABLE' ? (
               <div className="mt-4">
                 <label className="text-acai-300 mb-1 block text-xs font-medium">
@@ -392,24 +562,14 @@ export default function NovoPedidoPage() {
                     {geoMessage ??
                       'Usamos sua localização, se você permitir, só para sugerir rua e bairro.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      lastViaCepFetch.current = ''
-                      tryGeolocation()
-                    }}
-                    className="border-acai-500 hover:bg-acai-700 shrink-0 rounded-lg border px-3 py-1.5 text-xs text-fuchsia-200"
-                  >
-                    Usar localização atual
-                  </button>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="text-acai-300 mb-1 block text-xs font-medium">
                     CEP
                   </label>
                   <input
-                    className="w-full rounded-lg p-3"
+                    className="w-full rounded-lg p-3 pr-12"
                     placeholder="00000-000"
                     inputMode="numeric"
                     autoComplete="postal-code"
@@ -423,7 +583,21 @@ export default function NovoPedidoPage() {
                     onBlur={(e) =>
                       void lookupCep(onlyDigits(e.currentTarget.value, 8))
                     }
+                    required
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      lastViaCepFetch.current = ''
+                      tryGeolocation()
+                    }}
+                    disabled={geoStatus === 'pending' || isSubmitting}
+                    title="Recebe a localização diretamente do seu GPS"
+                    aria-label="Recebe a localização diretamente do seu GPS"
+                    className="border-acai-500 hover:bg-acai-700 absolute right-2 top-[2.15rem] inline-flex h-8 w-8 items-center justify-center rounded-md border text-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <MapPin size={16} />
+                  </button>
                   {cepLoading ? (
                     <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
                   ) : null}
@@ -444,6 +618,7 @@ export default function NovoPedidoPage() {
                     autoComplete="street-address"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
+                    required
                   />
                 </div>
 
@@ -456,6 +631,7 @@ export default function NovoPedidoPage() {
                     placeholder="Nº / complemento"
                     value={number}
                     onChange={(e) => setNumber(e.target.value)}
+                    required
                   />
                 </div>
 
@@ -469,6 +645,7 @@ export default function NovoPedidoPage() {
                     autoComplete="address-level2"
                     value={neighborhood}
                     onChange={(e) => setNeighborhood(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -478,31 +655,31 @@ export default function NovoPedidoPage() {
               <p className="mt-3 text-sm text-amber-400">{submitError}</p>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => {
-                setSubmitError(null)
-                if (type === 'TABLE' && !tableNumber.trim()) {
-                  setSubmitError('Informe o número da mesa para continuar.')
-                  return
-                }
-                if (type === 'DELIVERY') {
-                  const d = onlyDigits(cepDigits, 8)
-                  if (d.length !== 8 || !street.trim() || !neighborhood.trim()) {
-                    setSubmitError(
-                      'Para entrega, preencha o CEP (8 dígitos), a rua e o bairro.'
-                    )
-                    return
-                  }
-                }
-                setCheckoutStep(2)
-              }}
-              className="mt-5 w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500"
-            >
-              Continuar para pagamento
-            </button>
+            <div className="mt-5 grid gap-2 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                ← Voltar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmitError(null)
+                  setCheckoutStep(2)
+                }}
+                disabled={!canContinueToPayment || isSubmitting}
+                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Pagamento →
+              </button>
+            </div>
           </>
-        ) : (
+        </div>
+      ) : (
+        <div className="border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
           <>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
               Pagamento
@@ -516,11 +693,12 @@ export default function NovoPedidoPage() {
                       setPaymentTab('ONLINE')
                       setSubmitError(null)
                     }}
+                    disabled={isSubmitting}
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                       paymentTab === 'ONLINE'
                         ? 'bg-fuchsia-700 text-white'
                         : 'text-acai-200 hover:bg-acai-800'
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     Online
                   </button>
@@ -530,11 +708,12 @@ export default function NovoPedidoPage() {
                       setPaymentTab('DELIVERY')
                       setSubmitError(null)
                     }}
+                    disabled={isSubmitting}
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                       paymentTab === 'DELIVERY'
                         ? 'bg-fuchsia-700 text-white'
                         : 'text-acai-200 hover:bg-acai-800'
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     Na entrega
                   </button>
@@ -572,20 +751,21 @@ export default function NovoPedidoPage() {
                     <h4 className="mb-2 mt-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
                       Forma de pagamento na entrega
                     </h4>
-                    <select
-                      className="w-full rounded-lg p-3"
+                    <ThemedSelect
+                      className="w-full"
                       value={paymentMethod}
-                      onChange={(e) =>
+                      onChange={(nextValue) =>
                         setPaymentMethod(
-                          e.target.value as 'CASH' | 'DEBIT' | 'CREDIT' | 'PIX'
+                          nextValue as 'CASH' | 'DEBIT' | 'CREDIT' | 'PIX'
                         )
                       }
-                    >
-                      <option value="PIX">PIX (na entrega)</option>
-                      <option value="DEBIT">Débito (na entrega)</option>
-                      <option value="CREDIT">Crédito (na entrega)</option>
-                      <option value="CASH">Dinheiro (na entrega)</option>
-                    </select>
+                      options={[
+                        { value: 'PIX', label: 'PIX (na entrega)' },
+                        { value: 'DEBIT', label: 'Débito (na entrega)' },
+                        { value: 'CREDIT', label: 'Crédito (na entrega)' },
+                        { value: 'CASH', label: 'Dinheiro (na entrega)' },
+                      ]}
+                    />
                     {paymentMethod === 'CASH' ? (
                       <div className="mt-3">
                         <input
@@ -630,20 +810,24 @@ export default function NovoPedidoPage() {
                   setSubmitError(null)
                   setCheckoutStep(1)
                 }}
-                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800"
+                disabled={isSubmitting}
+                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Voltar
+                ← Voltar
               </button>
               <button
                 onClick={submitOrder}
-                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500"
+                disabled={
+                  isSubmitting || (type !== 'TABLE' && paymentTab === 'ONLINE')
+                }
+                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Confirmar pedido
+                {isSubmitting ? 'Confirmando pedido...' : 'Confirmar pedido'}
               </button>
             </div>
           </>
-        )}
-      </div>
+        </div>
+      )}
       <p className="text-acai-400 mt-4 text-xs">
         Preparado para integração futura com provedores de PIX online e
         marketplaces (iFood/99Food) através do campo externalRefs da entidade

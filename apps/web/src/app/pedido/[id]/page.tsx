@@ -1,18 +1,50 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createSupabaseClient } from '../../../lib/supabase-client'
 import { orderStatusLabel } from '../../../lib/order-labels'
 
 type Props = { params: Promise<{ id: string }> }
+type OrderData = {
+  id: string
+  status: string
+  createdAt?: string
+  type?: string
+  total?: number
+  address?: string | null
+}
+
+const TIMELINE = [
+  { id: 'PENDING', label: 'Pedido recebido' },
+  { id: 'PREPARING', label: 'Pedido em preparo' },
+  { id: 'READY', label: 'Saiu para entrega' },
+  { id: 'DELIVERED', label: 'Entregue' },
+] as const
 
 export default function PedidoStatusPage({ params }: Props) {
   const [orderId, setOrderId] = useState('')
+  const [order, setOrder] = useState<OrderData | null>(null)
   const [status, setStatus] = useState('PENDING')
 
   useEffect(() => {
     params.then((p) => setOrderId(p.id))
   }, [params])
+
+  useEffect(() => {
+    if (!orderId) return
+    fetch('/api/orders')
+      .then(async (res) => {
+        const all = (await res.json()) as OrderData[]
+        const found = all.find((item) => item.id === orderId) ?? null
+        if (!found) return
+        setOrder(found)
+        setStatus(String(found.status ?? 'PENDING'))
+      })
+      .catch(() => {
+        // Keep UI usable even when initial fetch fails.
+      })
+  }, [orderId])
 
   useEffect(() => {
     if (!orderId) return
@@ -29,6 +61,14 @@ export default function PedidoStatusPage({ params }: Props) {
         },
         (payload) => {
           setStatus(String(payload.new.status))
+          setOrder((prev) =>
+            prev
+              ? { ...prev, status: String(payload.new.status) }
+              : ({
+                  id: orderId,
+                  status: String(payload.new.status),
+                } as OrderData)
+          )
         }
       )
       .subscribe()
@@ -38,18 +78,116 @@ export default function PedidoStatusPage({ params }: Props) {
     }
   }, [orderId])
 
+  const currentIndex = (() => {
+    if (status === 'CONFIRMED') return 1
+    if (status === 'CANCELLED') return 0
+    return Math.max(
+      TIMELINE.findIndex((step) => step.id === status),
+      0
+    )
+  })()
+  const createdAtDate = order?.createdAt ? new Date(order.createdAt) : null
+  const etaMinutes =
+    status === 'DELIVERED' ? 0 : status === 'READY' ? 8 : status === 'PREPARING' ? 20 : 35
+  const eta = createdAtDate
+    ? new Date(createdAtDate.getTime() + etaMinutes * 60_000)
+    : null
+
   return (
     <main className="mx-auto max-w-2xl p-4">
       <h1 className="text-2xl font-bold text-fuchsia-100">
         Acompanhamento do pedido
       </h1>
       <p className="text-acai-300 mt-3 text-sm">Pedido: {orderId}</p>
-      <div className="border-acai-600 bg-acai-800/90 mt-4 rounded-xl border p-5">
-        <p className="text-acai-300 text-sm">Status atual</p>
-        <p className="text-3xl font-bold text-fuchsia-400">
-          {orderStatusLabel(status)}
-        </p>
+      <div className="border-acai-600 bg-acai-800/90 mt-4 space-y-4 rounded-xl border p-5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-acai-300 text-sm">Status atual</p>
+            <p className="text-3xl font-bold text-fuchsia-400">
+              {orderStatusLabel(status)}
+            </p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-acai-300 text-sm">Previsão de entrega</p>
+            <p className="text-xl font-semibold text-acai-100">
+              {status === 'DELIVERED'
+                ? 'Pedido finalizado'
+                : eta
+                  ? eta.toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'Calculando...'}
+            </p>
+            {etaMinutes > 0 && status !== 'DELIVERED' ? (
+              <p className="text-acai-400 text-xs">aprox. {etaMinutes} min</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="border-acai-700 rounded-xl border bg-acai-900/50 p-3">
+          <p className="text-acai-300 mb-3 text-xs uppercase tracking-wide">
+            Timeline do pedido
+          </p>
+          <ol className="space-y-3">
+            {TIMELINE.map((step, index) => {
+              const done = index <= currentIndex
+              const active = index === currentIndex
+              return (
+                <li key={step.id} className="flex items-start gap-3">
+                  <span
+                    className={[
+                      'mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold',
+                      done
+                        ? 'border-fuchsia-500 bg-fuchsia-600 text-white'
+                        : 'border-acai-600 bg-acai-900 text-acai-400',
+                    ].join(' ')}
+                  >
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p
+                      className={[
+                        'text-sm',
+                        done ? 'text-acai-100' : 'text-acai-400',
+                        active ? 'font-semibold text-fuchsia-300' : '',
+                      ].join(' ')}
+                    >
+                      {step.label}
+                    </p>
+                    {active ? (
+                      <p className="text-xs text-fuchsia-300/90">Etapa atual</p>
+                    ) : null}
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+
+        {order?.total ? (
+          <p className="text-acai-300 text-sm">
+            Total: R$ {Number(order.total).toFixed(2)}
+          </p>
+        ) : null}
+        {order?.address ? (
+          <p className="text-acai-300 text-sm">Entrega em: {order.address}</p>
+        ) : null}
       </div>
+      <footer className="mt-5 grid gap-2 sm:grid-cols-2">
+        <Link
+          href="/ajuda"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow transition hover:bg-fuchsia-500"
+        >
+          Ajuda
+        </Link>
+        <Link
+          href="/"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow transition hover:bg-fuchsia-500"
+        >
+          Voltar para página inicial
+        </Link>
+      </footer>
     </main>
   )
 }

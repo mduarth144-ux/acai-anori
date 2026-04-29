@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { ClipboardList, Layers3, Package, QrCode } from 'lucide-react'
 import {
   clearAdminDemoSession,
   readAdminDemoSession,
@@ -9,6 +11,7 @@ import {
 } from '../lib/admin-demo-auth'
 
 export function AdminAreaGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const [phase, setPhase] = useState<'loading' | 'guest' | 'authed'>('loading')
   const [user, setUser] = useState('admin')
   const [pass, setPass] = useState('')
@@ -165,6 +168,33 @@ export function AdminAreaGate({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </div>
+      <nav className="border-acai-800/80 bg-acai-900/60 border-b backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5">
+          {[
+            { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },
+            { href: '/admin/produtos', label: 'Produtos', icon: Package },
+            { href: '/admin/categorias', label: 'Categorias', icon: Layers3 },
+            { href: '/admin/mesas', label: 'Mesas / QR', icon: QrCode },
+          ].map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={[
+                  'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition',
+                  isActive
+                    ? 'border-fuchsia-600/80 bg-fuchsia-900/40 text-fuchsia-100'
+                    : 'border-acai-700 bg-acai-900 text-acai-200 hover:border-fuchsia-700 hover:text-fuchsia-100',
+                ].join(' ')}
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
       {children}
     </div>
   )
