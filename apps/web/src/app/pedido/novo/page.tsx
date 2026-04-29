@@ -295,7 +295,7 @@ export default function NovoPedidoPage() {
 
     if (!isCustomerDataValid) {
       setSubmitError(
-        'Preencha nome e telefone válidos antes de confirmar o pedido.'
+        'Preencha nome, telefone e e-mail válidos antes de confirmar o pedido.'
       )
       return
     }
@@ -386,9 +386,11 @@ export default function NovoPedidoPage() {
   })()
 
   const phoneDigits = customerPhone.replace(/\D/g, '')
+  const normalizedEmail = customerEmail.trim()
+  const isEmailValid = /\S+@\S+\.\S+/.test(normalizedEmail)
   const cepDigitsOnly = onlyDigits(cepDigits, 8)
   const isCustomerDataValid =
-    customerName.trim().length >= 3 && phoneDigits.length === 11
+    customerName.trim().length >= 3 && phoneDigits.length === 11 && isEmailValid
   const isDeliveryAddressValid =
     cepDigitsOnly.length === 8 &&
     street.trim().length > 0 &&
@@ -517,11 +519,13 @@ export default function NovoPedidoPage() {
             </div>
             <input
               className="rounded-lg p-3 md:col-span-2"
-              placeholder="E-mail (opcional)"
+              placeholder="E-mail"
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
               inputMode="email"
+              type="email"
               autoComplete="email"
+              required
             />
           </div>
           <p className="text-acai-300 mt-2 text-xs">Formato: (99) 999999-9999</p>
@@ -532,6 +536,11 @@ export default function NovoPedidoPage() {
           {customerPhone.length > 0 && phoneDigits.length !== 11 ? (
             <p className="mt-1 text-xs text-amber-400">
               Informe um telefone válido com DDD (11 dígitos).
+            </p>
+          ) : null}
+          {customerEmail.length > 0 && !isEmailValid ? (
+            <p className="mt-1 text-xs text-amber-400">
+              Informe um e-mail válido.
             </p>
           ) : null}
 
@@ -578,89 +587,91 @@ export default function NovoPedidoPage() {
                   </p>
                 </div>
 
-                <div className="relative">
-                  <label className="text-acai-300 mb-1 block text-xs font-medium">
-                    CEP
-                  </label>
-                  <input
-                    className="w-full rounded-lg p-3 pr-12"
-                    placeholder="00000-000"
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                    value={formatCepDisplay(cepDigits)}
-                    onChange={(e) => {
-                      const d = onlyDigits(e.target.value, 8)
-                      setCepDigits(d)
-                      setCepNotFound(false)
-                      if (d.length < 8) lastViaCepFetch.current = ''
-                    }}
-                    onBlur={(e) =>
-                      void lookupCep(onlyDigits(e.currentTarget.value, 8))
-                    }
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      lastViaCepFetch.current = ''
-                      tryGeolocation()
-                    }}
-                    disabled={geoStatus === 'pending' || isSubmitting}
-                    title="Recebe a localização diretamente do seu GPS"
-                    aria-label="Recebe a localização diretamente do seu GPS"
-                    className="border-acai-500 hover:bg-acai-700 absolute right-2 top-[2.15rem] inline-flex h-8 w-8 items-center justify-center rounded-md border text-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <MapPin size={16} />
-                  </button>
-                  {cepLoading ? (
-                    <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
-                  ) : null}
-                  {cepNotFound ? (
-                    <p className="mt-1 text-xs text-amber-400">
-                      CEP não encontrado.
-                    </p>
-                  ) : null}
-                </div>
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="relative col-span-12 md:col-span-4">
+                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                      CEP
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-3 pr-12"
+                      placeholder="00000-000"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      value={formatCepDisplay(cepDigits)}
+                      onChange={(e) => {
+                        const d = onlyDigits(e.target.value, 8)
+                        setCepDigits(d)
+                        setCepNotFound(false)
+                        if (d.length < 8) lastViaCepFetch.current = ''
+                      }}
+                      onBlur={(e) =>
+                        void lookupCep(onlyDigits(e.currentTarget.value, 8))
+                      }
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        lastViaCepFetch.current = ''
+                        tryGeolocation()
+                      }}
+                      disabled={geoStatus === 'pending' || isSubmitting}
+                      title="Recebe a localização diretamente do seu GPS"
+                      aria-label="Recebe a localização diretamente do seu GPS"
+                      className="border-acai-500 hover:bg-acai-700 absolute right-2 top-[2.15rem] inline-flex h-8 w-8 items-center justify-center rounded-md border text-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <MapPin size={16} />
+                    </button>
+                    {cepLoading ? (
+                      <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
+                    ) : null}
+                    {cepNotFound ? (
+                      <p className="mt-1 text-xs text-amber-400">
+                        CEP não encontrado.
+                      </p>
+                    ) : null}
+                  </div>
 
-                <div>
-                  <label className="text-acai-300 mb-1 block text-xs font-medium">
-                    Rua
-                  </label>
-                  <input
-                    className="w-full rounded-lg p-3"
-                    placeholder="Nome da rua"
-                    autoComplete="street-address"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="col-span-9 md:col-span-8">
+                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                      Rua
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-3"
+                      placeholder="Nome da rua"
+                      autoComplete="street-address"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="text-acai-300 mb-1 block text-xs font-medium">
-                    Número
-                  </label>
-                  <input
-                    className="w-full rounded-lg p-3"
-                    placeholder="Nº / complemento"
-                    value={number}
-                    onChange={(e) => setNumber(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="order-4 col-span-12 md:order-3 md:col-span-8">
+                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                      Bairro
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-3"
+                      placeholder="Bairro"
+                      autoComplete="address-level2"
+                      value={neighborhood}
+                      onChange={(e) => setNeighborhood(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="text-acai-300 mb-1 block text-xs font-medium">
-                    Bairro
-                  </label>
-                  <input
-                    className="w-full rounded-lg p-3"
-                    placeholder="Bairro"
-                    autoComplete="address-level2"
-                    value={neighborhood}
-                    onChange={(e) => setNeighborhood(e.target.value)}
-                    required
-                  />
+                  <div className="order-3 col-span-3 md:order-4 md:col-span-4">
+                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                      Número
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-3"
+                      placeholder="Nº"
+                      value={number}
+                      onChange={(e) => setNumber(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             ) : null}

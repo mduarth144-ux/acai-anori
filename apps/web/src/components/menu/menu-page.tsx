@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
@@ -215,10 +216,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       {bestSellers.length > 0 ? (
         <section className="mb-6">
           <h2 className="mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-3 gap-3">
             {bestSellers.map((product) => (
-              <article key={`best-${product.id}`} className="rounded-xl border border-acai-600 bg-acai-900/60 p-3">
-                <div className="mb-2 h-28 overflow-hidden rounded-lg bg-acai-900">
+              <article key={`best-${product.id}`} className="flex h-full flex-col rounded-xl border border-acai-600 bg-acai-900/60 p-2">
+                <div className="mb-2 h-16 overflow-hidden rounded-lg bg-acai-900 sm:h-20 md:h-32 lg:h-36">
                   {product.imageUrl ? (
                     <Image
                       src={product.imageUrl}
@@ -234,7 +235,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                   )}
                 </div>
                 <h3 className="text-sm font-semibold text-fuchsia-100">{product.name}</h3>
-                <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                   <span className="text-sm font-bold text-fuchsia-300">
                     R$ {product.price.toFixed(2)}
                   </span>
@@ -243,7 +244,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     onClick={() => startWizard(product)}
                     className="rounded-md bg-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-fuchsia-500"
                   >
-                    Adicionar
+                    <Plus className="h-4 w-4" />
                   </button>
                 </div>
               </article>
@@ -252,15 +253,15 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </section>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {filtered.map((product) => (
-          <article key={product.id} className="rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
+          <article key={product.id} className="flex h-full flex-col rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
             <div className="mb-3 h-40 overflow-hidden rounded-xl bg-acai-900">
               {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} width={600} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-acai-400">Sem imagem</div>}
             </div>
             <h2 className="text-xl font-semibold text-fuchsia-100">{product.name}</h2>
             <p className="my-2 text-sm text-acai-300">{product.description ?? 'Açaí artesanal com ingredientes selecionados.'}</p>
-            <div className="flex items-center justify-between">
+            <div className="mt-auto flex items-center justify-between pt-2">
               <span className="font-bold text-fuchsia-300">R$ {product.price.toFixed(2)}</span>
               <button
                 onClick={() => startWizard(product)}
@@ -385,7 +386,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                 onClick={addWizardItemToCart}
                 className="flex-1 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-500"
               >
-                Adicionar ao pedido
+                Adicionar
               </button>
             </div>
           </div>
