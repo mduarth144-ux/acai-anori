@@ -456,14 +456,33 @@ export default function NovoPedidoPage() {
                   return (
                     <div
                       key={itemId}
-                      className="flex items-center justify-between gap-3 py-2 text-sm"
+                      className="flex items-start justify-between gap-3 py-2 text-sm"
                     >
-                      <span className="text-acai-200 min-w-0 flex-1">
-                        <span className="mr-2 font-semibold text-fuchsia-300">
-                          {item.quantity}×
+                      <div className="min-w-0 flex-1">
+                        <span className="text-acai-200 block">
+                          <span className="mr-2 font-semibold text-fuchsia-300">
+                            {item.quantity}×
+                          </span>
+                          {item.name}
                         </span>
-                        {item.name}
-                      </span>
+
+                        {item.choices && item.choices.length > 0 ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {item.choices.map((choice, index) => (
+                              <span
+                                key={`${itemId}-choice-${index}`}
+                                className="rounded-full border border-acai-600 bg-acai-900 px-2 py-0.5 text-[11px] text-fuchsia-200"
+                              >
+                                {choice.name}
+                                {choice.priceModifier !== 0
+                                  ? ` (+R$ ${choice.priceModifier.toFixed(2)})`
+                                  : ''}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
                       <span className="font-medium text-fuchsia-300 shrink-0 whitespace-nowrap">
                         R$ {itemTotal.toFixed(2)}
                       </span>

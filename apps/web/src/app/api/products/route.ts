@@ -31,8 +31,20 @@ function normalizeLegacyGroups(customizationGroupsInput: GroupInput[]) {
   }))
 }
 
+function normalizeReusableGroupTemplateIds(input: unknown[]): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const value of input) {
+    const normalized = String(value ?? '').trim()
+    if (!normalized || seen.has(normalized)) continue
+    seen.add(normalized)
+    out.push(normalized)
+  }
+  return out
+}
+
 function resolveCustomizations(item: any) {
-  const assignedGroups = (item.groupAssignments ?? []).map((assignment) => ({
+  const assignedGroups = (item.groupAssignments ?? []).map((assignment: any) => ({
     id: assignment.groupTemplate.id,
     label: assignment.groupTemplate.name,
     required: assignment.groupTemplate.required,
@@ -40,7 +52,7 @@ function resolveCustomizations(item: any) {
     maxSelect: assignment.groupTemplate.maxSelect,
     affectsPrice: assignment.groupTemplate.affectsPrice,
     freeQuantity: assignment.groupTemplate.freeQuantity,
-    options: assignment.groupTemplate.options.map((option) => ({
+    options: assignment.groupTemplate.options.map((option: any) => ({
       id: option.id,
       name: option.name,
       priceModifier: Number(option.priceModifier),
@@ -52,9 +64,9 @@ function resolveCustomizations(item: any) {
 
   if (assignedGroups.length > 0) return assignedGroups
 
-  return item.customizations.map((customization) => ({
+  return item.customizations.map((customization: any) => ({
     ...customization,
-    options: customization.options.map((option) => ({
+    options: customization.options.map((option: any) => ({
       ...option,
       priceModifier: Number(option.priceModifier),
       optionProduct: option.optionProduct
@@ -117,7 +129,9 @@ export async function POST(request: Request) {
   const reusableGroupTemplateIdsInput = Array.isArray(body.reusableGroupTemplateIds)
     ? body.reusableGroupTemplateIds
     : []
-  const reusableGroupTemplateIds = [...new Set(reusableGroupTemplateIdsInput.map((value: unknown) => String(value).trim()).filter(Boolean))]
+  const reusableGroupTemplateIds = normalizeReusableGroupTemplateIds(
+    reusableGroupTemplateIdsInput
+  )
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -146,7 +160,7 @@ export async function POST(request: Request) {
       groupAssignments: reusableGroupTemplateIds.length > 0
         ? {
             create: reusableGroupTemplateIds.map((groupTemplateId, index) => ({
-              groupTemplateId,
+              groupTemplate: { connect: { id: groupTemplateId } },
               order: index,
             })),
           }
@@ -191,7 +205,7 @@ export async function POST(request: Request) {
     ...data,
     price: Number(data.price),
     customizations: resolveCustomizations(data),
-    parentRelations: data.parentRelations.map((relation) => ({
+    parentRelations: data.parentRelations.map((relation: any) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },
     })),
@@ -210,7 +224,9 @@ export async function PATCH(request: Request) {
   const reusableGroupTemplateIdsInput = Array.isArray(body.reusableGroupTemplateIds)
     ? body.reusableGroupTemplateIds
     : []
-  const reusableGroupTemplateIds = [...new Set(reusableGroupTemplateIdsInput.map((value: unknown) => String(value).trim()).filter(Boolean))]
+  const reusableGroupTemplateIds = normalizeReusableGroupTemplateIds(
+    reusableGroupTemplateIdsInput
+  )
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -240,7 +256,7 @@ export async function PATCH(request: Request) {
       groupAssignments: {
         deleteMany: {},
         create: reusableGroupTemplateIds.map((groupTemplateId, index) => ({
-          groupTemplateId,
+          groupTemplate: { connect: { id: groupTemplateId } },
           order: index,
         })),
       },
@@ -282,7 +298,7 @@ export async function PATCH(request: Request) {
     ...data,
     price: Number(data.price),
     customizations: resolveCustomizations(data),
-    parentRelations: data.parentRelations.map((relation) => ({
+    parentRelations: data.parentRelations.map((relation: any) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },
     })),
