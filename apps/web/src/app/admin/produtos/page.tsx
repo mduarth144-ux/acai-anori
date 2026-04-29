@@ -3,7 +3,13 @@
 import Image from 'next/image'
 import { Edit3, Plus, Search, Trash2 } from 'lucide-react'
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ProductFormModal, PendingGroup, PendingGroupOption, ProductType } from '../../../components/admin/product-form-modal'
+import {
+  ProductFormModal,
+  PendingGroup,
+  PendingGroupOption,
+  PendingReusableGroupAssignment,
+  ProductType,
+} from '../../../components/admin/product-form-modal'
 import { ThemedSelect } from '../../../components/ui/themed-select'
 
 type Category = { id: string; name: string }
@@ -34,7 +40,13 @@ type Product = {
       optionProduct?: { id: string; name: string; price: number } | null
     }>
   }>
+  groupAssignments?: Array<{
+    groupTemplateId: string
+    groupTemplate: { id: string; name: string }
+  }>
 }
+
+type ReusableGroupTemplate = { id: string; name: string }
 
 const PRODUCTS_BATCH_SIZE = 12
 
@@ -52,6 +64,8 @@ export default function AdminProdutosPage() {
   const [filterAvailability, setFilterAvailability] = useState<'all' | 'active' | 'inactive'>('all')
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_BATCH_SIZE)
   const [customizationGroups, setCustomizationGroups] = useState<PendingGroup[]>([])
+  const [reusableGroupTemplates, setReusableGroupTemplates] = useState<ReusableGroupTemplate[]>([])
+  const [reusableGroupAssignments, setReusableGroupAssignments] = useState<PendingReusableGroupAssignment[]>([])
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
@@ -64,12 +78,14 @@ export default function AdminProdutosPage() {
   const load = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [categoriesResp, productsResp] = await Promise.all([
+      const [categoriesResp, productsResp, reusableTemplatesResp] = await Promise.all([
         fetch('/api/categories').then((res) => res.json()),
         fetch('/api/products?admin=1').then((res) => res.json()),
+        fetch('/api/customization-group-templates').then((res) => res.json()),
       ])
       setCategories(categoriesResp)
       setProducts(productsResp)
+      setReusableGroupTemplates(reusableTemplatesResp)
       if (categoriesResp.length > 0) {
         setCategoryId((current) => current || categoriesResp[0].id)
       }
@@ -88,6 +104,7 @@ export default function AdminProdutosPage() {
     setSelectionTitle('')
     setAvailable(true)
     setCustomizationGroups([])
+    setReusableGroupAssignments([])
     setEditingProductId(null)
     setShowForm(false)
   }
@@ -115,6 +132,11 @@ export default function AdminProdutosPage() {
           optionName: option.optionProduct?.name ?? option.name,
           priceModifier: String(Number(option.priceModifier ?? option.optionProduct?.price ?? 0)),
         })),
+      }))
+    )
+    setReusableGroupAssignments(
+      (product.groupAssignments ?? []).map((assignment) => ({
+        groupTemplateId: assignment.groupTemplateId,
       }))
     )
     setFeedback(null)
@@ -152,6 +174,11 @@ export default function AdminProdutosPage() {
             priceModifier: Number(option.priceModifier || 0),
           })),
       })),
+      reusableGroupTemplateIds: productType === 'COMPOSED'
+        ? reusableGroupAssignments
+            .map((assignment) => assignment.groupTemplateId)
+            .filter(Boolean)
+        : [],
     }
     const response = await fetch(
       editingProductId ? `/api/products?id=${editingProductId}` : '/api/products',
@@ -170,6 +197,25 @@ export default function AdminProdutosPage() {
     setFeedback(editingProductId ? 'Produto atualizado com sucesso.' : 'Produto salvo com sucesso.')
     await load()
     setIsSaving(false)
+  }
+
+  function addReusableGroupAssignment() {
+    setReusableGroupAssignments((prev) => [...prev, { groupTemplateId: '' }])
+  }
+
+  function removeReusableGroupAssignment(assignmentIndex: number) {
+    setReusableGroupAssignments((prev) => prev.filter((_, index) => index !== assignmentIndex))
+  }
+
+  function updateReusableGroupAssignment(
+    assignmentIndex: number,
+    patch: Partial<PendingReusableGroupAssignment>
+  ) {
+    setReusableGroupAssignments((prev) =>
+      prev.map((assignment, index) =>
+        index === assignmentIndex ? { ...assignment, ...patch } : assignment
+      )
+    )
   }
 
   function addCustomizationGroup() {
@@ -427,6 +473,7 @@ export default function AdminProdutosPage() {
         selectionTitle={selectionTitle}
         available={available}
         customizationGroups={customizationGroups}
+        reusableGroupAssignments={reusableGroupAssignments}
         categories={categories}
         accompanimentProducts={accompanimentProducts.map((p) => ({
           id: p.id,
@@ -434,6 +481,7 @@ export default function AdminProdutosPage() {
           categoryName: p.category.name,
           price: Number(p.price),
         }))}
+        reusableGroupTemplates={reusableGroupTemplates}
         onClose={resetForm}
         onSubmit={onSubmit}
         setName={setName}
@@ -449,6 +497,9 @@ export default function AdminProdutosPage() {
         addGroupOption={addGroupOption}
         removeGroupOption={removeGroupOption}
         updateGroupOption={updateGroupOption}
+        addReusableGroupAssignment={addReusableGroupAssignment}
+        removeReusableGroupAssignment={removeReusableGroupAssignment}
+        updateReusableGroupAssignment={updateReusableGroupAssignment}
       />
       {feedback ? <p className="mb-3 text-sm text-fuchsia-200">{feedback}</p> : null}
       <div className="space-y-2">

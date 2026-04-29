@@ -13,6 +13,19 @@ export default async function HomePage() {
         customizations: {
           include: { options: { include: { optionProduct: true } } },
         },
+        groupAssignments: {
+          include: {
+            groupTemplate: {
+              include: {
+                options: {
+                  include: { optionProduct: true },
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
+        },
       },
       orderBy: { order: 'asc' },
     }),
@@ -21,16 +34,35 @@ export default async function HomePage() {
   const products = productsRaw.map((product) => ({
     ...product,
     price: Number(product.price),
-    customizations: product.customizations.map((customization) => ({
-      ...customization,
-      options: customization.options.map((option) => ({
-        ...option,
-        priceModifier: Number(option.priceModifier),
-        optionProduct: option.optionProduct
-          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
-          : null,
-      })),
-    })),
+    customizations:
+      product.groupAssignments.length > 0
+        ? product.groupAssignments.map((assignment) => ({
+            id: assignment.groupTemplate.id,
+            label: assignment.groupTemplate.name,
+            required: assignment.groupTemplate.required,
+            minSelect: assignment.groupTemplate.minSelect,
+            maxSelect: assignment.groupTemplate.maxSelect,
+            affectsPrice: assignment.groupTemplate.affectsPrice,
+            freeQuantity: assignment.groupTemplate.freeQuantity,
+            options: assignment.groupTemplate.options.map((option) => ({
+              id: option.id,
+              name: option.name,
+              priceModifier: Number(option.priceModifier),
+              optionProduct: option.optionProduct
+                ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+                : null,
+            })),
+          }))
+        : product.customizations.map((customization) => ({
+            ...customization,
+            options: customization.options.map((option) => ({
+              ...option,
+              priceModifier: Number(option.priceModifier),
+              optionProduct: option.optionProduct
+                ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+                : null,
+            })),
+          })),
   }))
 
   return <MenuPage categories={categories} products={products} />

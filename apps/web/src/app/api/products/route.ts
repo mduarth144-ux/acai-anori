@@ -1,6 +1,69 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
 
+type GroupInput = {
+  label?: string
+  required?: boolean
+  minSelect?: number
+  maxSelect?: number | null
+  affectsPrice?: boolean
+  freeQuantity?: number
+  options?: Array<{ optionProductId?: string; priceModifier?: number; name?: string }>
+}
+
+function normalizeLegacyGroups(customizationGroupsInput: GroupInput[]) {
+  return customizationGroupsInput.map((group) => ({
+    label: String(group.label ?? '').trim() || 'Grupo',
+    required: Boolean(group.required),
+    minSelect: Math.max(0, Number(group.minSelect ?? 0)),
+    maxSelect: Number.isFinite(group.maxSelect) ? Math.max(0, Number(group.maxSelect)) : null,
+    affectsPrice: Boolean(group.affectsPrice ?? true),
+    freeQuantity: Math.max(0, Number(group.freeQuantity ?? 0)),
+    options: {
+      create: (group.options ?? [])
+        .filter((option) => option?.optionProductId)
+        .map((option) => ({
+          optionProductId: String(option.optionProductId),
+          name: String(option.name ?? '').trim() || 'Item',
+          priceModifier: Number(option.priceModifier ?? 0),
+        })),
+    },
+  }))
+}
+
+function resolveCustomizations(item: any) {
+  const assignedGroups = (item.groupAssignments ?? []).map((assignment) => ({
+    id: assignment.groupTemplate.id,
+    label: assignment.groupTemplate.name,
+    required: assignment.groupTemplate.required,
+    minSelect: assignment.groupTemplate.minSelect,
+    maxSelect: assignment.groupTemplate.maxSelect,
+    affectsPrice: assignment.groupTemplate.affectsPrice,
+    freeQuantity: assignment.groupTemplate.freeQuantity,
+    options: assignment.groupTemplate.options.map((option) => ({
+      id: option.id,
+      name: option.name,
+      priceModifier: Number(option.priceModifier),
+      optionProduct: option.optionProduct
+        ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+        : null,
+    })),
+  }))
+
+  if (assignedGroups.length > 0) return assignedGroups
+
+  return item.customizations.map((customization) => ({
+    ...customization,
+    options: customization.options.map((option) => ({
+      ...option,
+      priceModifier: Number(option.priceModifier),
+      optionProduct: option.optionProduct
+        ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+        : null,
+    })),
+  }))
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const isAdmin = searchParams.get('admin') === '1'
@@ -11,6 +74,19 @@ export async function GET(request: Request) {
       category: true,
       customizations: {
         include: { options: { include: { optionProduct: true } } },
+      },
+      groupAssignments: {
+        include: {
+          groupTemplate: {
+            include: {
+              options: {
+                include: { optionProduct: true },
+                orderBy: { order: 'asc' },
+              },
+            },
+          },
+        },
+        orderBy: { order: 'asc' },
       },
       parentRelations: {
         include: { child: { include: { category: true } } },
@@ -24,16 +100,7 @@ export async function GET(request: Request) {
     data.map((item) => ({
       ...item,
       price: Number(item.price),
-      customizations: item.customizations.map((customization) => ({
-        ...customization,
-        options: customization.options.map((option) => ({
-          ...option,
-          priceModifier: Number(option.priceModifier),
-          optionProduct: option.optionProduct
-            ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
-            : null,
-        })),
-      })),
+      customizations: resolveCustomizations(item),
       parentRelations: item.parentRelations.map((relation) => ({
         ...relation,
         child: { ...relation.child, price: Number(relation.child.price) },
@@ -47,6 +114,10 @@ export async function POST(request: Request) {
   const customizationGroupsInput = Array.isArray(body.customizationGroups)
     ? body.customizationGroups
     : []
+  const reusableGroupTemplateIdsInput = Array.isArray(body.reusableGroupTemplateIds)
+    ? body.reusableGroupTemplateIds
+    : []
+  const reusableGroupTemplateIds = [...new Set(reusableGroupTemplateIdsInput.map((value: unknown) => String(value).trim()).filter(Boolean))]
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -69,30 +140,14 @@ export async function POST(request: Request) {
       selectionTitle: body.selectionTitle?.trim() || null,
       customizations: customizationGroupsInput.length > 0
         ? {
-            create: customizationGroupsInput.map((group: {
-              label?: string
-              required?: boolean
-              minSelect?: number
-              maxSelect?: number | null
-              affectsPrice?: boolean
-              freeQuantity?: number
-              options?: Array<{ optionProductId?: string; priceModifier?: number; name?: string }>
-            }) => ({
-              label: String(group.label ?? '').trim() || 'Grupo',
-              required: Boolean(group.required),
-              minSelect: Math.max(0, Number(group.minSelect ?? 0)),
-              maxSelect: Number.isFinite(group.maxSelect) ? Math.max(0, Number(group.maxSelect)) : null,
-              affectsPrice: Boolean(group.affectsPrice ?? true),
-              freeQuantity: Math.max(0, Number(group.freeQuantity ?? 0)),
-              options: {
-                create: (group.options ?? [])
-                  .filter((option) => option?.optionProductId)
-                  .map((option) => ({
-                    optionProductId: String(option.optionProductId),
-                    name: String(option.name ?? '').trim() || 'Item',
-                    priceModifier: Number(option.priceModifier ?? 0),
-                  })),
-              },
+            create: normalizeLegacyGroups(customizationGroupsInput),
+          }
+        : undefined,
+      groupAssignments: reusableGroupTemplateIds.length > 0
+        ? {
+            create: reusableGroupTemplateIds.map((groupTemplateId, index) => ({
+              groupTemplateId,
+              order: index,
             })),
           }
         : undefined,
@@ -113,6 +168,19 @@ export async function POST(request: Request) {
       customizations: {
         include: { options: { include: { optionProduct: true } } },
       },
+      groupAssignments: {
+        include: {
+          groupTemplate: {
+            include: {
+              options: {
+                include: { optionProduct: true },
+                orderBy: { order: 'asc' },
+              },
+            },
+          },
+        },
+        orderBy: { order: 'asc' },
+      },
       parentRelations: {
         include: { child: { include: { category: true } } },
         orderBy: { order: 'asc' },
@@ -122,16 +190,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ...data,
     price: Number(data.price),
-    customizations: data.customizations.map((customization) => ({
-      ...customization,
-      options: customization.options.map((option) => ({
-        ...option,
-        priceModifier: Number(option.priceModifier),
-        optionProduct: option.optionProduct
-          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
-          : null,
-      })),
-    })),
+    customizations: resolveCustomizations(data),
     parentRelations: data.parentRelations.map((relation) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },
@@ -148,6 +207,10 @@ export async function PATCH(request: Request) {
   const customizationGroupsInput = Array.isArray(body.customizationGroups)
     ? body.customizationGroups
     : []
+  const reusableGroupTemplateIdsInput = Array.isArray(body.reusableGroupTemplateIds)
+    ? body.reusableGroupTemplateIds
+    : []
+  const reusableGroupTemplateIds = [...new Set(reusableGroupTemplateIdsInput.map((value: unknown) => String(value).trim()).filter(Boolean))]
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -172,30 +235,13 @@ export async function PATCH(request: Request) {
       selectionTitle: body.selectionTitle?.trim() || null,
       customizations: {
         deleteMany: {},
-        create: customizationGroupsInput.map((group: {
-          label?: string
-          required?: boolean
-          minSelect?: number
-          maxSelect?: number | null
-          affectsPrice?: boolean
-          freeQuantity?: number
-          options?: Array<{ optionProductId?: string; priceModifier?: number; name?: string }>
-        }) => ({
-          label: String(group.label ?? '').trim() || 'Grupo',
-          required: Boolean(group.required),
-          minSelect: Math.max(0, Number(group.minSelect ?? 0)),
-          maxSelect: Number.isFinite(group.maxSelect) ? Math.max(0, Number(group.maxSelect)) : null,
-          affectsPrice: Boolean(group.affectsPrice ?? true),
-          freeQuantity: Math.max(0, Number(group.freeQuantity ?? 0)),
-          options: {
-            create: (group.options ?? [])
-              .filter((option) => option?.optionProductId)
-              .map((option) => ({
-                optionProductId: String(option.optionProductId),
-                name: String(option.name ?? '').trim() || 'Item',
-                priceModifier: Number(option.priceModifier ?? 0),
-              })),
-          },
+        create: normalizeLegacyGroups(customizationGroupsInput),
+      },
+      groupAssignments: {
+        deleteMany: {},
+        create: reusableGroupTemplateIds.map((groupTemplateId, index) => ({
+          groupTemplateId,
+          order: index,
         })),
       },
       parentRelations: {
@@ -212,6 +258,19 @@ export async function PATCH(request: Request) {
       customizations: {
         include: { options: { include: { optionProduct: true } } },
       },
+      groupAssignments: {
+        include: {
+          groupTemplate: {
+            include: {
+              options: {
+                include: { optionProduct: true },
+                orderBy: { order: 'asc' },
+              },
+            },
+          },
+        },
+        orderBy: { order: 'asc' },
+      },
       parentRelations: {
         include: { child: { include: { category: true } } },
         orderBy: { order: 'asc' },
@@ -222,16 +281,7 @@ export async function PATCH(request: Request) {
   return NextResponse.json({
     ...data,
     price: Number(data.price),
-    customizations: data.customizations.map((customization) => ({
-      ...customization,
-      options: customization.options.map((option) => ({
-        ...option,
-        priceModifier: Number(option.priceModifier),
-        optionProduct: option.optionProduct
-          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
-          : null,
-      })),
-    })),
+    customizations: resolveCustomizations(data),
     parentRelations: data.parentRelations.map((relation) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },

@@ -2,6 +2,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator scriptclient {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-script-client"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -16,6 +21,15 @@ model Category {
   order     Int       @default(0)
   products  Product[]
   createdAt DateTime  @default(now())
+}
+
+model MacroCategory {
+  id        String   @id
+  name      String
+  slug      String   @unique
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 model Product {
@@ -34,6 +48,8 @@ model Product {
   parentRelations ProductRelation[]      @relation("ProductRelationParent")
   childRelations  ProductRelation[]      @relation("ProductRelationChild")
   optionInGroups  CustomizationOption[]  @relation("CustomizationOptionProduct")
+  optionInTemplateGroups CustomizationGroupTemplateOption[] @relation("TemplateOptionProduct")
+  groupAssignments ProductGroupAssignment[]
   orderItems      OrderItem[]
   createdAt       DateTime               @default(now())
 }
@@ -74,6 +90,47 @@ model CustomizationOption {
   optionProductId String?
   name            String
   priceModifier   Decimal              @default(0) @db.Decimal(10, 2)
+}
+
+model CustomizationGroupTemplate {
+  id             String                           @id @default(cuid())
+  name           String
+  slug           String                           @unique
+  required       Boolean                          @default(false)
+  minSelect      Int                              @default(0)
+  maxSelect      Int?
+  affectsPrice   Boolean                          @default(true)
+  freeQuantity   Int                              @default(0)
+  options        CustomizationGroupTemplateOption[]
+  assignments    ProductGroupAssignment[]
+  createdAt      DateTime                         @default(now())
+
+  @@index([name])
+}
+
+model CustomizationGroupTemplateOption {
+  id                String                     @id @default(cuid())
+  groupTemplate     CustomizationGroupTemplate @relation(fields: [groupTemplateId], references: [id], onDelete: Cascade)
+  groupTemplateId   String
+  optionProduct     Product?                   @relation("TemplateOptionProduct", fields: [optionProductId], references: [id], onDelete: SetNull)
+  optionProductId   String?
+  name              String
+  priceModifier     Decimal                    @default(0) @db.Decimal(10, 2)
+  order             Int                        @default(0)
+}
+
+model ProductGroupAssignment {
+  id               String                     @id @default(cuid())
+  product          Product                    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId        String
+  groupTemplate    CustomizationGroupTemplate @relation(fields: [groupTemplateId], references: [id], onDelete: Cascade)
+  groupTemplateId  String
+  order            Int                        @default(0)
+  createdAt        DateTime                   @default(now())
+
+  @@unique([productId, groupTemplateId])
+  @@index([productId, order])
+  @@index([groupTemplateId])
 }
 
 enum ProductType {

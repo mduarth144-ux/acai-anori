@@ -21,8 +21,13 @@ export type PendingGroup = {
   options: PendingGroupOption[]
 }
 
+export type PendingReusableGroupAssignment = {
+  groupTemplateId: string
+}
+
 type Category = { id: string; name: string }
 type AccompanimentProduct = { id: string; name: string; categoryName: string; price: number }
+type ReusableGroupTemplate = { id: string; name: string }
 
 type Props = {
   isOpen: boolean
@@ -36,8 +41,10 @@ type Props = {
   selectionTitle: string
   available: boolean
   customizationGroups: PendingGroup[]
+  reusableGroupAssignments: PendingReusableGroupAssignment[]
   categories: Category[]
   accompanimentProducts: AccompanimentProduct[]
+  reusableGroupTemplates: ReusableGroupTemplate[]
   onClose: () => void
   onSubmit: (e: FormEvent) => void
   setName: (value: string) => void
@@ -53,6 +60,12 @@ type Props = {
   addGroupOption: (groupIndex: number) => void
   removeGroupOption: (groupIndex: number, optionIndex: number) => void
   updateGroupOption: (groupIndex: number, optionIndex: number, patch: Partial<PendingGroupOption>) => void
+  addReusableGroupAssignment: () => void
+  removeReusableGroupAssignment: (assignmentIndex: number) => void
+  updateReusableGroupAssignment: (
+    assignmentIndex: number,
+    patch: Partial<PendingReusableGroupAssignment>
+  ) => void
 }
 
 export function ProductFormModal(props: Props) {
@@ -116,6 +129,54 @@ export function ProductFormModal(props: Props) {
 
         {props.productType === 'COMPOSED' ? (
           <div className="mt-2 rounded-lg border border-acai-600 bg-acai-900/40 p-3">
+            <div className="mb-4 rounded-md border border-acai-700/60 p-2">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="font-medium text-acai-100">Grupos reutilizáveis</h2>
+                <button
+                  type="button"
+                  onClick={props.addReusableGroupAssignment}
+                  className="rounded-md bg-fuchsia-700 px-2 py-1 text-xs text-white"
+                >
+                  Vincular grupo
+                </button>
+              </div>
+              <div className="space-y-2">
+                {props.reusableGroupAssignments.length === 0 ? (
+                  <p className="text-xs text-acai-300">Nenhum grupo reutilizável vinculado.</p>
+                ) : null}
+                {props.reusableGroupAssignments.map((assignment, assignmentIndex) => (
+                  <div
+                    key={`assignment-${assignmentIndex}`}
+                    className="grid gap-2 md:grid-cols-[1fr_120px]"
+                  >
+                    <ThemedSelect
+                      value={assignment.groupTemplateId}
+                      onChange={(nextValue) =>
+                        props.updateReusableGroupAssignment(assignmentIndex, {
+                          groupTemplateId: nextValue,
+                        })
+                      }
+                      options={[
+                        { value: '', label: 'Selecione um grupo reutilizável' },
+                        ...props.reusableGroupTemplates.map((template) => ({
+                          value: template.id,
+                          label: template.name,
+                        })),
+                      ]}
+                      className="w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => props.removeReusableGroupAssignment(assignmentIndex)}
+                      className="rounded-md border border-red-500 px-2 text-red-300 hover:bg-red-500/10"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mb-2 flex items-center justify-between">
               <h2 className="font-medium text-acai-100">Grupos de personalização</h2>
               <button type="button" onClick={props.addCustomizationGroup} className="rounded-md bg-fuchsia-700 px-2 py-1 text-xs text-white">
