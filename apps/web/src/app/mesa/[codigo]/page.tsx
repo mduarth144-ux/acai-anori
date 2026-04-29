@@ -39,10 +39,8 @@ export default async function MesaPage({ params }: Props) {
     }),
   ])
 
-  const products = productsRaw.map((product) => ({
-    ...product,
-    price: Number(product.price),
-    customizations:
+  const products = productsRaw.map((product) => {
+    const customizations =
       product.groupAssignments.length > 0
         ? product.groupAssignments.map((assignment) => ({
             id: assignment.groupTemplate.id,
@@ -57,21 +55,50 @@ export default async function MesaPage({ params }: Props) {
               name: option.name,
               priceModifier: Number(option.priceModifier),
               optionProduct: option.optionProduct
-                ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+                ? {
+                    id: option.optionProduct.id,
+                    name: option.optionProduct.name,
+                  }
                 : null,
             })),
           }))
         : product.customizations.map((customization) => ({
-            ...customization,
+            id: customization.id,
+            label: customization.label,
+            required: customization.required,
+            minSelect: customization.minSelect,
+            maxSelect: customization.maxSelect,
+            affectsPrice: customization.affectsPrice,
+            freeQuantity: customization.freeQuantity,
             options: customization.options.map((option) => ({
-              ...option,
+              id: option.id,
+              name: option.name,
               priceModifier: Number(option.priceModifier),
               optionProduct: option.optionProduct
-                ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+                ? {
+                    id: option.optionProduct.id,
+                    name: option.optionProduct.name,
+                  }
                 : null,
             })),
-          })),
-  }))
+          }))
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      imageUrl: product.imageUrl,
+      type: product.type,
+      selectionTitle: product.selectionTitle,
+      category: {
+        id: product.category.id,
+        name: product.category.name,
+        slug: product.category.slug,
+      },
+      customizations,
+    }
+  })
 
   return <MenuPage categories={categories} products={products} tableCode={table.code} />
 }
