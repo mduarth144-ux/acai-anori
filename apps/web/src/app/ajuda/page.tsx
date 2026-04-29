@@ -46,16 +46,16 @@ export default function AjudaPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-4">
-      <h1 className="text-2xl font-bold text-fuchsia-100">Ajuda</h1>
-      <p className="text-acai-300 mt-2 text-sm">
+    <main className="help-page mx-auto max-w-2xl p-4">
+      <h1 className="help-title text-2xl font-bold text-fuchsia-100">Ajuda</h1>
+      <p className="help-subtitle text-acai-300 mt-2 text-sm">
         Envie sua mensagem para nossa equipe ou fale direto no WhatsApp.
       </p>
 
-      <section className="border-acai-600 bg-acai-800/90 mt-4 rounded-2xl border p-5 shadow-lg">
+      <section className="help-card border-acai-600 bg-acai-800/90 mt-4 rounded-2xl border p-5 shadow-lg">
         <form className="space-y-3" onSubmit={handleSubmit}>
           <div>
-            <label className="text-acai-300 mb-1 block text-xs font-medium">Nome</label>
+            <label className="help-label text-acai-300 mb-1 block text-xs font-medium">Nome</label>
             <input
               className="w-full rounded-lg p-3"
               placeholder="Seu nome"
@@ -66,7 +66,7 @@ export default function AjudaPage() {
           </div>
 
           <div>
-            <label className="text-acai-300 mb-1 block text-xs font-medium">Telefone</label>
+            <label className="help-label text-acai-300 mb-1 block text-xs font-medium">Telefone</label>
             <input
               className="w-full rounded-lg p-3"
               placeholder="(92) 00000-0000"
@@ -77,7 +77,7 @@ export default function AjudaPage() {
           </div>
 
           <div>
-            <label className="text-acai-300 mb-1 block text-xs font-medium">Mensagem</label>
+            <label className="help-label text-acai-300 mb-1 block text-xs font-medium">Mensagem</label>
             <textarea
               className="w-full rounded-lg p-3"
               placeholder="Descreva como podemos ajudar."
@@ -88,7 +88,7 @@ export default function AjudaPage() {
             />
           </div>
 
-          {formError ? <p className="text-sm text-amber-400">{formError}</p> : null}
+          {formError ? <p className="help-error text-sm text-amber-400">{formError}</p> : null}
 
           <button
             type="submit"
@@ -103,7 +103,7 @@ export default function AjudaPage() {
           href={`https://wa.me/${WHATSAPP_NUMBER}`}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 transition hover:bg-acai-800"
+          className="help-secondary-button mt-3 inline-flex w-full items-center justify-center rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 transition hover:bg-acai-800"
         >
           Falar conosco no WhatsApp
         </a>

@@ -65,7 +65,7 @@ export function ThemedSelect({
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
         className={[
-          'border-acai-600 bg-acai-950/80 text-acai-50 focus-visible:border-fuchsia-500 focus-visible:ring-fuchsia-500/50 hover:border-fuchsia-600 flex min-h-11 w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left shadow-sm transition',
+          'themed-select-trigger border-acai-600 bg-acai-950/80 text-acai-50 focus-visible:border-fuchsia-500 focus-visible:ring-fuchsia-500/50 hover:border-fuchsia-600 flex min-h-11 w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left shadow-sm transition',
           'focus:outline-none focus-visible:ring-2',
           disabled ? 'cursor-not-allowed opacity-70' : '',
           open ? 'border-fuchsia-500 ring-1 ring-fuchsia-500/50' : '',
@@ -73,17 +73,17 @@ export function ThemedSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className={selected ? 'text-acai-50' : 'text-acai-400'}>
+        <span className={['themed-select-value', selected ? 'text-acai-50' : 'text-acai-400'].join(' ')}>
           {selected?.label ?? placeholder}
         </span>
         <ChevronDown
-          className={`h-4 w-4 text-fuchsia-300 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`themed-select-chevron h-4 w-4 text-fuchsia-300 transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden
         />
       </button>
 
       {open ? (
-        <div className="border-acai-600 bg-acai-950/95 absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-xl border p-1 shadow-2xl backdrop-blur">
+        <div className="themed-select-dropdown border-acai-600 bg-acai-950/95 absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-xl border p-1 shadow-2xl backdrop-blur">
           <ul role="listbox" className="space-y-0.5">
             {options.map((option) => {
               const isSelected = option.value === value
@@ -100,6 +100,7 @@ export function ThemedSelect({
                       setOpen(false)
                     }}
                     className={[
+                      'themed-select-option',
                       'w-full rounded-lg px-3 py-2 text-left text-sm transition',
                       option.disabled
                         ? 'cursor-not-allowed opacity-50'

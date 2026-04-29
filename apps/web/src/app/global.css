@@ -273,6 +273,125 @@ html.theme-white .wizard-modal-submit:hover {
   background: #5b3f54 !important;
 }
 
+html.theme-white .help-title,
+html.theme-white .checkout-title {
+  color: #3a2a38 !important;
+}
+
+html.theme-white .help-subtitle,
+html.theme-white .checkout-helper,
+html.theme-white .checkout-label,
+html.theme-white .help-label {
+  color: #6f5b6d !important;
+}
+
+html.theme-white .help-card,
+html.theme-white .checkout-card {
+  background: #ffffff !important;
+  border-color: #ddd4db !important;
+  color: #2f222e !important;
+  box-shadow:
+    0 10px 22px -16px rgba(20, 14, 21, 0.35),
+    0 3px 8px -5px rgba(20, 14, 21, 0.18) !important;
+}
+
+html.theme-white .help-secondary-button {
+  border-color: #cabec8 !important;
+  color: #3a2a38 !important;
+  background: #ffffff !important;
+}
+
+html.theme-white .help-secondary-button:hover {
+  background: #f6f1f5 !important;
+}
+
+html.theme-white .checkout-section-title,
+html.theme-white .checkout-item-price,
+html.theme-white .checkout-total-value,
+html.theme-white .checkout-total-label {
+  color: #4a3545 !important;
+}
+
+html.theme-white .checkout-chip,
+html.theme-white .checkout-choice-chip {
+  background: #f3edf2 !important;
+  border-color: #d9ccd6 !important;
+  color: #4f3a4c !important;
+}
+
+html.theme-white .checkout-item-name {
+  color: #3a2a38 !important;
+}
+
+html.theme-white .checkout-total-row {
+  border-top-color: #e5dde4 !important;
+}
+
+html.theme-white .checkout-tab-shell,
+html.theme-white .checkout-online-box {
+  background: #f9f7fa !important;
+  border-color: #e5dde4 !important;
+}
+
+html.theme-white .themed-select-trigger {
+  background: #ffffff !important;
+  border-color: #cfc2cb !important;
+  color: #2f222e !important;
+}
+
+html.theme-white .themed-select-value {
+  color: #2f222e !important;
+}
+
+html.theme-white .themed-select-chevron {
+  color: #5b3f54 !important;
+}
+
+html.theme-white .themed-select-dropdown {
+  background: #ffffff !important;
+  border-color: #d9ccd6 !important;
+}
+
+html.theme-white .themed-select-option {
+  color: #2f222e !important;
+}
+
+html.theme-white .themed-select-option:hover {
+  background: #f6f1f5 !important;
+}
+
+html.theme-white .bg-acai-800\/90,
+html.theme-white .bg-acai-900\/60,
+html.theme-white .bg-acai-900\/50,
+html.theme-white .bg-acai-900\/40,
+html.theme-white .bg-acai-900\/30 {
+  background: #ffffff !important;
+}
+
+html.theme-white .border-acai-600,
+html.theme-white .border-acai-700,
+html.theme-white .border-acai-700\/60,
+html.theme-white .border-acai-700\/70 {
+  border-color: #ddd4db !important;
+}
+
+html.theme-white .text-fuchsia-100,
+html.theme-white .text-fuchsia-200,
+html.theme-white .text-fuchsia-300,
+html.theme-white .text-fuchsia-400 {
+  color: #4a3545 !important;
+}
+
+html.theme-white .text-acai-100,
+html.theme-white .text-acai-200 {
+  color: #3a2a38 !important;
+}
+
+html.theme-white .text-acai-300,
+html.theme-white .text-acai-400 {
+  color: #6f5b6d !important;
+}
+
 @layer base {
   body {
     margin: 0;

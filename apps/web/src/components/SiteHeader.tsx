@@ -137,9 +137,6 @@ export function SiteHeader() {
             <Link href="/pedidos" className="hover:text-fuchsia-300">
               Meus pedidos
             </Link>
-            <Link href="/admin" className="hover:text-fuchsia-300">
-              Admin
-            </Link>
             <button
               type="button"
               onClick={toggleTheme}
@@ -233,13 +230,6 @@ export function SiteHeader() {
                   className="border-acai-700 bg-acai-900/60 block rounded-lg border px-3 py-2 text-acai-100"
                 >
                   Cardápio
-                </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="border-acai-700 bg-acai-900/60 block rounded-lg border px-3 py-2 text-acai-100"
-                >
-                  Admin
                 </Link>
                 <Link
                   href="/pedidos"

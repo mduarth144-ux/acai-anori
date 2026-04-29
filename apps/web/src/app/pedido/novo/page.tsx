@@ -406,25 +406,25 @@ export default function NovoPedidoPage() {
         : true)
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
-      <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">
+    <main className="checkout-page mx-auto max-w-3xl p-4">
+      <h1 className="checkout-title mb-4 text-2xl font-bold text-fuchsia-100">
         Finalizar pedido
       </h1>
 
       {cart.length > 0 && (
-        <div className="border-acai-600 bg-acai-800/90 mb-4 rounded-2xl border p-4 shadow-lg">
+        <div className="checkout-card border-acai-600 bg-acai-800/90 mb-4 rounded-2xl border p-4 shadow-lg">
           <button
             type="button"
             onClick={() => setIsSummaryOpen((prev) => !prev)}
             className="flex w-full items-center justify-between gap-3"
             aria-expanded={isSummaryOpen}
           >
-            <h2 className="text-left text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+            <h2 className="checkout-section-title text-left text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
               {isSummaryOpen
                 ? 'Resumo do pedido'
                 : `Resumo do pedido - R$ ${total().toFixed(2)}`}
             </h2>
-            <span className="inline-flex items-center gap-1 rounded-xl border border-acai-500 bg-acai-900/70 px-2 py-1 text-[11px] font-medium text-fuchsia-200">
+            <span className="checkout-chip inline-flex items-center gap-1 rounded-xl border border-acai-500 bg-acai-900/70 px-2 py-1 text-[11px] font-medium text-fuchsia-200">
               <span
                 className={`transition-transform duration-300 ${
                   isSummaryOpen ? 'rotate-180' : 'rotate-0'
@@ -459,7 +459,7 @@ export default function NovoPedidoPage() {
                       className="flex items-start justify-between gap-3 py-2 text-sm"
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="text-acai-200 block">
+                        <span className="checkout-item-name text-acai-200 block">
                           <span className="mr-2 font-semibold text-fuchsia-300">
                             {item.quantity}×
                           </span>
@@ -471,7 +471,7 @@ export default function NovoPedidoPage() {
                             {item.choices.map((choice, index) => (
                               <span
                                 key={`${itemId}-choice-${index}`}
-                                className="rounded-full border border-acai-600 bg-acai-900 px-2 py-0.5 text-[11px] text-fuchsia-200"
+                                className="checkout-choice-chip rounded-full border border-acai-600 bg-acai-900 px-2 py-0.5 text-[11px] text-fuchsia-200"
                               >
                                 {choice.name}
                                 {choice.priceModifier !== 0
@@ -483,16 +483,16 @@ export default function NovoPedidoPage() {
                         ) : null}
                       </div>
 
-                      <span className="font-medium text-fuchsia-300 shrink-0 whitespace-nowrap">
+                      <span className="checkout-item-price font-medium text-fuchsia-300 shrink-0 whitespace-nowrap">
                         R$ {itemTotal.toFixed(2)}
                       </span>
                     </div>
                   )
                 })}
               </div>
-              <div className="border-acai-600 mt-3 flex items-center justify-between border-t pt-3">
-                <span className="font-bold text-fuchsia-100">Total</span>
-                <span className="text-lg font-bold text-fuchsia-300 whitespace-nowrap">
+              <div className="checkout-total-row border-acai-600 mt-3 flex items-center justify-between border-t pt-3">
+                <span className="checkout-total-label font-bold text-fuchsia-100">Total</span>
+                <span className="checkout-total-value text-lg font-bold text-fuchsia-300 whitespace-nowrap">
                   R$ {total().toFixed(2)}
                 </span>
               </div>
@@ -502,8 +502,8 @@ export default function NovoPedidoPage() {
       )}
 
       {checkoutStep === 1 ? (
-        <div className="border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+        <div className="checkout-card border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
+          <h2 className="checkout-section-title mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
             {showConfirmDataTitle ? 'Confirme Seus dados' : 'Confirme Seus dados'}
           </h2>
           <div className="grid gap-3 md:grid-cols-2">
@@ -547,10 +547,10 @@ export default function NovoPedidoPage() {
               required
             />
           </div>
-          <p className="text-acai-300 mt-2 text-xs">Formato: (99) 999999-9999</p>
+          <p className="checkout-helper text-acai-300 mt-2 text-xs">Formato: (99) 999999-9999</p>
           <br />
           {phoneCaptureMessage ? (
-            <p className="mt-1 text-xs text-fuchsia-300">{phoneCaptureMessage}</p>
+            <p className="checkout-helper mt-1 text-xs text-fuchsia-300">{phoneCaptureMessage}</p>
           ) : null}
           {customerPhone.length > 0 && phoneDigits.length !== 11 ? (
             <p className="mt-1 text-xs text-amber-400">
@@ -564,7 +564,7 @@ export default function NovoPedidoPage() {
           ) : null}
 
           <>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+            <h3 className="checkout-section-title mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
               Tipo de entrega
             </h3>
             <ThemedSelect
@@ -581,7 +581,7 @@ export default function NovoPedidoPage() {
             />
             {type === 'TABLE' ? (
               <div className="mt-4">
-                <label className="text-acai-300 mb-1 block text-xs font-medium">
+                <label className="checkout-label text-acai-300 mb-1 block text-xs font-medium">
                   Número da Mesa
                 </label>
                 <input
@@ -600,7 +600,7 @@ export default function NovoPedidoPage() {
             {type === 'DELIVERY' ? (
               <div className="mt-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-acai-300 text-xs">
+                  <p className="checkout-helper text-acai-300 text-xs">
                     {geoMessage ??
                       'Usamos sua localização, se você permitir, só para sugerir rua e bairro.'}
                   </p>
@@ -608,7 +608,7 @@ export default function NovoPedidoPage() {
 
                 <div className="grid grid-cols-12 gap-3">
                   <div className="relative col-span-12 md:col-span-4">
-                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    <label className="checkout-label text-acai-300 mb-1 block text-xs font-medium">
                       CEP
                     </label>
                     <input
@@ -642,7 +642,7 @@ export default function NovoPedidoPage() {
                       <MapPin size={16} />
                     </button>
                     {cepLoading ? (
-                      <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
+                      <p className="checkout-helper text-acai-400 mt-1 text-xs">Buscando CEP…</p>
                     ) : null}
                     {cepNotFound ? (
                       <p className="mt-1 text-xs text-amber-400">
@@ -652,7 +652,7 @@ export default function NovoPedidoPage() {
                   </div>
 
                   <div className="col-span-9 md:col-span-8">
-                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    <label className="checkout-label text-acai-300 mb-1 block text-xs font-medium">
                       Rua
                     </label>
                     <input
@@ -666,7 +666,7 @@ export default function NovoPedidoPage() {
                   </div>
 
                   <div className="order-4 col-span-12 md:order-3 md:col-span-8">
-                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    <label className="checkout-label text-acai-300 mb-1 block text-xs font-medium">
                       Bairro
                     </label>
                     <input
@@ -680,7 +680,7 @@ export default function NovoPedidoPage() {
                   </div>
 
                   <div className="order-3 col-span-3 md:order-4 md:col-span-4">
-                    <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    <label className="checkout-label text-acai-300 mb-1 block text-xs font-medium">
                       Número
                     </label>
                     <input
@@ -723,14 +723,14 @@ export default function NovoPedidoPage() {
           </>
         </div>
       ) : (
-        <div className="border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
+        <div className="checkout-card border-acai-600 bg-acai-800/90 rounded-2xl border p-4 shadow-lg">
           <>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+            <h3 className="checkout-section-title mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
               Pagamento
             </h3>
             {type !== 'TABLE' ? (
               <>
-                <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-acai-600 bg-acai-900/60 p-1">
+                <div className="checkout-tab-shell mb-3 grid grid-cols-2 gap-2 rounded-xl border border-acai-600 bg-acai-900/60 p-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -764,8 +764,8 @@ export default function NovoPedidoPage() {
                 </div>
 
                 {paymentTab === 'ONLINE' ? (
-                  <div className="space-y-2 rounded-xl border border-acai-600 bg-acai-900/30 p-3">
-                    <p className="text-acai-300 text-xs">
+                  <div className="checkout-online-box space-y-2 rounded-xl border border-acai-600 bg-acai-900/30 p-3">
+                    <p className="checkout-helper text-acai-300 text-xs">
                       Pagamento online em breve. No momento, finalize na aba "Na entrega".
                     </p>
                     <button
@@ -792,7 +792,7 @@ export default function NovoPedidoPage() {
                   </div>
                 ) : (
                   <>
-                    <h4 className="mb-2 mt-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
+                    <h4 className="checkout-section-title mb-2 mt-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
                       Forma de pagamento na entrega
                     </h4>
                     <ThemedSelect
@@ -818,7 +818,7 @@ export default function NovoPedidoPage() {
                           value={changeFor}
                           onChange={(e) => setChangeFor(e.target.value)}
                         />
-                        <p className="text-acai-300 mt-2 text-sm">
+                        <p className="checkout-helper text-acai-300 mt-2 text-sm">
                           Troco estimado: R$ {change.toFixed(2)}
                         </p>
                       </div>
@@ -827,12 +827,12 @@ export default function NovoPedidoPage() {
                 )}
               </>
             ) : (
-              <p className="text-acai-300 rounded-lg border border-acai-600 bg-acai-900/40 p-3 text-sm">
+              <p className="checkout-helper rounded-lg border border-acai-600 bg-acai-900/40 p-3 text-sm text-acai-300">
                 Para pedidos em mesa, o pagamento será tratado no atendimento.
               </p>
             )}
 
-            <h4 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
+            <h4 className="checkout-section-title mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
               Observações
             </h4>
             <textarea
@@ -872,7 +872,7 @@ export default function NovoPedidoPage() {
           </>
         </div>
       )}
-      <p className="text-acai-400 mt-4 text-xs">
+      <p className="checkout-helper text-acai-400 mt-4 text-xs">
         Preparado para integração futura com provedores de PIX online e
         marketplaces (iFood/99Food) através do campo externalRefs da entidade
         Order.

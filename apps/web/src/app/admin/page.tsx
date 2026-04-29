@@ -9,16 +9,15 @@ import {
   ConciergeBell,
   PackageCheck,
   ShoppingCart,
-  SmartphoneNfc,
-  Store,
 } from 'lucide-react'
+import { orderStatusLabel, orderTypeLabel } from '../../lib/order-labels'
 
-type LiveOrder = {
+type DashboardOrder = {
   id: string
-  customer: string
+  customerName?: string | null
+  type: string
+  status: string
   total: number
-  channel: 'Balcao' | 'iFood' | '99Food'
-  status: 'novo' | 'preparo' | 'entrega'
   createdAt: string
 }
 
@@ -50,92 +49,100 @@ function playBell(audioCtxRef: React.MutableRefObject<AudioContext | null>) {
 }
 
 export default function AdminPage() {
-  const [orders, setOrders] = useState<LiveOrder[]>([
-    {
-      id: 'A-1204',
-      customer: 'Fernanda',
-      total: 52.9,
-      channel: 'iFood',
-      status: 'preparo',
-      createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-    },
-    {
-      id: 'A-1203',
-      customer: 'Rafael',
-      total: 34.5,
-      channel: 'Balcao',
-      status: 'entrega',
-      createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-    },
-    {
-      id: 'A-1202',
-      customer: 'Juliana',
-      total: 41,
-      channel: '99Food',
-      status: 'preparo',
-      createdAt: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
-    },
-  ])
-  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [orders, setOrders] = useState<DashboardOrder[]>([])
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
+  const latestOrderIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const customers = ['Camila', 'Joao', 'Patricia', 'Diego', 'Bruna', 'Lucas']
-    const channels: LiveOrder['channel'][] = ['iFood', '99Food', 'Balcao']
-    const timer = setInterval(() => {
-      const shouldCreate = Math.random() > 0.45
-      if (!shouldCreate) return
-
-      const next: LiveOrder = {
-        id: `A-${Math.floor(1205 + Math.random() * 400)}`,
-        customer: customers[Math.floor(Math.random() * customers.length)],
-        total: Number((19 + Math.random() * 68).toFixed(2)),
-        channel: channels[Math.floor(Math.random() * channels.length)],
-        status: 'novo',
-        createdAt: new Date().toISOString(),
+    let mounted = true
+    async function loadOrders() {
+      try {
+        const response = await fetch('/api/orders')
+        if (!response.ok) throw new Error('Falha ao buscar pedidos')
+        const data = (await response.json()) as DashboardOrder[]
+        if (!mounted) return
+        const list = Array.isArray(data)
+          ? data.map((order) => ({
+              ...order,
+              total: Number(order.total ?? 0),
+            }))
+          : []
+        const latestId = list[0]?.id ?? null
+        if (
+          latestOrderIdRef.current &&
+          latestId &&
+          latestId !== latestOrderIdRef.current
+        ) {
+          playBell(audioCtxRef)
+        }
+        latestOrderIdRef.current = latestId
+        setOrders(list)
+        setLastUpdate(new Date())
+        setError(null)
+      } catch {
+        if (!mounted) return
+        setError('Não foi possível atualizar o dashboard agora.')
       }
-      setOrders((prev) => [next, ...prev].slice(0, 8))
-      setLastUpdate(new Date())
-      playBell(audioCtxRef)
-    }, 9000)
+    }
 
-    return () => clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    const progress = setInterval(() => {
-      setOrders((prev) =>
-        prev.map((order) => {
-          if (order.status === 'novo' && Math.random() > 0.5) {
-            return { ...order, status: 'preparo' }
-          }
-          if (order.status === 'preparo' && Math.random() > 0.7) {
-            return { ...order, status: 'entrega' }
-          }
-          return order
-        })
-      )
-    }, 7000)
-    return () => clearInterval(progress)
+    void loadOrders()
+    const timer = setInterval(() => {
+      void loadOrders()
+    }, 10000)
+    return () => {
+      mounted = false
+      clearInterval(timer)
+    }
   }, [])
 
   const kpis = useMemo(() => {
-    const inProgress = orders.filter((o) => o.status !== 'entrega').length
+    const inProgress = orders.filter(
+      (o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED'
+    ).length
     const revenue = orders.reduce((acc, order) => acc + order.total, 0)
     const deliveryRate =
       orders.length === 0
         ? 0
         : Math.round(
-            (orders.filter((o) => o.status === 'entrega').length / orders.length) *
+            (orders.filter((o) => o.status === 'DELIVERED').length / orders.length) *
               100
           )
     return { inProgress, revenue, deliveryRate }
   }, [orders])
 
-  const weeklySales = [420, 510, 468, 590, 640, 702, 680]
-  const miniTrend = [18, 22, 20, 26, 29, 31, 35, 33, 38, 41]
-  const maxWeekly = Math.max(...weeklySales)
-  const maxMini = Math.max(...miniTrend)
+  const weeklySales = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const day = new Date()
+      day.setHours(0, 0, 0, 0)
+      day.setDate(day.getDate() - (6 - index))
+      return day
+    })
+    const totals = days.map(() => 0)
+    const dayToIndex = new Map(days.map((day, index) => [day.toDateString(), index]))
+
+    for (const order of orders) {
+      const created = new Date(order.createdAt)
+      const idx = dayToIndex.get(created.toDateString())
+      if (idx == null) continue
+      totals[idx] += Number(order.total || 0)
+    }
+    return totals
+  }, [orders])
+
+  const miniTrend = useMemo(
+    () =>
+      orders
+        .slice(0, 10)
+        .reverse()
+        .map((order) => Math.max(Number(order.total || 0), 0)),
+    [orders]
+  )
+  const maxWeekly = Math.max(...weeklySales, 1)
+  const maxMini = Math.max(...miniTrend, 1)
+  const recentOrders = useMemo(() => orders.slice(0, 8), [orders])
+  const updatesHealthy = lastUpdate ? Date.now() - lastUpdate.getTime() < 30000 : false
 
   return (
     <main className="w-full space-y-5">
@@ -144,8 +151,8 @@ export default function AdminPage() {
           Dashboard administrativo
         </h1>
         <p className="text-acai-300 mt-1 text-sm">
-          Visão consolidada de pedidos, vendas e integrações em tempo real (modo
-          demonstração).
+          Visão consolidada de pedidos e vendas com atualização automática a cada 10
+          segundos.
         </p>
       </header>
 
@@ -171,7 +178,7 @@ export default function AdminPage() {
           },
           {
             label: 'Último evento',
-            value: lastUpdate.toLocaleTimeString('pt-BR'),
+            value: lastUpdate ? lastUpdate.toLocaleTimeString('pt-BR') : '--:--:--',
             icon: Clock3,
             hint: 'Entrada mais recente',
           },
@@ -201,38 +208,44 @@ export default function AdminPage() {
               Campainha ativa
             </span>
           </div>
+          {error ? (
+            <p className="mb-2 rounded-lg border border-amber-800/60 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+              {error}
+            </p>
+          ) : null}
           <div className="space-y-2">
-            {orders.map((order) => (
+            {recentOrders.map((order) => (
               <div
                 key={`${order.id}-${order.createdAt}`}
                 className="border-acai-700 bg-acai-950/60 flex items-center justify-between rounded-lg border px-3 py-2"
               >
                 <div>
                   <p className="text-acai-100 text-sm font-medium">
-                    #{order.id} - {order.customer}
+                    #{order.id} - {order.customerName?.trim() || 'Cliente não informado'}
                   </p>
                   <p className="text-acai-400 text-xs">
-                    {order.channel} - {formatBRL(order.total)}
+                    {orderTypeLabel(order.type)} - {formatBRL(order.total)}
                   </p>
                 </div>
                 <span
                   className={[
                     'rounded-full px-2 py-1 text-xs font-medium',
-                    order.status === 'novo'
+                    order.status === 'PENDING'
                       ? 'bg-amber-900/40 text-amber-200'
-                      : order.status === 'preparo'
+                      : order.status === 'PREPARING' || order.status === 'CONFIRMED'
                         ? 'bg-sky-900/40 text-sky-200'
-                        : 'bg-emerald-900/40 text-emerald-200',
+                        : order.status === 'CANCELLED'
+                          ? 'bg-red-900/40 text-red-200'
+                          : 'bg-emerald-900/40 text-emerald-200',
                   ].join(' ')}
                 >
-                  {order.status === 'novo'
-                    ? 'Novo'
-                    : order.status === 'preparo'
-                      ? 'Em preparo'
-                      : 'Saiu para entrega'}
+                  {orderStatusLabel(order.status)}
                 </span>
               </div>
             ))}
+            {recentOrders.length === 0 ? (
+              <p className="text-acai-400 text-xs">Nenhum pedido encontrado.</p>
+            ) : null}
           </div>
         </article>
 
@@ -251,12 +264,12 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
-            <p className="text-acai-400 mt-2 text-xs">Seg a Dom</p>
+            <p className="text-acai-400 mt-2 text-xs">Últimos 7 dias</p>
           </article>
 
           <article className="border-acai-700/70 bg-acai-900/70 rounded-2xl border p-4">
             <h3 className="text-acai-100 mb-3 text-sm font-semibold">
-              Tendência de entregas
+              Valor dos últimos 10 pedidos
             </h3>
             <div className="flex h-16 items-end gap-1">
               {miniTrend.map((value, index) => (
@@ -267,19 +280,19 @@ export default function AdminPage() {
                 />
               ))}
             </div>
-            <p className="text-acai-400 mt-2 text-xs">Últimos 10 ciclos</p>
+            <p className="text-acai-400 mt-2 text-xs">Sequência cronológica</p>
           </article>
 
           <article className="border-acai-700/70 bg-acai-900/70 rounded-2xl border p-4">
             <h3 className="text-acai-100 mb-3 text-sm font-semibold">
-              Status de parceiros
+              Status do painel
             </h3>
             <div className="space-y-2 text-sm">
               {[
-                { name: 'iFood', status: 'online', icon: Store },
-                { name: '99Food', status: 'instavel', icon: SmartphoneNfc },
-                { name: 'POS local', status: 'online', icon: PackageCheck },
-                { name: 'Webhook pedidos', status: 'online', icon: Activity },
+                { name: 'API de pedidos', status: error ? 'instavel' : 'online', icon: Activity },
+                { name: 'Banco de dados', status: error ? 'instavel' : 'online', icon: PackageCheck },
+                { name: 'Atualização automática', status: updatesHealthy ? 'online' : 'instavel', icon: Clock3 },
+                { name: 'Processamento de pedidos', status: orders.length > 0 ? 'online' : 'instavel', icon: Bike },
               ].map(({ name, status, icon: Icon }) => (
                 <div key={name} className="flex items-center justify-between">
                   <span className="text-acai-200 inline-flex items-center gap-2">
