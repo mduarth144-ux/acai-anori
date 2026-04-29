@@ -2,17 +2,20 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Camera, HelpCircle, Menu, ShoppingBag, UserCircle2, X } from 'lucide-react'
+import { Camera, HelpCircle, Menu, Moon, ShoppingBag, Sun, UserCircle2, X } from 'lucide-react'
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 
 type Profile = { name: string; phone: string; email: string; photoDataUrl: string | null }
 type DrawerSection = 'menu' | 'help' | 'contact' | 'about' | 'profile'
 
 const PROFILE_STORAGE_KEY = 'app.profile.v1'
+const THEME_STORAGE_KEY = 'app.theme.v1'
+type ThemeMode = 'dark' | 'white'
 
 export function SiteHeader() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [section, setSection] = useState<DrawerSection>('menu')
+  const [theme, setTheme] = useState<ThemeMode>('white')
   const [profile, setProfile] = useState<Profile>({
     name: '',
     phone: '',
@@ -52,6 +55,34 @@ export function SiteHeader() {
 
   useEffect(() => {
     try {
+      const persistedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+      if (persistedTheme === 'dark' || persistedTheme === 'white') {
+        setTheme(persistedTheme)
+        return
+      }
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark')
+        return
+      }
+      setTheme('white')
+    } catch {
+      setTheme('white')
+    }
+  }, [])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const isWhiteTheme = theme === 'white'
+    root.classList.toggle('theme-white', isWhiteTheme)
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+    } catch {
+      // Ignore persistence issues in private mode/quota limits.
+    }
+  }, [theme])
+
+  useEffect(() => {
+    try {
       window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
     } catch {
       // Ignore persistence issues in private mode/quota limits.
@@ -79,6 +110,12 @@ export function SiteHeader() {
     reader.readAsDataURL(file)
   }
 
+  function toggleTheme() {
+    setTheme((current) => (current === 'dark' ? 'white' : 'dark'))
+  }
+
+  const isWhiteTheme = theme === 'white'
+
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-acai-700 bg-acai-950/90 backdrop-blur supports-[backdrop-filter]:bg-acai-950/80">
@@ -103,19 +140,67 @@ export function SiteHeader() {
             <Link href="/admin" className="hover:text-fuchsia-300">
               Admin
             </Link>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={[
+                'relative inline-flex h-9 w-[72px] items-center rounded-full border border-acai-600 bg-acai-900/90 p-1 transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500/60',
+              ].join(' ')}
+              aria-label={isWhiteTheme ? 'Ativar tema escuro' : 'Ativar tema branco'}
+              title={isWhiteTheme ? 'Tema branco ativo' : 'Tema escuro ativo'}
+            >
+              <span className="absolute left-2">
+                <Sun className={`h-3.5 w-3.5 ${isWhiteTheme ? 'text-amber-300' : 'text-acai-500'}`} />
+              </span>
+              <span className="absolute right-2">
+                <Moon className={`h-3.5 w-3.5 ${isWhiteTheme ? 'text-acai-500' : 'text-fuchsia-300'}`} />
+              </span>
+              <span
+                className={[
+                  'inline-block h-7 w-7 transform rounded-full bg-white shadow transition-transform',
+                  isWhiteTheme ? 'translate-x-0' : 'translate-x-[32px]',
+                ].join(' ')}
+              />
+            </button>
           </div>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-lg border border-acai-600 bg-acai-900 p-2 text-fuchsia-200 sm:hidden"
-            onClick={() => {
-              loadPersistedData()
-              setSection('menu')
-              setIsDrawerOpen(true)
-            }}
-            aria-label="Abrir menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 sm:hidden">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={[
+                'relative inline-flex h-9 w-[72px] items-center rounded-full border border-acai-600 bg-acai-900/90 p-1 transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500/60',
+              ].join(' ')}
+              aria-label={isWhiteTheme ? 'Ativar tema escuro' : 'Ativar tema branco'}
+              title={isWhiteTheme ? 'Tema branco ativo' : 'Tema escuro ativo'}
+            >
+              <span className="absolute left-2">
+                <Sun className={`h-3.5 w-3.5 ${isWhiteTheme ? 'text-amber-300' : 'text-acai-500'}`} />
+              </span>
+              <span className="absolute right-2">
+                <Moon className={`h-3.5 w-3.5 ${isWhiteTheme ? 'text-acai-500' : 'text-fuchsia-300'}`} />
+              </span>
+              <span
+                className={[
+                  'inline-block h-7 w-7 transform rounded-full bg-white shadow transition-transform',
+                  isWhiteTheme ? 'translate-x-0' : 'translate-x-[32px]',
+                ].join(' ')}
+              />
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg border border-acai-600 bg-acai-900 p-2 text-fuchsia-200"
+              onClick={() => {
+                loadPersistedData()
+                setSection('menu')
+                setIsDrawerOpen(true)
+              }}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </nav>
       </header>
 

@@ -46,6 +46,7 @@ type Props = {
 const PRODUCTS_BATCH_SIZE = 8
 const ORDERS_STORAGE_KEY = 'orders.history.v1'
 const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
+const MAX_OPTIONS_PER_CUSTOMIZATION_GROUP = 6
 const ACTIVE_ORDER_STATUS = new Set(['PENDING', 'CONFIRMED', 'PREPARING', 'READY'])
 const TIMELINE_STEPS = [
   { id: 'PENDING', label: 'Pedido recebido', shortLabel: 'Pedido', Icon: Clock3 },
@@ -302,10 +303,11 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     }
 
     const allChoices = wizardProduct.customizations.flatMap((customization) => {
+      const limitedOptions = customization.options.slice(0, MAX_OPTIONS_PER_CUSTOMIZATION_GROUP)
       const selectedIds = new Set(selectedChoicesByCustomization[customization.id] ?? [])
       let freeSlotsRemaining =
         customization.affectsPrice === false ? Number.MAX_SAFE_INTEGER : Math.max(0, customization.freeQuantity ?? 0)
-      return customization.options
+      return limitedOptions
         .filter((option) => selectedIds.has(option.id))
         .map((option) => ({
           name: option.optionProduct?.name ?? option.name,
@@ -423,7 +425,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       ) : null}
 
       <div className="mb-4">
-        <label htmlFor="category-filter" className="mb-2 block text-sm font-medium text-fuchsia-200/90">
+        <label
+          htmlFor="category-filter"
+          className="menu-section-label mb-2 block text-sm font-medium text-fuchsia-200/90"
+        >
           Categoria
         </label>
         <ThemedSelect
@@ -445,10 +450,13 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
       {shouldShowBestSellers && bestSellers.length > 0 ? (
         <section className="mb-6">
-          <h2 className="mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
+          <h2 className="menu-section-heading mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
           <div className="grid grid-cols-3 gap-3">
             {bestSellers.map((product) => (
-              <article key={`best-${product.id}`} className="flex h-full flex-col rounded-xl border border-acai-600 bg-acai-900/60 p-2">
+              <article
+                key={`best-${product.id}`}
+                className="best-seller-card flex h-full flex-col rounded-xl border border-acai-600 bg-acai-900/60 p-2"
+              >
                 <div className="mb-2 h-16 overflow-hidden rounded-lg bg-acai-900 sm:h-20 md:h-32 lg:h-36">
                   {product.imageUrl ? (
                     <Image
@@ -464,15 +472,15 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     </div>
                   )}
                 </div>
-                <h3 className="text-sm font-semibold text-fuchsia-100">{product.name}</h3>
+                <h3 className="best-seller-title text-sm font-semibold text-fuchsia-100">{product.name}</h3>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                  <span className="text-sm font-bold text-fuchsia-300">
+                  <span className="best-seller-price text-sm font-bold text-fuchsia-300">
                     R$ {product.price.toFixed(2)}
                   </span>
                   <button
                     type="button"
                     onClick={() => startWizard(product)}
-                    className="rounded-md bg-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-fuchsia-500"
+                    className="best-seller-button rounded-md bg-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-fuchsia-500"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -487,22 +495,45 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         {visibleProductsByCategory.map(({ category, products: categoryProducts }) => (
           <section key={category.slug} className="rounded-2xl border border-acai-700/70 bg-acai-900/40 p-4 shadow-lg ring-1 ring-acai-700/40">
             <h2 className="mb-4 text-xl font-bold text-fuchsia-100">{category.name}</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {categoryProducts.map((product) => (
-                <article key={product.id} className="flex h-full flex-col rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
-                  <div className="mb-3 h-40 overflow-hidden rounded-xl bg-acai-900">
-                    {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} width={600} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-acai-400">Sem imagem</div>}
+                <article
+                  key={product.id}
+                  className="product-card flex h-full items-stretch gap-3 rounded-2xl border border-acai-600 bg-acai-800/90 p-3 shadow-xl shadow-black/30 ring-1 ring-acai-700/50"
+                >
+                  <div className="order-2 w-28 shrink-0 overflow-hidden rounded-xl bg-acai-900 sm:w-32">
+                    {product.imageUrl ? (
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        width={360}
+                        height={360}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full min-h-24 items-center justify-center text-xs text-acai-400">
+                        Sem imagem
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-xl font-semibold text-fuchsia-100">{product.name}</h3>
-                  <p className="my-2 text-sm text-acai-300">{product.description ?? 'Açaí artesanal com ingredientes selecionados.'}</p>
-                  <div className="mt-auto flex items-center justify-between pt-2">
-                    <span className="font-bold text-fuchsia-300">R$ {product.price.toFixed(2)}</span>
-                    <button
-                      onClick={() => startWizard(product)}
-                      className="rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
-                    >
-                      Adicionar
-                    </button>
+                  <div className="order-1 flex min-w-0 flex-1 flex-col">
+                    <h3 className="product-card-title line-clamp-2 text-base font-semibold text-fuchsia-100 sm:text-lg">
+                      {product.name}
+                    </h3>
+                    <p className="product-card-description mt-1 line-clamp-3 text-xs text-acai-300 sm:text-sm">
+                      {product.description ?? 'Açaí artesanal com ingredientes selecionados.'}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between pt-3">
+                      <span className="product-card-price font-bold text-fuchsia-300">
+                        R$ {product.price.toFixed(2)}
+                      </span>
+                      <button
+                        onClick={() => startWizard(product)}
+                        className="product-card-button rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -580,7 +611,9 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     </div>
 
                     <div className="space-y-2">
-                      {customization.options.map((option) => {
+                      {customization.options
+                        .slice(0, MAX_OPTIONS_PER_CUSTOMIZATION_GROUP)
+                        .map((option) => {
                         const selected = (
                           selectedChoicesByCustomization[customization.id] ?? []
                         ).includes(option.id)
