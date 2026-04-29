@@ -42,11 +42,42 @@ export function MenuPage({ categories, products, tableCode }: Props) {
   const itemCount = items.reduce((acc, i) => acc + i.quantity, 0)
 
   const filtered = useMemo(() => {
-    return products.filter((product) => {
-      const categoryMatch = activeCategory === 'all' || product.category.slug === activeCategory
-      const queryMatch = product.name.toLowerCase().includes(query.toLowerCase())
-      return categoryMatch && queryMatch
-    })
+    const frozenPriority = ['tradicional', 'especial', 'casadinha', 'mix', 'litro']
+
+    const normalize = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+
+    const ranked = products
+      .map((product, index) => ({ product, index }))
+      .filter(({ product }) => {
+        const categoryMatch = activeCategory === 'all' || product.category.slug === activeCategory
+        const queryMatch = normalize(product.name).includes(normalize(query))
+        return categoryMatch && queryMatch
+      })
+      .sort((a, b) => {
+        const aText = normalize(`${a.product.name} ${a.product.description ?? ''} ${a.product.category.name}`)
+        const bText = normalize(`${b.product.name} ${b.product.description ?? ''} ${b.product.category.name}`)
+        const aIsFrozen = aText.includes('frozen')
+        const bIsFrozen = bText.includes('frozen')
+
+        if (aIsFrozen !== bIsFrozen) return aIsFrozen ? -1 : 1
+
+        if (aIsFrozen && bIsFrozen) {
+          const rankOf = (text: string) => {
+            const idx = frozenPriority.findIndex((tag) => text.includes(tag))
+            return idx === -1 ? Number.MAX_SAFE_INTEGER : idx
+          }
+          const rankDiff = rankOf(aText) - rankOf(bText)
+          if (rankDiff !== 0) return rankDiff
+        }
+
+        return a.index - b.index
+      })
+
+    return ranked.map(({ product }) => product)
   }, [activeCategory, products, query])
 
   const currentCustomization = wizardProduct?.customizations[wizardStep]
@@ -188,7 +219,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                 onClick={() => startWizard(product)}
                 className="rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
               >
-                {product.customizations.length > 0 ? 'Personalizar' : 'Adicionar'}
+                Adicionar
               </button>
             </div>
           </article>
@@ -223,7 +254,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           <div className="w-full max-w-xl rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl">
             <div className="mb-4">
               <p className="text-xs uppercase tracking-wide text-fuchsia-300">
-                Etapa {wizardStep + 1} de {wizardProduct.customizations.length}
+                ESCOLHA UM ACOMPANHAMENTO
               </p>
               <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
               <p className="mt-1 text-sm text-acai-300">{currentCustomization.label}</p>

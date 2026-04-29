@@ -11,10 +11,15 @@ import {
 } from '../../../lib/cep-viacep'
 
 type GeoStatus = 'idle' | 'pending' | 'ok' | 'denied' | 'error' | 'unavailable'
+const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
 
 export default function NovoPedidoPage() {
   const router = useRouter()
   const [tableCode, setTableCode] = useState<string | null>(null)
+  const [tableNumber, setTableNumber] = useState('')
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false)
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2>(1)
+  const [paymentTab, setPaymentTab] = useState<'ONLINE' | 'DELIVERY'>('DELIVERY')
   const cart = useCartStore((state) => state.items)
   const total = useCartStore((state) => state.total)
   const clearCart = useCartStore((state) => state.clearCart)
@@ -35,6 +40,49 @@ export default function NovoPedidoPage() {
   const [cepNotFound, setCepNotFound] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const lastViaCepFetch = useRef('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem(CHECKOUT_PROFILE_STORAGE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw) as {
+        customerName?: string
+        customerPhone?: string
+        cepDigits?: string
+        street?: string
+        number?: string
+        neighborhood?: string
+      }
+      if (saved.customerName) setCustomerName(saved.customerName)
+      if (saved.customerPhone) setCustomerPhone(saved.customerPhone)
+      if (saved.cepDigits) setCepDigits(onlyDigits(saved.cepDigits, 8))
+      if (saved.street) setStreet(saved.street)
+      if (saved.number) setNumber(saved.number)
+      if (saved.neighborhood) setNeighborhood(saved.neighborhood)
+    } catch {
+      // Ignore invalid storage payloads and continue with empty form.
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(
+        CHECKOUT_PROFILE_STORAGE_KEY,
+        JSON.stringify({
+          customerName,
+          customerPhone,
+          cepDigits,
+          street,
+          number,
+          neighborhood,
+        })
+      )
+    } catch {
+      // Ignore storage quota/availability errors to avoid blocking checkout.
+    }
+  }, [customerName, customerPhone, cepDigits, street, number, neighborhood])
 
   const address = useMemo(
     () => buildDeliveryAddressLine({ cepDigits, street, number, neighborhood }),
@@ -78,6 +126,8 @@ export default function NovoPedidoPage() {
     const mesa = new URLSearchParams(window.location.search).get('mesa')
     if (mesa) {
       setTableCode(mesa)
+      const parsed = mesa.match(/^mesa-(\d+)$/)
+      if (parsed?.[1]) setTableNumber(parsed[1])
       setType('TABLE')
       return
     }
@@ -132,6 +182,23 @@ export default function NovoPedidoPage() {
 
   async function submitOrder() {
     setSubmitError(null)
+    if (type !== 'TABLE' && paymentTab === 'ONLINE') {
+      setSubmitError(
+        'Pagamento online ainda não está disponível. Selecione a aba "Na entrega".'
+      )
+      return
+    }
+
+    const computedTableCode =
+      type === 'TABLE'
+        ? tableCode ?? (tableNumber.trim() ? `mesa-${tableNumber.trim()}` : null)
+        : null
+
+    if (type === 'TABLE' && !computedTableCode) {
+      setSubmitError('Informe o número da mesa para continuar.')
+      return
+    }
+
     if (type === 'DELIVERY') {
       const d = onlyDigits(cepDigits, 8)
       if (d.length !== 8 || !street.trim() || !neighborhood.trim()) {
@@ -147,10 +214,12 @@ export default function NovoPedidoPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type,
-        tableCode,
-        paymentMethod,
+        tableCode: computedTableCode,
+        paymentMethod: type === 'TABLE' ? 'PIX' : paymentMethod,
         changeFor:
-          paymentMethod === 'CASH' ? Number(changeFor || 0) : undefined,
+          type !== 'TABLE' && paymentMethod === 'CASH'
+            ? Number(changeFor || 0)
+            : undefined,
         customerName,
         customerPhone,
         address: type === 'DELIVERY' ? address : undefined,
@@ -190,43 +259,71 @@ export default function NovoPedidoPage() {
 
       {cart.length > 0 && (
         <div className="border-acai-600 bg-acai-800/90 mb-4 rounded-2xl border p-4 shadow-lg">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
-            Resumo do pedido
-          </h2>
-          <div className="divide-acai-600 flex flex-col divide-y">
-            {cart.map((item) => {
-              const itemId = item.id ?? item.productId
-              const itemTotal =
-                (item.unitPrice +
-                  (item.choices?.reduce(
-                    (c: number, x: { priceModifier: number }) =>
-                      c + x.priceModifier,
-                    0
-                  ) ?? 0)) *
-                item.quantity
-              return (
-                <div
-                  key={itemId}
-                  className="flex items-center justify-between py-2 text-sm"
-                >
-                  <span className="text-acai-200">
-                    <span className="mr-2 font-semibold text-fuchsia-300">
-                      {item.quantity}×
-                    </span>
-                    {item.name}
-                  </span>
-                  <span className="font-medium text-fuchsia-300">
-                    R$ {itemTotal.toFixed(2)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="border-acai-600 mt-3 flex items-center justify-between border-t pt-3">
-            <span className="font-bold text-fuchsia-100">Total</span>
-            <span className="text-lg font-bold text-fuchsia-300">
-              R$ {total().toFixed(2)}
+          <button
+            type="button"
+            onClick={() => setIsSummaryOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-3"
+            aria-expanded={isSummaryOpen}
+          >
+            <h2 className="text-left text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+              {isSummaryOpen
+                ? 'Resumo do pedido'
+                : `Resumo do pedido - R$ ${total().toFixed(2)}`}
+            </h2>
+            <span className="inline-flex items-center gap-1 rounded-xl border border-acai-500 bg-acai-900/70 px-2 py-1 text-[11px] font-medium text-fuchsia-200">
+              <span
+                className={`transition-transform duration-300 ${
+                  isSummaryOpen ? 'rotate-180' : 'rotate-0'
+                }`}
+                aria-hidden
+              >
+                ▼
+              </span>
+              Ver itens
             </span>
+          </button>
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${
+              isSummaryOpen ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="divide-acai-600 flex flex-col divide-y">
+                {cart.map((item) => {
+                  const itemId = item.id ?? item.productId
+                  const itemTotal =
+                    (item.unitPrice +
+                      (item.choices?.reduce(
+                        (c: number, x: { priceModifier: number }) =>
+                          c + x.priceModifier,
+                        0
+                      ) ?? 0)) *
+                    item.quantity
+                  return (
+                    <div
+                      key={itemId}
+                      className="flex items-center justify-between gap-3 py-2 text-sm"
+                    >
+                      <span className="text-acai-200 min-w-0 flex-1">
+                        <span className="mr-2 font-semibold text-fuchsia-300">
+                          {item.quantity}×
+                        </span>
+                        {item.name}
+                      </span>
+                      <span className="font-medium text-fuchsia-300 shrink-0 whitespace-nowrap">
+                        R$ {itemTotal.toFixed(2)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-acai-600 mt-3 flex items-center justify-between border-t pt-3">
+                <span className="font-bold text-fuchsia-100">Total</span>
+                <span className="text-lg font-bold text-fuchsia-300 whitespace-nowrap">
+                  R$ {total().toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -251,157 +348,301 @@ export default function NovoPedidoPage() {
         </div>
 
         <h2 className="mb-3 mt-5 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
-          Tipo de entrega
+          Etapa {checkoutStep} de 2
         </h2>
-        <select
-          className="w-full rounded-lg p-3"
-          value={type}
-          onChange={(e) =>
-            setType(e.target.value as 'TABLE' | 'DELIVERY' | 'PICKUP')
-          }
-        >
-          <option value="TABLE">Mesa</option>
-          <option value="DELIVERY">Entrega</option>
-          <option value="PICKUP">Retirada</option>
-        </select>
-        {type === 'DELIVERY' ? (
-          <div className="mt-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-acai-300 text-xs">
-                {geoMessage ??
-                  'Usamos sua localização, se você permitir, só para sugerir rua e bairro.'}
+
+        {checkoutStep === 1 ? (
+          <>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+              Tipo de entrega
+            </h3>
+            <select
+              className="w-full rounded-lg p-3"
+              value={type}
+              onChange={(e) =>
+                setType(e.target.value as 'TABLE' | 'DELIVERY' | 'PICKUP')
+              }
+            >
+              <option value="TABLE">Mesa</option>
+              <option value="DELIVERY">Entrega</option>
+              <option value="PICKUP">Retirada</option>
+            </select>
+            {type === 'TABLE' ? (
+              <div className="mt-4">
+                <label className="text-acai-300 mb-1 block text-xs font-medium">
+                  Número da Mesa
+                </label>
+                <input
+                  className="w-full rounded-lg p-3"
+                  placeholder="Ex.: 12"
+                  inputMode="numeric"
+                  value={tableNumber}
+                  onChange={(e) => {
+                    const digitsOnly = e.target.value.replace(/\D/g, '')
+                    setTableNumber(digitsOnly)
+                    setTableCode(digitsOnly ? `mesa-${digitsOnly}` : null)
+                  }}
+                />
+              </div>
+            ) : null}
+            {type === 'DELIVERY' ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-acai-300 text-xs">
+                    {geoMessage ??
+                      'Usamos sua localização, se você permitir, só para sugerir rua e bairro.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      lastViaCepFetch.current = ''
+                      tryGeolocation()
+                    }}
+                    className="border-acai-500 hover:bg-acai-700 shrink-0 rounded-lg border px-3 py-1.5 text-xs text-fuchsia-200"
+                  >
+                    Usar localização atual
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    CEP
+                  </label>
+                  <input
+                    className="w-full rounded-lg p-3"
+                    placeholder="00000-000"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    value={formatCepDisplay(cepDigits)}
+                    onChange={(e) => {
+                      const d = onlyDigits(e.target.value, 8)
+                      setCepDigits(d)
+                      setCepNotFound(false)
+                      if (d.length < 8) lastViaCepFetch.current = ''
+                    }}
+                    onBlur={(e) =>
+                      void lookupCep(onlyDigits(e.currentTarget.value, 8))
+                    }
+                  />
+                  {cepLoading ? (
+                    <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
+                  ) : null}
+                  {cepNotFound ? (
+                    <p className="mt-1 text-xs text-amber-400">
+                      CEP não encontrado.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    Rua
+                  </label>
+                  <input
+                    className="w-full rounded-lg p-3"
+                    placeholder="Nome da rua"
+                    autoComplete="street-address"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    Número
+                  </label>
+                  <input
+                    className="w-full rounded-lg p-3"
+                    placeholder="Nº / complemento"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-acai-300 mb-1 block text-xs font-medium">
+                    Bairro
+                  </label>
+                  <input
+                    className="w-full rounded-lg p-3"
+                    placeholder="Bairro"
+                    autoComplete="address-level2"
+                    value={neighborhood}
+                    onChange={(e) => setNeighborhood(e.target.value)}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {submitError ? (
+              <p className="mt-3 text-sm text-amber-400">{submitError}</p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSubmitError(null)
+                if (type === 'TABLE' && !tableNumber.trim()) {
+                  setSubmitError('Informe o número da mesa para continuar.')
+                  return
+                }
+                if (type === 'DELIVERY') {
+                  const d = onlyDigits(cepDigits, 8)
+                  if (d.length !== 8 || !street.trim() || !neighborhood.trim()) {
+                    setSubmitError(
+                      'Para entrega, preencha o CEP (8 dígitos), a rua e o bairro.'
+                    )
+                    return
+                  }
+                }
+                setCheckoutStep(2)
+              }}
+              className="mt-5 w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500"
+            >
+              Continuar para pagamento
+            </button>
+          </>
+        ) : (
+          <>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
+              Pagamento
+            </h3>
+            {type !== 'TABLE' ? (
+              <>
+                <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-acai-600 bg-acai-900/60 p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentTab('ONLINE')
+                      setSubmitError(null)
+                    }}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      paymentTab === 'ONLINE'
+                        ? 'bg-fuchsia-700 text-white'
+                        : 'text-acai-200 hover:bg-acai-800'
+                    }`}
+                  >
+                    Online
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentTab('DELIVERY')
+                      setSubmitError(null)
+                    }}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      paymentTab === 'DELIVERY'
+                        ? 'bg-fuchsia-700 text-white'
+                        : 'text-acai-200 hover:bg-acai-800'
+                    }`}
+                  >
+                    Na entrega
+                  </button>
+                </div>
+
+                {paymentTab === 'ONLINE' ? (
+                  <div className="space-y-2 rounded-xl border border-acai-600 bg-acai-900/30 p-3">
+                    <p className="text-acai-300 text-xs">
+                      Pagamento online em breve. No momento, finalize na aba "Na entrega".
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full cursor-not-allowed rounded-lg border border-acai-600 p-3 text-left text-acai-400 opacity-70"
+                    >
+                      PIX online (em breve)
+                    </button>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full cursor-not-allowed rounded-lg border border-acai-600 p-3 text-left text-acai-400 opacity-70"
+                    >
+                      Cartão de crédito (em breve)
+                    </button>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full cursor-not-allowed rounded-lg border border-acai-600 p-3 text-left text-acai-400 opacity-70"
+                    >
+                      Cartão de débito (em breve)
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h4 className="mb-2 mt-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
+                      Forma de pagamento na entrega
+                    </h4>
+                    <select
+                      className="w-full rounded-lg p-3"
+                      value={paymentMethod}
+                      onChange={(e) =>
+                        setPaymentMethod(
+                          e.target.value as 'CASH' | 'DEBIT' | 'CREDIT' | 'PIX'
+                        )
+                      }
+                    >
+                      <option value="PIX">PIX (na entrega)</option>
+                      <option value="DEBIT">Débito (na entrega)</option>
+                      <option value="CREDIT">Crédito (na entrega)</option>
+                      <option value="CASH">Dinheiro (na entrega)</option>
+                    </select>
+                    {paymentMethod === 'CASH' ? (
+                      <div className="mt-3">
+                        <input
+                          className="w-full rounded-lg p-3"
+                          placeholder="Troco para quanto?"
+                          value={changeFor}
+                          onChange={(e) => setChangeFor(e.target.value)}
+                        />
+                        <p className="text-acai-300 mt-2 text-sm">
+                          Troco estimado: R$ {change.toFixed(2)}
+                        </p>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="text-acai-300 rounded-lg border border-acai-600 bg-acai-900/40 p-3 text-sm">
+                Para pedidos em mesa, o pagamento será tratado no atendimento.
               </p>
+            )}
+
+            <h4 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
+              Observações
+            </h4>
+            <textarea
+              className="w-full rounded-lg p-3"
+              placeholder="Observações (opcional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+
+            {submitError ? (
+              <p className="mt-3 text-sm text-amber-400">{submitError}</p>
+            ) : null}
+
+            <div className="mt-5 grid gap-2 md:grid-cols-2">
               <button
                 type="button"
                 onClick={() => {
-                  lastViaCepFetch.current = ''
-                  tryGeolocation()
+                  setSubmitError(null)
+                  setCheckoutStep(1)
                 }}
-                className="border-acai-500 hover:bg-acai-700 shrink-0 rounded-lg border px-3 py-1.5 text-xs text-fuchsia-200"
+                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800"
               >
-                Usar localização atual
+                Voltar
+              </button>
+              <button
+                onClick={submitOrder}
+                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500"
+              >
+                Confirmar pedido
               </button>
             </div>
-
-            <div>
-              <label className="text-acai-300 mb-1 block text-xs font-medium">
-                CEP
-              </label>
-              <input
-                className="w-full rounded-lg p-3"
-                placeholder="00000-000"
-                inputMode="numeric"
-                autoComplete="postal-code"
-                value={formatCepDisplay(cepDigits)}
-                onChange={(e) => {
-                  const d = onlyDigits(e.target.value, 8)
-                  setCepDigits(d)
-                  setCepNotFound(false)
-                  if (d.length < 8) lastViaCepFetch.current = ''
-                }}
-                onBlur={(e) =>
-                  void lookupCep(onlyDigits(e.currentTarget.value, 8))
-                }
-              />
-              {cepLoading ? (
-                <p className="text-acai-400 mt-1 text-xs">Buscando CEP…</p>
-              ) : null}
-              {cepNotFound ? (
-                <p className="mt-1 text-xs text-amber-400">
-                  CEP não encontrado.
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label className="text-acai-300 mb-1 block text-xs font-medium">
-                Rua
-              </label>
-              <input
-                className="w-full rounded-lg p-3"
-                placeholder="Nome da rua"
-                autoComplete="street-address"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-acai-300 mb-1 block text-xs font-medium">
-                Número
-              </label>
-              <input
-                className="w-full rounded-lg p-3"
-                placeholder="Nº / complemento"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-acai-300 mb-1 block text-xs font-medium">
-                Bairro
-              </label>
-              <input
-                className="w-full rounded-lg p-3"
-                placeholder="Bairro"
-                autoComplete="address-level2"
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        <h2 className="mb-3 mt-5 text-sm font-semibold uppercase tracking-wide text-fuchsia-400">
-          Forma de pagamento
-        </h2>
-        <select
-          className="w-full rounded-lg p-3"
-          value={paymentMethod}
-          onChange={(e) =>
-            setPaymentMethod(
-              e.target.value as 'CASH' | 'DEBIT' | 'CREDIT' | 'PIX'
-            )
-          }
-        >
-          <option value="CASH">Dinheiro (na entrega)</option>
-          <option value="DEBIT">Débito (na entrega)</option>
-          <option value="CREDIT">Crédito (na entrega)</option>
-          <option value="PIX">PIX (na entrega)</option>
-        </select>
-        {paymentMethod === 'CASH' ? (
-          <div className="mt-3">
-            <input
-              className="w-full rounded-lg p-3"
-              placeholder="Troco para quanto?"
-              value={changeFor}
-              onChange={(e) => setChangeFor(e.target.value)}
-            />
-            <p className="text-acai-300 mt-2 text-sm">
-              Troco estimado: R$ {change.toFixed(2)}
-            </p>
-          </div>
-        ) : null}
-
-        <textarea
-          className="mt-5 w-full rounded-lg p-3"
-          placeholder="Observações (opcional)"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-        />
-
-        {submitError ? (
-          <p className="mt-3 text-sm text-amber-400">{submitError}</p>
-        ) : null}
-
-        <button
-          onClick={submitOrder}
-          className="mt-5 w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500"
-        >
-          Confirmar pedido
-        </button>
+          </>
+        )}
       </div>
       <p className="text-acai-400 mt-4 text-xs">
         Preparado para integração futura com provedores de PIX online e
