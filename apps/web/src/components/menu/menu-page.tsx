@@ -573,12 +573,12 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
       {wizardProduct ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 md:items-center">
-          <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl max-h-[92vh]">
+          <div className="wizard-modal flex w-full max-w-2xl flex-col rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl max-h-[92vh]">
             <div className="mb-4">
-              <p className="text-xs uppercase tracking-wide text-fuchsia-300">
+              <p className="wizard-modal-kicker text-xs uppercase tracking-wide text-fuchsia-300">
                 {wizardProduct.selectionTitle?.trim() || 'PERSONALIZE SEU PRODUTO'}
               </p>
-              <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
+              <h3 className="wizard-modal-title mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
             </div>
 
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
@@ -593,13 +593,13 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                 return (
                   <section
                     key={customization.id}
-                    className="border-acai-700/60 border-t pt-4 first:border-t-0 first:pt-0"
+                    className="wizard-modal-group border-acai-700/60 border-t pt-4 first:border-t-0 first:pt-0"
                   >
                     <div className="mb-2">
-                      <p className="text-sm font-semibold text-fuchsia-100">
+                      <p className="wizard-modal-group-title text-sm font-semibold text-fuchsia-100">
                         {customization.label}
                       </p>
-                      <p className="mt-1 text-xs text-acai-400">
+                      <p className="wizard-modal-group-hint mt-1 text-xs text-acai-400">
                         {minSelect > 0
                           ? `Obrigatório (${minSelect} mínimo)`
                           : 'Opcional'}
@@ -627,7 +627,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                             key={option.id}
                             type="button"
                             onClick={() => toggleChoice(customization.id, option.id)}
-                            className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                            className={`wizard-modal-option w-full rounded-xl border px-3 py-2 text-left transition ${
                               selected
                                 ? 'border-fuchsia-400 bg-fuchsia-950/40 text-fuchsia-100'
                                 : 'border-acai-600 bg-acai-800 text-acai-100 hover:bg-acai-700'
@@ -635,7 +635,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                           >
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-sm">{option.optionProduct?.name ?? option.name}</span>
-                              <span className="text-xs text-fuchsia-300">
+                              <span className="wizard-modal-option-price text-xs text-fuchsia-300">
                                 {effectivePrice > 0
                                   ? `+ R$ ${effectivePrice.toFixed(2)}`
                                   : 'Sem custo'}
@@ -650,20 +650,20 @@ export function MenuPage({ categories, products, tableCode }: Props) {
               })}
             </div>
 
-            {wizardError ? <p className="mt-3 text-sm text-amber-400">{wizardError}</p> : null}
+            {wizardError ? <p className="wizard-modal-error mt-3 text-sm text-amber-400">{wizardError}</p> : null}
 
             <div className="mt-5 flex gap-2">
               <button
                 type="button"
                 onClick={closeWizard}
-                className="flex-1 rounded-lg border border-acai-500 px-4 py-2 text-sm font-medium text-acai-100 hover:bg-acai-800"
+                className="wizard-modal-cancel flex-1 rounded-lg border border-acai-500 px-4 py-2 text-sm font-medium text-acai-100 hover:bg-acai-800"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={addWizardItemToCart}
-                className="flex-1 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-500"
+                className="wizard-modal-submit flex-1 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-500"
               >
                 Adicionar
               </button>

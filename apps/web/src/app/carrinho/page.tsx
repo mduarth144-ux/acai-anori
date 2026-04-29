@@ -25,11 +25,11 @@ export default function CarrinhoPage() {
 
   if (items.length === 0) {
     return (
-      <main className="mx-auto max-w-2xl p-4">
+      <main className="cart-page mx-auto max-w-2xl p-4">
         <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
           <ShoppingBag className="h-16 w-16 text-fuchsia-400/60" />
-          <h1 className="text-2xl font-bold text-fuchsia-100">Seu pedido está vazio</h1>
-          <p className="text-acai-300">Adicione itens do cardápio para continuar.</p>
+          <h1 className="cart-title text-2xl font-bold text-fuchsia-100">Seu pedido está vazio</h1>
+          <p className="cart-muted text-acai-300">Adicione itens do cardápio para continuar.</p>
           <Link
             href={menuHref}
             className="mt-2 rounded-xl bg-fuchsia-600 px-6 py-3 text-sm font-medium text-white shadow hover:bg-fuchsia-500"
@@ -42,7 +42,7 @@ export default function CarrinhoPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-4 pb-52">
+    <main className="cart-page mx-auto max-w-2xl p-4 pb-52">
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => router.back()}
@@ -51,7 +51,7 @@ export default function CarrinhoPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold text-fuchsia-100">Seu pedido</h1>
+        <h1 className="cart-title text-2xl font-bold text-fuchsia-100">Seu pedido</h1>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -64,7 +64,7 @@ export default function CarrinhoPage() {
           return (
             <div
               key={itemId}
-              className="flex gap-4 rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20"
+              className="cart-item-card flex gap-4 rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20"
             >
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-acai-900">
                 {item.imageUrl ? (
@@ -84,7 +84,7 @@ export default function CarrinhoPage() {
 
               <div className="flex flex-1 flex-col gap-1">
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-semibold text-fuchsia-100">{item.name}</h2>
+                  <h2 className="cart-item-title font-semibold text-fuchsia-100">{item.name}</h2>
                   <button
                     onClick={() => removeItem(itemId)}
                     className="shrink-0 rounded-lg p-1 text-acai-400 hover:bg-red-950/50 hover:text-red-400"
@@ -95,13 +95,13 @@ export default function CarrinhoPage() {
                 </div>
 
                 {item.description && (
-                  <p className="text-xs text-acai-300 line-clamp-2">{item.description}</p>
+                  <p className="cart-muted text-xs text-acai-300 line-clamp-2">{item.description}</p>
                 )}
 
                 {item.choices && item.choices.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {item.choices.map((c, i) => (
-                      <span key={i} className="rounded-full border border-acai-600 bg-acai-900 px-2 py-0.5 text-xs text-fuchsia-200">
+                      <span key={i} className="cart-choice rounded-full border border-acai-600 bg-acai-900 px-2 py-0.5 text-xs text-fuchsia-200">
                         {c.name}
                         {c.priceModifier !== 0 && ` (+R$ ${c.priceModifier.toFixed(2)})`}
                       </span>
@@ -110,7 +110,7 @@ export default function CarrinhoPage() {
                 )}
 
                 {item.notes && (
-                  <p className="text-xs italic text-acai-400">Obs: {item.notes}</p>
+                  <p className="cart-muted text-xs italic text-acai-400">Obs: {item.notes}</p>
                 )}
 
                 <div className="mt-auto flex items-center justify-between">
@@ -133,7 +133,7 @@ export default function CarrinhoPage() {
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <span className="font-bold text-fuchsia-300">R$ {itemTotal.toFixed(2)}</span>
+                  <span className="cart-item-price font-bold text-fuchsia-300">R$ {itemTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function CarrinhoPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-30">
         <div className="mx-auto w-full max-w-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl ring-1 ring-fuchsia-900/30">
+          <div className="cart-summary rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl ring-1 ring-fuchsia-900/30">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm text-fuchsia-200">Total do pedido</span>
               <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>

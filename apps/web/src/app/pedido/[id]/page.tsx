@@ -94,22 +94,22 @@ export default function PedidoStatusPage({ params }: Props) {
     : null
 
   return (
-    <main className="mx-auto max-w-2xl p-4">
-      <h1 className="text-2xl font-bold text-fuchsia-100">
+    <main className="order-status-page mx-auto max-w-2xl p-4">
+      <h1 className="order-status-title text-2xl font-bold text-fuchsia-100">
         Acompanhamento do pedido
       </h1>
-      <p className="text-acai-300 mt-3 text-sm">Pedido: {orderId}</p>
-      <div className="border-acai-600 bg-acai-800/90 mt-4 space-y-4 rounded-xl border p-5">
+      <p className="order-status-subtitle text-acai-300 mt-3 text-sm">Pedido: {orderId}</p>
+      <div className="order-status-card border-acai-600 bg-acai-800/90 mt-4 space-y-4 rounded-xl border p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-acai-300 text-sm">Status atual</p>
-            <p className="text-3xl font-bold text-fuchsia-400">
+            <p className="order-status-label text-acai-300 text-sm">Status atual</p>
+            <p className="order-status-value text-3xl font-bold text-fuchsia-400">
               {orderStatusLabel(status)}
             </p>
           </div>
           <div className="sm:text-right">
-            <p className="text-acai-300 text-sm">Previsão de entrega</p>
-            <p className="text-xl font-semibold text-acai-100">
+            <p className="order-status-label text-acai-300 text-sm">Previsão de entrega</p>
+            <p className="order-status-eta text-xl font-semibold text-acai-100">
               {status === 'DELIVERED'
                 ? 'Pedido finalizado'
                 : eta
@@ -120,13 +120,13 @@ export default function PedidoStatusPage({ params }: Props) {
                   : 'Calculando...'}
             </p>
             {etaMinutes > 0 && status !== 'DELIVERED' ? (
-              <p className="text-acai-400 text-xs">aprox. {etaMinutes} min</p>
+              <p className="order-status-muted text-acai-400 text-xs">aprox. {etaMinutes} min</p>
             ) : null}
           </div>
         </div>
 
-        <div className="border-acai-700 rounded-xl border bg-acai-900/50 p-3">
-          <p className="text-acai-300 mb-3 text-xs uppercase tracking-wide">
+        <div className="order-status-timeline border-acai-700 rounded-xl border bg-acai-900/50 p-3">
+          <p className="order-status-muted text-acai-300 mb-3 text-xs uppercase tracking-wide">
             Timeline do pedido
           </p>
           <ol className="space-y-3">
@@ -156,7 +156,7 @@ export default function PedidoStatusPage({ params }: Props) {
                       {step.label}
                     </p>
                     {active ? (
-                      <p className="text-xs text-fuchsia-300/90">Etapa atual</p>
+                      <p className="order-status-current text-xs text-fuchsia-300/90">Etapa atual</p>
                     ) : null}
                   </div>
                 </li>
@@ -166,12 +166,12 @@ export default function PedidoStatusPage({ params }: Props) {
         </div>
 
         {order?.total ? (
-          <p className="text-acai-300 text-sm">
+          <p className="order-status-muted text-acai-300 text-sm">
             Total: R$ {Number(order.total).toFixed(2)}
           </p>
         ) : null}
         {order?.address ? (
-          <p className="text-acai-300 text-sm">Entrega em: {order.address}</p>
+          <p className="order-status-muted text-acai-300 text-sm">Entrega em: {order.address}</p>
         ) : null}
       </div>
       <footer className="mt-5 grid gap-2 sm:grid-cols-2">

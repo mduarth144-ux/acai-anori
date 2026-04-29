@@ -85,11 +85,11 @@ export default function MeusPedidosPage() {
   }, [fetchOrders])
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
-      <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">Meus pedidos</h1>
+    <main className="orders-page mx-auto max-w-3xl p-4">
+      <h1 className="orders-title mb-4 text-2xl font-bold text-fuchsia-100">Meus pedidos</h1>
 
-      <div className="border-acai-600 bg-acai-800/90 mb-4 rounded-2xl border p-4 shadow-lg">
-        <p className="text-acai-300 mb-3 text-sm">
+      <div className="orders-search-card border-acai-600 bg-acai-800/90 mb-4 rounded-2xl border p-4 shadow-lg">
+        <p className="orders-subtext text-acai-300 mb-3 text-sm">
           Busque pedidos pelo mesmo telefone ou e-mail usados na finalização.
         </p>
         <div className="grid gap-3 md:grid-cols-2">
@@ -117,11 +117,11 @@ export default function MeusPedidosPage() {
         >
           {loading ? 'Buscando...' : 'Buscar pedidos'}
         </button>
-        {error ? <p className="mt-2 text-sm text-amber-400">{error}</p> : null}
+        {error ? <p className="orders-error mt-2 text-sm text-amber-400">{error}</p> : null}
       </div>
 
       {hasSearched && !loading && orders.length === 0 && !error ? (
-        <p className="text-acai-300 text-sm">Nenhum pedido encontrado para os dados informados.</p>
+        <p className="orders-subtext text-acai-300 text-sm">Nenhum pedido encontrado para os dados informados.</p>
       ) : null}
 
       <div className="space-y-3">
@@ -129,13 +129,13 @@ export default function MeusPedidosPage() {
           <Link
             key={order.id}
             href={`/pedido/${order.id}`}
-            className="border-acai-600 bg-acai-800/90 block rounded-xl border p-4 shadow-lg"
+            className="orders-item-card border-acai-600 bg-acai-800/90 block rounded-xl border p-4 shadow-lg"
           >
-            <p className="text-acai-400 text-sm">#{order.id}</p>
-            <p className="font-semibold text-fuchsia-200">
+            <p className="orders-item-id text-acai-400 text-sm">#{order.id}</p>
+            <p className="orders-item-title font-semibold text-fuchsia-200">
               {orderTypeLabel(order.type)} - R$ {Number(order.total).toFixed(2)}
             </p>
-            <p className="text-acai-300 text-sm">
+            <p className="orders-item-meta text-acai-300 text-sm">
               {new Date(order.createdAt).toLocaleString('pt-BR')} -{' '}
               {orderStatusLabel(order.status)}
             </p>
