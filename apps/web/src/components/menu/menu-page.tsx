@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { CheckCircle2, ChefHat, Clock3, Plus, Truck } from 'lucide-react'
+import { CheckCircle2, ChefHat, Clock3, Plus, Search, Truck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
@@ -129,6 +129,14 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         .filter((product): product is Product => Boolean(product)),
     [storefrontProducts]
   )
+  const featuredProducts = useMemo(() => {
+    const base = bestSellers.slice(0, 3)
+    const pickedIds = new Set(base.map((product) => product.id))
+    const candidates = storefrontProducts.filter((product) => !pickedIds.has(product.id))
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5)
+    const extras = shuffled.slice(0, 3)
+    return [...base, ...extras]
+  }, [bestSellers, storefrontProducts])
   const shouldShowBestSellers = activeCategory === 'all' && query.trim().length === 0
   const visibleProducts = useMemo(
     () => filtered.slice(0, visibleCount),
@@ -341,25 +349,42 @@ export function MenuPage({ categories, products, tableCode }: Props) {
   })()
 
   return (
-    <main className="mx-auto max-w-6xl p-4">
-      <header className="mb-6 rounded-2xl bg-gradient-to-br from-fuchsia-950 via-purple-950 to-acai-950 p-6 text-acai-50 shadow-lg ring-1 ring-fuchsia-900/40">
-        <div className="flex items-center justify-between gap-3">
-        <div className="text-left">
-            <h1 className="text-xl font-bold">Cardápio Online</h1>
-            <p className="mt-1 text-sm text-fuchsia-200/90">
-              Açaí em Litro e Açaí Frozen para você e sua família receberem em sua casa
-            </p>
-          </div>
-          <Image
-            src="/brand/logo.png"
-            alt="Logo Anori Açaí Frozen"
-            width={220}
-            height={70}
-            className="h-14 w-auto rounded-xl bg-acai-950/60 p-2 ring-1 ring-white/15 sm:h-16"
-          />
+    <main>
+      <header className="relative mb-6">
+        <div className="relative h-40 w-full overflow-hidden bg-[#4f1b67] sm:h-48 lg:h-56">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(203,124,245,0.42),transparent_36%),radial-gradient(circle_at_78%_20%,rgba(186,106,237,0.3),transparent_34%),radial-gradient(circle_at_55%_70%,rgba(148,98,232,0.34),transparent_44%),linear-gradient(180deg,#6b2a8f_0%,#582178_52%,#3f1458_100%)]" />
+          {[...Array(16)].map((_, index) => (
+            <span
+              key={`hero-particle-${index}`}
+              className="absolute rounded-full bg-fuchsia-100/65 blur-[1px] animate-[heroNebula_8s_ease-in-out_infinite]"
+              style={{
+                width: `${3 + (index % 3) * 3}px`,
+                height: `${3 + (index % 3) * 3}px`,
+                left: `${6 + ((index * 19) % 88)}%`,
+                top: `${8 + ((index * 23) % 72)}%`,
+                animationDelay: `${index * 0.28}s`,
+                opacity: 0.2 + (index % 4) * 0.12,
+              }}
+            />
+          ))}
+          <div className="absolute inset-x-0 bottom-0 h-10 bg-[linear-gradient(to_top,rgba(255,255,255,0.12),transparent)]" />
         </div>
-        {tableCode ? <p className="mt-3 text-sm text-acai-100">Pedido em mesa: <b>{tableCode}</b></p> : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-11 bg-[#ececef]" />
+        <div className="absolute bottom-11 left-1/2 z-20 -translate-x-1/2 translate-y-1/2">
+          <div className="h-24 w-24 rounded-full bg-white p-1 shadow-[0_10px_24px_-10px_rgba(15,23,42,0.8)] ring-2 ring-white sm:h-28 sm:w-28">
+            <div className="h-full w-full overflow-hidden rounded-full bg-[#4a1d74]">
+              <Image
+                src="/brand/logo.png"
+                alt="Logo Açaí Legal"
+                width={112}
+                height={112}
+                className="h-full w-full object-cover object-center"
+              />
+            </div>
+          </div>
+        </div>
       </header>
+      <div className="mx-auto max-w-6xl p-4 pt-11">
 
       {activeOrder ? (
         <section className="border-acai-600 bg-acai-800/90 mb-6 rounded-2xl border p-4 shadow-lg ring-1 ring-fuchsia-900/30">
@@ -424,40 +449,43 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </section>
       ) : null}
 
-      <div className="mb-4">
-        <label
-          htmlFor="category-filter"
-          className="menu-section-label mb-2 block text-sm font-medium text-fuchsia-200/90"
-        >
-          Categoria
-        </label>
+      <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(220px,280px)_1fr]">
         <ThemedSelect
           id="category-filter"
           value={activeCategory}
           onChange={(nextValue) => setActiveCategory(nextValue)}
           className="w-full"
           options={[
-            { value: 'all', label: 'Todas' },
+            { value: 'all', label: 'Lista de categorias' },
             ...categories.map((category) => ({
               value: category.slug,
               label: category.name,
             })),
           ]}
         />
+        <label className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 text-zinc-500 shadow-sm transition hover:border-zinc-400 focus-within:border-fuchsia-500 focus-within:ring-2 focus-within:ring-fuchsia-500/30">
+          <Search className="h-4 w-4 text-zinc-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Busque por um produto"
+            className="h-full w-full border-0 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
+          />
+        </label>
       </div>
 
-      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" className="mb-6 w-full rounded-xl p-3" />
-
-      {shouldShowBestSellers && bestSellers.length > 0 ? (
+      {shouldShowBestSellers && featuredProducts.length > 0 ? (
         <section className="mb-6">
-          <h2 className="menu-section-heading mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {bestSellers.map((product) => (
+          <h2 className="menu-section-heading mb-3 text-xl font-bold text-fuchsia-100">
+            Os mais pedidos
+          </h2>
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1">
+            {featuredProducts.map((product) => (
               <article
                 key={`best-${product.id}`}
-                className="best-seller-card flex h-full flex-col rounded-xl border border-acai-600 bg-acai-900/60 p-2"
+                className="best-seller-card flex min-w-[230px] snap-start flex-col rounded-xl border border-acai-600 bg-acai-900/60 p-2 sm:min-w-[250px]"
               >
-                <div className="mb-2 h-16 overflow-hidden rounded-lg bg-acai-900 sm:h-20 md:h-32 lg:h-36">
+                <div className="mb-2 h-36 overflow-hidden rounded-lg bg-acai-900">
                   {product.imageUrl ? (
                     <Image
                       src={product.imageUrl}
@@ -472,7 +500,12 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     </div>
                   )}
                 </div>
-                <h3 className="best-seller-title text-sm font-semibold text-fuchsia-100">{product.name}</h3>
+                <h3 className="best-seller-title line-clamp-2 text-sm font-semibold text-fuchsia-100">
+                  {product.name}
+                </h3>
+                <p className="mt-1 line-clamp-2 text-xs text-acai-300">
+                  {product.description ?? 'Delicioso e cremoso, feito na hora para você.'}
+                </p>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                   <span className="best-seller-price text-sm font-bold text-fuchsia-300">
                     R$ {product.price.toFixed(2)}
@@ -671,6 +704,18 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           </div>
         </div>
       ) : null}
+      <style jsx>{`
+        @keyframes heroNebula {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+          50% {
+            transform: translate3d(0, -10px, 0) scale(1.2);
+          }
+        }
+      `}</style>
+      </div>
     </main>
   )
 }

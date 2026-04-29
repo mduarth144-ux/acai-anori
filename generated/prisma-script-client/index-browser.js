@@ -246,6 +246,37 @@ exports.Prisma.OrderItemScalarFieldEnum = {
   choices: 'choices'
 };
 
+exports.Prisma.IntegrationOutboxScalarFieldEnum = {
+  id: 'id',
+  topic: 'topic',
+  source: 'source',
+  status: 'status',
+  orderId: 'orderId',
+  idempotencyKey: 'idempotencyKey',
+  payload: 'payload',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  lockedAt: 'lockedAt',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.IfoodWebhookEventScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  eventType: 'eventType',
+  merchantId: 'merchantId',
+  ifoodOrderId: 'ifoodOrderId',
+  payload: 'payload',
+  payloadHash: 'payloadHash',
+  processingStatus: 'processingStatus',
+  processingError: 'processingError',
+  receivedAt: 'receivedAt',
+  processedAt: 'processedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -303,6 +334,23 @@ exports.PaymentMethod = exports.$Enums.PaymentMethod = {
   PIX: 'PIX'
 };
 
+exports.IntegrationOutboxTopic = exports.$Enums.IntegrationOutboxTopic = {
+  IFOOD_ORDER_CREATE: 'IFOOD_ORDER_CREATE',
+  IFOOD_ORDER_STATUS_UPDATE: 'IFOOD_ORDER_STATUS_UPDATE'
+};
+
+exports.IntegrationOutboxSource = exports.$Enums.IntegrationOutboxSource = {
+  INTERNAL: 'INTERNAL',
+  IFOOD_WEBHOOK: 'IFOOD_WEBHOOK'
+};
+
+exports.IntegrationOutboxStatus = exports.$Enums.IntegrationOutboxStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  FAILED: 'FAILED'
+};
+
 exports.Prisma.ModelName = {
   Category: 'Category',
   MacroCategory: 'MacroCategory',
@@ -315,7 +363,9 @@ exports.Prisma.ModelName = {
   ProductGroupAssignment: 'ProductGroupAssignment',
   Table: 'Table',
   Order: 'Order',
-  OrderItem: 'OrderItem'
+  OrderItem: 'OrderItem',
+  IntegrationOutbox: 'IntegrationOutbox',
+  IfoodWebhookEvent: 'IfoodWebhookEvent'
 };
 
 /**

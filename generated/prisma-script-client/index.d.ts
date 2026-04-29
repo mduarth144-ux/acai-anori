@@ -73,6 +73,16 @@ export type Order = $Result.DefaultSelection<Prisma.$OrderPayload>
  * 
  */
 export type OrderItem = $Result.DefaultSelection<Prisma.$OrderItemPayload>
+/**
+ * Model IntegrationOutbox
+ * 
+ */
+export type IntegrationOutbox = $Result.DefaultSelection<Prisma.$IntegrationOutboxPayload>
+/**
+ * Model IfoodWebhookEvent
+ * 
+ */
+export type IfoodWebhookEvent = $Result.DefaultSelection<Prisma.$IfoodWebhookEventPayload>
 
 /**
  * Enums
@@ -117,6 +127,32 @@ export const PaymentMethod: {
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
+
+export const IntegrationOutboxStatus: {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  FAILED: 'FAILED'
+};
+
+export type IntegrationOutboxStatus = (typeof IntegrationOutboxStatus)[keyof typeof IntegrationOutboxStatus]
+
+
+export const IntegrationOutboxTopic: {
+  IFOOD_ORDER_CREATE: 'IFOOD_ORDER_CREATE',
+  IFOOD_ORDER_STATUS_UPDATE: 'IFOOD_ORDER_STATUS_UPDATE'
+};
+
+export type IntegrationOutboxTopic = (typeof IntegrationOutboxTopic)[keyof typeof IntegrationOutboxTopic]
+
+
+export const IntegrationOutboxSource: {
+  INTERNAL: 'INTERNAL',
+  IFOOD_WEBHOOK: 'IFOOD_WEBHOOK'
+};
+
+export type IntegrationOutboxSource = (typeof IntegrationOutboxSource)[keyof typeof IntegrationOutboxSource]
+
 }
 
 export type ProductType = $Enums.ProductType
@@ -134,6 +170,18 @@ export const OrderType: typeof $Enums.OrderType
 export type PaymentMethod = $Enums.PaymentMethod
 
 export const PaymentMethod: typeof $Enums.PaymentMethod
+
+export type IntegrationOutboxStatus = $Enums.IntegrationOutboxStatus
+
+export const IntegrationOutboxStatus: typeof $Enums.IntegrationOutboxStatus
+
+export type IntegrationOutboxTopic = $Enums.IntegrationOutboxTopic
+
+export const IntegrationOutboxTopic: typeof $Enums.IntegrationOutboxTopic
+
+export type IntegrationOutboxSource = $Enums.IntegrationOutboxSource
+
+export const IntegrationOutboxSource: typeof $Enums.IntegrationOutboxSource
 
 /**
  * ##  Prisma Client ʲˢ
@@ -372,6 +420,26 @@ export class PrismaClient<
     * ```
     */
   get orderItem(): Prisma.OrderItemDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.integrationOutbox`: Exposes CRUD operations for the **IntegrationOutbox** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more IntegrationOutboxes
+    * const integrationOutboxes = await prisma.integrationOutbox.findMany()
+    * ```
+    */
+  get integrationOutbox(): Prisma.IntegrationOutboxDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.ifoodWebhookEvent`: Exposes CRUD operations for the **IfoodWebhookEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more IfoodWebhookEvents
+    * const ifoodWebhookEvents = await prisma.ifoodWebhookEvent.findMany()
+    * ```
+    */
+  get ifoodWebhookEvent(): Prisma.IfoodWebhookEventDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -824,7 +892,9 @@ export namespace Prisma {
     ProductGroupAssignment: 'ProductGroupAssignment',
     Table: 'Table',
     Order: 'Order',
-    OrderItem: 'OrderItem'
+    OrderItem: 'OrderItem',
+    IntegrationOutbox: 'IntegrationOutbox',
+    IfoodWebhookEvent: 'IfoodWebhookEvent'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -843,7 +913,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "category" | "macroCategory" | "product" | "productRelation" | "productCustomization" | "customizationOption" | "customizationGroupTemplate" | "customizationGroupTemplateOption" | "productGroupAssignment" | "table" | "order" | "orderItem"
+      modelProps: "category" | "macroCategory" | "product" | "productRelation" | "productCustomization" | "customizationOption" | "customizationGroupTemplate" | "customizationGroupTemplateOption" | "productGroupAssignment" | "table" | "order" | "orderItem" | "integrationOutbox" | "ifoodWebhookEvent"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1735,6 +1805,154 @@ export namespace Prisma {
           }
         }
       }
+      IntegrationOutbox: {
+        payload: Prisma.$IntegrationOutboxPayload<ExtArgs>
+        fields: Prisma.IntegrationOutboxFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.IntegrationOutboxFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.IntegrationOutboxFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          findFirst: {
+            args: Prisma.IntegrationOutboxFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.IntegrationOutboxFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          findMany: {
+            args: Prisma.IntegrationOutboxFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>[]
+          }
+          create: {
+            args: Prisma.IntegrationOutboxCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          createMany: {
+            args: Prisma.IntegrationOutboxCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.IntegrationOutboxCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>[]
+          }
+          delete: {
+            args: Prisma.IntegrationOutboxDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          update: {
+            args: Prisma.IntegrationOutboxUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          deleteMany: {
+            args: Prisma.IntegrationOutboxDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.IntegrationOutboxUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.IntegrationOutboxUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>[]
+          }
+          upsert: {
+            args: Prisma.IntegrationOutboxUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationOutboxPayload>
+          }
+          aggregate: {
+            args: Prisma.IntegrationOutboxAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIntegrationOutbox>
+          }
+          groupBy: {
+            args: Prisma.IntegrationOutboxGroupByArgs<ExtArgs>
+            result: $Utils.Optional<IntegrationOutboxGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.IntegrationOutboxCountArgs<ExtArgs>
+            result: $Utils.Optional<IntegrationOutboxCountAggregateOutputType> | number
+          }
+        }
+      }
+      IfoodWebhookEvent: {
+        payload: Prisma.$IfoodWebhookEventPayload<ExtArgs>
+        fields: Prisma.IfoodWebhookEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.IfoodWebhookEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.IfoodWebhookEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          findFirst: {
+            args: Prisma.IfoodWebhookEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.IfoodWebhookEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          findMany: {
+            args: Prisma.IfoodWebhookEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>[]
+          }
+          create: {
+            args: Prisma.IfoodWebhookEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          createMany: {
+            args: Prisma.IfoodWebhookEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.IfoodWebhookEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>[]
+          }
+          delete: {
+            args: Prisma.IfoodWebhookEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          update: {
+            args: Prisma.IfoodWebhookEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.IfoodWebhookEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.IfoodWebhookEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.IfoodWebhookEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.IfoodWebhookEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IfoodWebhookEventPayload>
+          }
+          aggregate: {
+            args: Prisma.IfoodWebhookEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIfoodWebhookEvent>
+          }
+          groupBy: {
+            args: Prisma.IfoodWebhookEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<IfoodWebhookEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.IfoodWebhookEventCountArgs<ExtArgs>
+            result: $Utils.Optional<IfoodWebhookEventCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1843,6 +2061,8 @@ export namespace Prisma {
     table?: TableOmit
     order?: OrderOmit
     orderItem?: OrderItemOmit
+    integrationOutbox?: IntegrationOutboxOmit
+    ifoodWebhookEvent?: IfoodWebhookEventOmit
   }
 
   /* Types for Logging */
@@ -2142,10 +2362,12 @@ export namespace Prisma {
 
   export type OrderCountOutputType = {
     items: number
+    integrationOutbox: number
   }
 
   export type OrderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     items?: boolean | OrderCountOutputTypeCountItemsArgs
+    integrationOutbox?: boolean | OrderCountOutputTypeCountIntegrationOutboxArgs
   }
 
   // Custom InputTypes
@@ -2164,6 +2386,13 @@ export namespace Prisma {
    */
   export type OrderCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrderItemWhereInput
+  }
+
+  /**
+   * OrderCountOutputType without action
+   */
+  export type OrderCountOutputTypeCountIntegrationOutboxArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IntegrationOutboxWhereInput
   }
 
 
@@ -13910,6 +14139,7 @@ export namespace Prisma {
     updatedAt?: boolean
     table?: boolean | Order$tableArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
+    integrationOutbox?: boolean | Order$integrationOutboxArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
 
@@ -13976,6 +14206,7 @@ export namespace Prisma {
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     table?: boolean | Order$tableArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
+    integrationOutbox?: boolean | Order$integrationOutboxArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13990,6 +14221,7 @@ export namespace Prisma {
     objects: {
       table: Prisma.$TablePayload<ExtArgs> | null
       items: Prisma.$OrderItemPayload<ExtArgs>[]
+      integrationOutbox: Prisma.$IntegrationOutboxPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -14404,6 +14636,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     table<T extends Order$tableArgs<ExtArgs> = {}>(args?: Subset<T, Order$tableArgs<ExtArgs>>): Prisma__TableClient<$Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     items<T extends Order$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    integrationOutbox<T extends Order$integrationOutboxArgs<ExtArgs> = {}>(args?: Subset<T, Order$integrationOutboxArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14885,6 +15118,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * Order.integrationOutbox
+   */
+  export type Order$integrationOutboxArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    where?: IntegrationOutboxWhereInput
+    orderBy?: IntegrationOutboxOrderByWithRelationInput | IntegrationOutboxOrderByWithRelationInput[]
+    cursor?: IntegrationOutboxWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: IntegrationOutboxScalarFieldEnum | IntegrationOutboxScalarFieldEnum[]
   }
 
   /**
@@ -16033,6 +16290,2280 @@ export namespace Prisma {
 
 
   /**
+   * Model IntegrationOutbox
+   */
+
+  export type AggregateIntegrationOutbox = {
+    _count: IntegrationOutboxCountAggregateOutputType | null
+    _avg: IntegrationOutboxAvgAggregateOutputType | null
+    _sum: IntegrationOutboxSumAggregateOutputType | null
+    _min: IntegrationOutboxMinAggregateOutputType | null
+    _max: IntegrationOutboxMaxAggregateOutputType | null
+  }
+
+  export type IntegrationOutboxAvgAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type IntegrationOutboxSumAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type IntegrationOutboxMinAggregateOutputType = {
+    id: string | null
+    topic: $Enums.IntegrationOutboxTopic | null
+    source: $Enums.IntegrationOutboxSource | null
+    status: $Enums.IntegrationOutboxStatus | null
+    orderId: string | null
+    idempotencyKey: string | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lastError: string | null
+    lockedAt: Date | null
+    processedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type IntegrationOutboxMaxAggregateOutputType = {
+    id: string | null
+    topic: $Enums.IntegrationOutboxTopic | null
+    source: $Enums.IntegrationOutboxSource | null
+    status: $Enums.IntegrationOutboxStatus | null
+    orderId: string | null
+    idempotencyKey: string | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lastError: string | null
+    lockedAt: Date | null
+    processedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type IntegrationOutboxCountAggregateOutputType = {
+    id: number
+    topic: number
+    source: number
+    status: number
+    orderId: number
+    idempotencyKey: number
+    payload: number
+    attempts: number
+    nextAttemptAt: number
+    lastError: number
+    lockedAt: number
+    processedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type IntegrationOutboxAvgAggregateInputType = {
+    attempts?: true
+  }
+
+  export type IntegrationOutboxSumAggregateInputType = {
+    attempts?: true
+  }
+
+  export type IntegrationOutboxMinAggregateInputType = {
+    id?: true
+    topic?: true
+    source?: true
+    status?: true
+    orderId?: true
+    idempotencyKey?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    lockedAt?: true
+    processedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type IntegrationOutboxMaxAggregateInputType = {
+    id?: true
+    topic?: true
+    source?: true
+    status?: true
+    orderId?: true
+    idempotencyKey?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    lockedAt?: true
+    processedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type IntegrationOutboxCountAggregateInputType = {
+    id?: true
+    topic?: true
+    source?: true
+    status?: true
+    orderId?: true
+    idempotencyKey?: true
+    payload?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    lockedAt?: true
+    processedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type IntegrationOutboxAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IntegrationOutbox to aggregate.
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationOutboxes to fetch.
+     */
+    orderBy?: IntegrationOutboxOrderByWithRelationInput | IntegrationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: IntegrationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned IntegrationOutboxes
+    **/
+    _count?: true | IntegrationOutboxCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: IntegrationOutboxAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: IntegrationOutboxSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: IntegrationOutboxMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: IntegrationOutboxMaxAggregateInputType
+  }
+
+  export type GetIntegrationOutboxAggregateType<T extends IntegrationOutboxAggregateArgs> = {
+        [P in keyof T & keyof AggregateIntegrationOutbox]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateIntegrationOutbox[P]>
+      : GetScalarType<T[P], AggregateIntegrationOutbox[P]>
+  }
+
+
+
+
+  export type IntegrationOutboxGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IntegrationOutboxWhereInput
+    orderBy?: IntegrationOutboxOrderByWithAggregationInput | IntegrationOutboxOrderByWithAggregationInput[]
+    by: IntegrationOutboxScalarFieldEnum[] | IntegrationOutboxScalarFieldEnum
+    having?: IntegrationOutboxScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: IntegrationOutboxCountAggregateInputType | true
+    _avg?: IntegrationOutboxAvgAggregateInputType
+    _sum?: IntegrationOutboxSumAggregateInputType
+    _min?: IntegrationOutboxMinAggregateInputType
+    _max?: IntegrationOutboxMaxAggregateInputType
+  }
+
+  export type IntegrationOutboxGroupByOutputType = {
+    id: string
+    topic: $Enums.IntegrationOutboxTopic
+    source: $Enums.IntegrationOutboxSource
+    status: $Enums.IntegrationOutboxStatus
+    orderId: string
+    idempotencyKey: string
+    payload: JsonValue
+    attempts: number
+    nextAttemptAt: Date
+    lastError: string | null
+    lockedAt: Date | null
+    processedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: IntegrationOutboxCountAggregateOutputType | null
+    _avg: IntegrationOutboxAvgAggregateOutputType | null
+    _sum: IntegrationOutboxSumAggregateOutputType | null
+    _min: IntegrationOutboxMinAggregateOutputType | null
+    _max: IntegrationOutboxMaxAggregateOutputType | null
+  }
+
+  type GetIntegrationOutboxGroupByPayload<T extends IntegrationOutboxGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<IntegrationOutboxGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof IntegrationOutboxGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], IntegrationOutboxGroupByOutputType[P]>
+            : GetScalarType<T[P], IntegrationOutboxGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type IntegrationOutboxSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    topic?: boolean
+    source?: boolean
+    status?: boolean
+    orderId?: boolean
+    idempotencyKey?: boolean
+    payload?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    lockedAt?: boolean
+    processedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["integrationOutbox"]>
+
+  export type IntegrationOutboxSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    topic?: boolean
+    source?: boolean
+    status?: boolean
+    orderId?: boolean
+    idempotencyKey?: boolean
+    payload?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    lockedAt?: boolean
+    processedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["integrationOutbox"]>
+
+  export type IntegrationOutboxSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    topic?: boolean
+    source?: boolean
+    status?: boolean
+    orderId?: boolean
+    idempotencyKey?: boolean
+    payload?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    lockedAt?: boolean
+    processedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["integrationOutbox"]>
+
+  export type IntegrationOutboxSelectScalar = {
+    id?: boolean
+    topic?: boolean
+    source?: boolean
+    status?: boolean
+    orderId?: boolean
+    idempotencyKey?: boolean
+    payload?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    lockedAt?: boolean
+    processedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type IntegrationOutboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "topic" | "source" | "status" | "orderId" | "idempotencyKey" | "payload" | "attempts" | "nextAttemptAt" | "lastError" | "lockedAt" | "processedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["integrationOutbox"]>
+  export type IntegrationOutboxInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }
+  export type IntegrationOutboxIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }
+  export type IntegrationOutboxIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+  }
+
+  export type $IntegrationOutboxPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "IntegrationOutbox"
+    objects: {
+      order: Prisma.$OrderPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      topic: $Enums.IntegrationOutboxTopic
+      source: $Enums.IntegrationOutboxSource
+      status: $Enums.IntegrationOutboxStatus
+      orderId: string
+      idempotencyKey: string
+      payload: Prisma.JsonValue
+      attempts: number
+      nextAttemptAt: Date
+      lastError: string | null
+      lockedAt: Date | null
+      processedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["integrationOutbox"]>
+    composites: {}
+  }
+
+  type IntegrationOutboxGetPayload<S extends boolean | null | undefined | IntegrationOutboxDefaultArgs> = $Result.GetResult<Prisma.$IntegrationOutboxPayload, S>
+
+  type IntegrationOutboxCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<IntegrationOutboxFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: IntegrationOutboxCountAggregateInputType | true
+    }
+
+  export interface IntegrationOutboxDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IntegrationOutbox'], meta: { name: 'IntegrationOutbox' } }
+    /**
+     * Find zero or one IntegrationOutbox that matches the filter.
+     * @param {IntegrationOutboxFindUniqueArgs} args - Arguments to find a IntegrationOutbox
+     * @example
+     * // Get one IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends IntegrationOutboxFindUniqueArgs>(args: SelectSubset<T, IntegrationOutboxFindUniqueArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one IntegrationOutbox that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {IntegrationOutboxFindUniqueOrThrowArgs} args - Arguments to find a IntegrationOutbox
+     * @example
+     * // Get one IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends IntegrationOutboxFindUniqueOrThrowArgs>(args: SelectSubset<T, IntegrationOutboxFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IntegrationOutbox that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxFindFirstArgs} args - Arguments to find a IntegrationOutbox
+     * @example
+     * // Get one IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends IntegrationOutboxFindFirstArgs>(args?: SelectSubset<T, IntegrationOutboxFindFirstArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IntegrationOutbox that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxFindFirstOrThrowArgs} args - Arguments to find a IntegrationOutbox
+     * @example
+     * // Get one IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends IntegrationOutboxFindFirstOrThrowArgs>(args?: SelectSubset<T, IntegrationOutboxFindFirstOrThrowArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more IntegrationOutboxes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all IntegrationOutboxes
+     * const integrationOutboxes = await prisma.integrationOutbox.findMany()
+     * 
+     * // Get first 10 IntegrationOutboxes
+     * const integrationOutboxes = await prisma.integrationOutbox.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const integrationOutboxWithIdOnly = await prisma.integrationOutbox.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends IntegrationOutboxFindManyArgs>(args?: SelectSubset<T, IntegrationOutboxFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a IntegrationOutbox.
+     * @param {IntegrationOutboxCreateArgs} args - Arguments to create a IntegrationOutbox.
+     * @example
+     * // Create one IntegrationOutbox
+     * const IntegrationOutbox = await prisma.integrationOutbox.create({
+     *   data: {
+     *     // ... data to create a IntegrationOutbox
+     *   }
+     * })
+     * 
+     */
+    create<T extends IntegrationOutboxCreateArgs>(args: SelectSubset<T, IntegrationOutboxCreateArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many IntegrationOutboxes.
+     * @param {IntegrationOutboxCreateManyArgs} args - Arguments to create many IntegrationOutboxes.
+     * @example
+     * // Create many IntegrationOutboxes
+     * const integrationOutbox = await prisma.integrationOutbox.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends IntegrationOutboxCreateManyArgs>(args?: SelectSubset<T, IntegrationOutboxCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many IntegrationOutboxes and returns the data saved in the database.
+     * @param {IntegrationOutboxCreateManyAndReturnArgs} args - Arguments to create many IntegrationOutboxes.
+     * @example
+     * // Create many IntegrationOutboxes
+     * const integrationOutbox = await prisma.integrationOutbox.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many IntegrationOutboxes and only return the `id`
+     * const integrationOutboxWithIdOnly = await prisma.integrationOutbox.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends IntegrationOutboxCreateManyAndReturnArgs>(args?: SelectSubset<T, IntegrationOutboxCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a IntegrationOutbox.
+     * @param {IntegrationOutboxDeleteArgs} args - Arguments to delete one IntegrationOutbox.
+     * @example
+     * // Delete one IntegrationOutbox
+     * const IntegrationOutbox = await prisma.integrationOutbox.delete({
+     *   where: {
+     *     // ... filter to delete one IntegrationOutbox
+     *   }
+     * })
+     * 
+     */
+    delete<T extends IntegrationOutboxDeleteArgs>(args: SelectSubset<T, IntegrationOutboxDeleteArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one IntegrationOutbox.
+     * @param {IntegrationOutboxUpdateArgs} args - Arguments to update one IntegrationOutbox.
+     * @example
+     * // Update one IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends IntegrationOutboxUpdateArgs>(args: SelectSubset<T, IntegrationOutboxUpdateArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more IntegrationOutboxes.
+     * @param {IntegrationOutboxDeleteManyArgs} args - Arguments to filter IntegrationOutboxes to delete.
+     * @example
+     * // Delete a few IntegrationOutboxes
+     * const { count } = await prisma.integrationOutbox.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends IntegrationOutboxDeleteManyArgs>(args?: SelectSubset<T, IntegrationOutboxDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IntegrationOutboxes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many IntegrationOutboxes
+     * const integrationOutbox = await prisma.integrationOutbox.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends IntegrationOutboxUpdateManyArgs>(args: SelectSubset<T, IntegrationOutboxUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IntegrationOutboxes and returns the data updated in the database.
+     * @param {IntegrationOutboxUpdateManyAndReturnArgs} args - Arguments to update many IntegrationOutboxes.
+     * @example
+     * // Update many IntegrationOutboxes
+     * const integrationOutbox = await prisma.integrationOutbox.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more IntegrationOutboxes and only return the `id`
+     * const integrationOutboxWithIdOnly = await prisma.integrationOutbox.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends IntegrationOutboxUpdateManyAndReturnArgs>(args: SelectSubset<T, IntegrationOutboxUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one IntegrationOutbox.
+     * @param {IntegrationOutboxUpsertArgs} args - Arguments to update or create a IntegrationOutbox.
+     * @example
+     * // Update or create a IntegrationOutbox
+     * const integrationOutbox = await prisma.integrationOutbox.upsert({
+     *   create: {
+     *     // ... data to create a IntegrationOutbox
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the IntegrationOutbox we want to update
+     *   }
+     * })
+     */
+    upsert<T extends IntegrationOutboxUpsertArgs>(args: SelectSubset<T, IntegrationOutboxUpsertArgs<ExtArgs>>): Prisma__IntegrationOutboxClient<$Result.GetResult<Prisma.$IntegrationOutboxPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of IntegrationOutboxes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxCountArgs} args - Arguments to filter IntegrationOutboxes to count.
+     * @example
+     * // Count the number of IntegrationOutboxes
+     * const count = await prisma.integrationOutbox.count({
+     *   where: {
+     *     // ... the filter for the IntegrationOutboxes we want to count
+     *   }
+     * })
+    **/
+    count<T extends IntegrationOutboxCountArgs>(
+      args?: Subset<T, IntegrationOutboxCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], IntegrationOutboxCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a IntegrationOutbox.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends IntegrationOutboxAggregateArgs>(args: Subset<T, IntegrationOutboxAggregateArgs>): Prisma.PrismaPromise<GetIntegrationOutboxAggregateType<T>>
+
+    /**
+     * Group by IntegrationOutbox.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationOutboxGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends IntegrationOutboxGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: IntegrationOutboxGroupByArgs['orderBy'] }
+        : { orderBy?: IntegrationOutboxGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, IntegrationOutboxGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIntegrationOutboxGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the IntegrationOutbox model
+   */
+  readonly fields: IntegrationOutboxFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for IntegrationOutbox.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__IntegrationOutboxClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the IntegrationOutbox model
+   */
+  interface IntegrationOutboxFieldRefs {
+    readonly id: FieldRef<"IntegrationOutbox", 'String'>
+    readonly topic: FieldRef<"IntegrationOutbox", 'IntegrationOutboxTopic'>
+    readonly source: FieldRef<"IntegrationOutbox", 'IntegrationOutboxSource'>
+    readonly status: FieldRef<"IntegrationOutbox", 'IntegrationOutboxStatus'>
+    readonly orderId: FieldRef<"IntegrationOutbox", 'String'>
+    readonly idempotencyKey: FieldRef<"IntegrationOutbox", 'String'>
+    readonly payload: FieldRef<"IntegrationOutbox", 'Json'>
+    readonly attempts: FieldRef<"IntegrationOutbox", 'Int'>
+    readonly nextAttemptAt: FieldRef<"IntegrationOutbox", 'DateTime'>
+    readonly lastError: FieldRef<"IntegrationOutbox", 'String'>
+    readonly lockedAt: FieldRef<"IntegrationOutbox", 'DateTime'>
+    readonly processedAt: FieldRef<"IntegrationOutbox", 'DateTime'>
+    readonly createdAt: FieldRef<"IntegrationOutbox", 'DateTime'>
+    readonly updatedAt: FieldRef<"IntegrationOutbox", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * IntegrationOutbox findUnique
+   */
+  export type IntegrationOutboxFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which IntegrationOutbox to fetch.
+     */
+    where: IntegrationOutboxWhereUniqueInput
+  }
+
+  /**
+   * IntegrationOutbox findUniqueOrThrow
+   */
+  export type IntegrationOutboxFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which IntegrationOutbox to fetch.
+     */
+    where: IntegrationOutboxWhereUniqueInput
+  }
+
+  /**
+   * IntegrationOutbox findFirst
+   */
+  export type IntegrationOutboxFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which IntegrationOutbox to fetch.
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationOutboxes to fetch.
+     */
+    orderBy?: IntegrationOutboxOrderByWithRelationInput | IntegrationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IntegrationOutboxes.
+     */
+    cursor?: IntegrationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IntegrationOutboxes.
+     */
+    distinct?: IntegrationOutboxScalarFieldEnum | IntegrationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationOutbox findFirstOrThrow
+   */
+  export type IntegrationOutboxFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which IntegrationOutbox to fetch.
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationOutboxes to fetch.
+     */
+    orderBy?: IntegrationOutboxOrderByWithRelationInput | IntegrationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IntegrationOutboxes.
+     */
+    cursor?: IntegrationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IntegrationOutboxes.
+     */
+    distinct?: IntegrationOutboxScalarFieldEnum | IntegrationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationOutbox findMany
+   */
+  export type IntegrationOutboxFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which IntegrationOutboxes to fetch.
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationOutboxes to fetch.
+     */
+    orderBy?: IntegrationOutboxOrderByWithRelationInput | IntegrationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing IntegrationOutboxes.
+     */
+    cursor?: IntegrationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationOutboxes.
+     */
+    skip?: number
+    distinct?: IntegrationOutboxScalarFieldEnum | IntegrationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationOutbox create
+   */
+  export type IntegrationOutboxCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * The data needed to create a IntegrationOutbox.
+     */
+    data: XOR<IntegrationOutboxCreateInput, IntegrationOutboxUncheckedCreateInput>
+  }
+
+  /**
+   * IntegrationOutbox createMany
+   */
+  export type IntegrationOutboxCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many IntegrationOutboxes.
+     */
+    data: IntegrationOutboxCreateManyInput | IntegrationOutboxCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IntegrationOutbox createManyAndReturn
+   */
+  export type IntegrationOutboxCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * The data used to create many IntegrationOutboxes.
+     */
+    data: IntegrationOutboxCreateManyInput | IntegrationOutboxCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * IntegrationOutbox update
+   */
+  export type IntegrationOutboxUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * The data needed to update a IntegrationOutbox.
+     */
+    data: XOR<IntegrationOutboxUpdateInput, IntegrationOutboxUncheckedUpdateInput>
+    /**
+     * Choose, which IntegrationOutbox to update.
+     */
+    where: IntegrationOutboxWhereUniqueInput
+  }
+
+  /**
+   * IntegrationOutbox updateMany
+   */
+  export type IntegrationOutboxUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update IntegrationOutboxes.
+     */
+    data: XOR<IntegrationOutboxUpdateManyMutationInput, IntegrationOutboxUncheckedUpdateManyInput>
+    /**
+     * Filter which IntegrationOutboxes to update
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * Limit how many IntegrationOutboxes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IntegrationOutbox updateManyAndReturn
+   */
+  export type IntegrationOutboxUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * The data used to update IntegrationOutboxes.
+     */
+    data: XOR<IntegrationOutboxUpdateManyMutationInput, IntegrationOutboxUncheckedUpdateManyInput>
+    /**
+     * Filter which IntegrationOutboxes to update
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * Limit how many IntegrationOutboxes to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * IntegrationOutbox upsert
+   */
+  export type IntegrationOutboxUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * The filter to search for the IntegrationOutbox to update in case it exists.
+     */
+    where: IntegrationOutboxWhereUniqueInput
+    /**
+     * In case the IntegrationOutbox found by the `where` argument doesn't exist, create a new IntegrationOutbox with this data.
+     */
+    create: XOR<IntegrationOutboxCreateInput, IntegrationOutboxUncheckedCreateInput>
+    /**
+     * In case the IntegrationOutbox was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<IntegrationOutboxUpdateInput, IntegrationOutboxUncheckedUpdateInput>
+  }
+
+  /**
+   * IntegrationOutbox delete
+   */
+  export type IntegrationOutboxDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter which IntegrationOutbox to delete.
+     */
+    where: IntegrationOutboxWhereUniqueInput
+  }
+
+  /**
+   * IntegrationOutbox deleteMany
+   */
+  export type IntegrationOutboxDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IntegrationOutboxes to delete
+     */
+    where?: IntegrationOutboxWhereInput
+    /**
+     * Limit how many IntegrationOutboxes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * IntegrationOutbox without action
+   */
+  export type IntegrationOutboxDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationOutbox
+     */
+    select?: IntegrationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationOutbox
+     */
+    omit?: IntegrationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IntegrationOutboxInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model IfoodWebhookEvent
+   */
+
+  export type AggregateIfoodWebhookEvent = {
+    _count: IfoodWebhookEventCountAggregateOutputType | null
+    _min: IfoodWebhookEventMinAggregateOutputType | null
+    _max: IfoodWebhookEventMaxAggregateOutputType | null
+  }
+
+  export type IfoodWebhookEventMinAggregateOutputType = {
+    id: string | null
+    eventId: string | null
+    eventType: string | null
+    merchantId: string | null
+    ifoodOrderId: string | null
+    payloadHash: string | null
+    processingStatus: string | null
+    processingError: string | null
+    receivedAt: Date | null
+    processedAt: Date | null
+  }
+
+  export type IfoodWebhookEventMaxAggregateOutputType = {
+    id: string | null
+    eventId: string | null
+    eventType: string | null
+    merchantId: string | null
+    ifoodOrderId: string | null
+    payloadHash: string | null
+    processingStatus: string | null
+    processingError: string | null
+    receivedAt: Date | null
+    processedAt: Date | null
+  }
+
+  export type IfoodWebhookEventCountAggregateOutputType = {
+    id: number
+    eventId: number
+    eventType: number
+    merchantId: number
+    ifoodOrderId: number
+    payload: number
+    payloadHash: number
+    processingStatus: number
+    processingError: number
+    receivedAt: number
+    processedAt: number
+    _all: number
+  }
+
+
+  export type IfoodWebhookEventMinAggregateInputType = {
+    id?: true
+    eventId?: true
+    eventType?: true
+    merchantId?: true
+    ifoodOrderId?: true
+    payloadHash?: true
+    processingStatus?: true
+    processingError?: true
+    receivedAt?: true
+    processedAt?: true
+  }
+
+  export type IfoodWebhookEventMaxAggregateInputType = {
+    id?: true
+    eventId?: true
+    eventType?: true
+    merchantId?: true
+    ifoodOrderId?: true
+    payloadHash?: true
+    processingStatus?: true
+    processingError?: true
+    receivedAt?: true
+    processedAt?: true
+  }
+
+  export type IfoodWebhookEventCountAggregateInputType = {
+    id?: true
+    eventId?: true
+    eventType?: true
+    merchantId?: true
+    ifoodOrderId?: true
+    payload?: true
+    payloadHash?: true
+    processingStatus?: true
+    processingError?: true
+    receivedAt?: true
+    processedAt?: true
+    _all?: true
+  }
+
+  export type IfoodWebhookEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IfoodWebhookEvent to aggregate.
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IfoodWebhookEvents to fetch.
+     */
+    orderBy?: IfoodWebhookEventOrderByWithRelationInput | IfoodWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: IfoodWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IfoodWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IfoodWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned IfoodWebhookEvents
+    **/
+    _count?: true | IfoodWebhookEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: IfoodWebhookEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: IfoodWebhookEventMaxAggregateInputType
+  }
+
+  export type GetIfoodWebhookEventAggregateType<T extends IfoodWebhookEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateIfoodWebhookEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateIfoodWebhookEvent[P]>
+      : GetScalarType<T[P], AggregateIfoodWebhookEvent[P]>
+  }
+
+
+
+
+  export type IfoodWebhookEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IfoodWebhookEventWhereInput
+    orderBy?: IfoodWebhookEventOrderByWithAggregationInput | IfoodWebhookEventOrderByWithAggregationInput[]
+    by: IfoodWebhookEventScalarFieldEnum[] | IfoodWebhookEventScalarFieldEnum
+    having?: IfoodWebhookEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: IfoodWebhookEventCountAggregateInputType | true
+    _min?: IfoodWebhookEventMinAggregateInputType
+    _max?: IfoodWebhookEventMaxAggregateInputType
+  }
+
+  export type IfoodWebhookEventGroupByOutputType = {
+    id: string
+    eventId: string
+    eventType: string
+    merchantId: string | null
+    ifoodOrderId: string | null
+    payload: JsonValue
+    payloadHash: string
+    processingStatus: string
+    processingError: string | null
+    receivedAt: Date
+    processedAt: Date | null
+    _count: IfoodWebhookEventCountAggregateOutputType | null
+    _min: IfoodWebhookEventMinAggregateOutputType | null
+    _max: IfoodWebhookEventMaxAggregateOutputType | null
+  }
+
+  type GetIfoodWebhookEventGroupByPayload<T extends IfoodWebhookEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<IfoodWebhookEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof IfoodWebhookEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], IfoodWebhookEventGroupByOutputType[P]>
+            : GetScalarType<T[P], IfoodWebhookEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type IfoodWebhookEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventId?: boolean
+    eventType?: boolean
+    merchantId?: boolean
+    ifoodOrderId?: boolean
+    payload?: boolean
+    payloadHash?: boolean
+    processingStatus?: boolean
+    processingError?: boolean
+    receivedAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["ifoodWebhookEvent"]>
+
+  export type IfoodWebhookEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventId?: boolean
+    eventType?: boolean
+    merchantId?: boolean
+    ifoodOrderId?: boolean
+    payload?: boolean
+    payloadHash?: boolean
+    processingStatus?: boolean
+    processingError?: boolean
+    receivedAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["ifoodWebhookEvent"]>
+
+  export type IfoodWebhookEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventId?: boolean
+    eventType?: boolean
+    merchantId?: boolean
+    ifoodOrderId?: boolean
+    payload?: boolean
+    payloadHash?: boolean
+    processingStatus?: boolean
+    processingError?: boolean
+    receivedAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["ifoodWebhookEvent"]>
+
+  export type IfoodWebhookEventSelectScalar = {
+    id?: boolean
+    eventId?: boolean
+    eventType?: boolean
+    merchantId?: boolean
+    ifoodOrderId?: boolean
+    payload?: boolean
+    payloadHash?: boolean
+    processingStatus?: boolean
+    processingError?: boolean
+    receivedAt?: boolean
+    processedAt?: boolean
+  }
+
+  export type IfoodWebhookEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "eventId" | "eventType" | "merchantId" | "ifoodOrderId" | "payload" | "payloadHash" | "processingStatus" | "processingError" | "receivedAt" | "processedAt", ExtArgs["result"]["ifoodWebhookEvent"]>
+
+  export type $IfoodWebhookEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "IfoodWebhookEvent"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      eventId: string
+      eventType: string
+      merchantId: string | null
+      ifoodOrderId: string | null
+      payload: Prisma.JsonValue
+      payloadHash: string
+      processingStatus: string
+      processingError: string | null
+      receivedAt: Date
+      processedAt: Date | null
+    }, ExtArgs["result"]["ifoodWebhookEvent"]>
+    composites: {}
+  }
+
+  type IfoodWebhookEventGetPayload<S extends boolean | null | undefined | IfoodWebhookEventDefaultArgs> = $Result.GetResult<Prisma.$IfoodWebhookEventPayload, S>
+
+  type IfoodWebhookEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<IfoodWebhookEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: IfoodWebhookEventCountAggregateInputType | true
+    }
+
+  export interface IfoodWebhookEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IfoodWebhookEvent'], meta: { name: 'IfoodWebhookEvent' } }
+    /**
+     * Find zero or one IfoodWebhookEvent that matches the filter.
+     * @param {IfoodWebhookEventFindUniqueArgs} args - Arguments to find a IfoodWebhookEvent
+     * @example
+     * // Get one IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends IfoodWebhookEventFindUniqueArgs>(args: SelectSubset<T, IfoodWebhookEventFindUniqueArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one IfoodWebhookEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {IfoodWebhookEventFindUniqueOrThrowArgs} args - Arguments to find a IfoodWebhookEvent
+     * @example
+     * // Get one IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends IfoodWebhookEventFindUniqueOrThrowArgs>(args: SelectSubset<T, IfoodWebhookEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IfoodWebhookEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventFindFirstArgs} args - Arguments to find a IfoodWebhookEvent
+     * @example
+     * // Get one IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends IfoodWebhookEventFindFirstArgs>(args?: SelectSubset<T, IfoodWebhookEventFindFirstArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IfoodWebhookEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventFindFirstOrThrowArgs} args - Arguments to find a IfoodWebhookEvent
+     * @example
+     * // Get one IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends IfoodWebhookEventFindFirstOrThrowArgs>(args?: SelectSubset<T, IfoodWebhookEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more IfoodWebhookEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all IfoodWebhookEvents
+     * const ifoodWebhookEvents = await prisma.ifoodWebhookEvent.findMany()
+     * 
+     * // Get first 10 IfoodWebhookEvents
+     * const ifoodWebhookEvents = await prisma.ifoodWebhookEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const ifoodWebhookEventWithIdOnly = await prisma.ifoodWebhookEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends IfoodWebhookEventFindManyArgs>(args?: SelectSubset<T, IfoodWebhookEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a IfoodWebhookEvent.
+     * @param {IfoodWebhookEventCreateArgs} args - Arguments to create a IfoodWebhookEvent.
+     * @example
+     * // Create one IfoodWebhookEvent
+     * const IfoodWebhookEvent = await prisma.ifoodWebhookEvent.create({
+     *   data: {
+     *     // ... data to create a IfoodWebhookEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends IfoodWebhookEventCreateArgs>(args: SelectSubset<T, IfoodWebhookEventCreateArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many IfoodWebhookEvents.
+     * @param {IfoodWebhookEventCreateManyArgs} args - Arguments to create many IfoodWebhookEvents.
+     * @example
+     * // Create many IfoodWebhookEvents
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends IfoodWebhookEventCreateManyArgs>(args?: SelectSubset<T, IfoodWebhookEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many IfoodWebhookEvents and returns the data saved in the database.
+     * @param {IfoodWebhookEventCreateManyAndReturnArgs} args - Arguments to create many IfoodWebhookEvents.
+     * @example
+     * // Create many IfoodWebhookEvents
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many IfoodWebhookEvents and only return the `id`
+     * const ifoodWebhookEventWithIdOnly = await prisma.ifoodWebhookEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends IfoodWebhookEventCreateManyAndReturnArgs>(args?: SelectSubset<T, IfoodWebhookEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a IfoodWebhookEvent.
+     * @param {IfoodWebhookEventDeleteArgs} args - Arguments to delete one IfoodWebhookEvent.
+     * @example
+     * // Delete one IfoodWebhookEvent
+     * const IfoodWebhookEvent = await prisma.ifoodWebhookEvent.delete({
+     *   where: {
+     *     // ... filter to delete one IfoodWebhookEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends IfoodWebhookEventDeleteArgs>(args: SelectSubset<T, IfoodWebhookEventDeleteArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one IfoodWebhookEvent.
+     * @param {IfoodWebhookEventUpdateArgs} args - Arguments to update one IfoodWebhookEvent.
+     * @example
+     * // Update one IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends IfoodWebhookEventUpdateArgs>(args: SelectSubset<T, IfoodWebhookEventUpdateArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more IfoodWebhookEvents.
+     * @param {IfoodWebhookEventDeleteManyArgs} args - Arguments to filter IfoodWebhookEvents to delete.
+     * @example
+     * // Delete a few IfoodWebhookEvents
+     * const { count } = await prisma.ifoodWebhookEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends IfoodWebhookEventDeleteManyArgs>(args?: SelectSubset<T, IfoodWebhookEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IfoodWebhookEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many IfoodWebhookEvents
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends IfoodWebhookEventUpdateManyArgs>(args: SelectSubset<T, IfoodWebhookEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IfoodWebhookEvents and returns the data updated in the database.
+     * @param {IfoodWebhookEventUpdateManyAndReturnArgs} args - Arguments to update many IfoodWebhookEvents.
+     * @example
+     * // Update many IfoodWebhookEvents
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more IfoodWebhookEvents and only return the `id`
+     * const ifoodWebhookEventWithIdOnly = await prisma.ifoodWebhookEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends IfoodWebhookEventUpdateManyAndReturnArgs>(args: SelectSubset<T, IfoodWebhookEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one IfoodWebhookEvent.
+     * @param {IfoodWebhookEventUpsertArgs} args - Arguments to update or create a IfoodWebhookEvent.
+     * @example
+     * // Update or create a IfoodWebhookEvent
+     * const ifoodWebhookEvent = await prisma.ifoodWebhookEvent.upsert({
+     *   create: {
+     *     // ... data to create a IfoodWebhookEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the IfoodWebhookEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends IfoodWebhookEventUpsertArgs>(args: SelectSubset<T, IfoodWebhookEventUpsertArgs<ExtArgs>>): Prisma__IfoodWebhookEventClient<$Result.GetResult<Prisma.$IfoodWebhookEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of IfoodWebhookEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventCountArgs} args - Arguments to filter IfoodWebhookEvents to count.
+     * @example
+     * // Count the number of IfoodWebhookEvents
+     * const count = await prisma.ifoodWebhookEvent.count({
+     *   where: {
+     *     // ... the filter for the IfoodWebhookEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends IfoodWebhookEventCountArgs>(
+      args?: Subset<T, IfoodWebhookEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], IfoodWebhookEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a IfoodWebhookEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends IfoodWebhookEventAggregateArgs>(args: Subset<T, IfoodWebhookEventAggregateArgs>): Prisma.PrismaPromise<GetIfoodWebhookEventAggregateType<T>>
+
+    /**
+     * Group by IfoodWebhookEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IfoodWebhookEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends IfoodWebhookEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: IfoodWebhookEventGroupByArgs['orderBy'] }
+        : { orderBy?: IfoodWebhookEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, IfoodWebhookEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIfoodWebhookEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the IfoodWebhookEvent model
+   */
+  readonly fields: IfoodWebhookEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for IfoodWebhookEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__IfoodWebhookEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the IfoodWebhookEvent model
+   */
+  interface IfoodWebhookEventFieldRefs {
+    readonly id: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly eventId: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly eventType: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly merchantId: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly ifoodOrderId: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly payload: FieldRef<"IfoodWebhookEvent", 'Json'>
+    readonly payloadHash: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly processingStatus: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly processingError: FieldRef<"IfoodWebhookEvent", 'String'>
+    readonly receivedAt: FieldRef<"IfoodWebhookEvent", 'DateTime'>
+    readonly processedAt: FieldRef<"IfoodWebhookEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * IfoodWebhookEvent findUnique
+   */
+  export type IfoodWebhookEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which IfoodWebhookEvent to fetch.
+     */
+    where: IfoodWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * IfoodWebhookEvent findUniqueOrThrow
+   */
+  export type IfoodWebhookEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which IfoodWebhookEvent to fetch.
+     */
+    where: IfoodWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * IfoodWebhookEvent findFirst
+   */
+  export type IfoodWebhookEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which IfoodWebhookEvent to fetch.
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IfoodWebhookEvents to fetch.
+     */
+    orderBy?: IfoodWebhookEventOrderByWithRelationInput | IfoodWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IfoodWebhookEvents.
+     */
+    cursor?: IfoodWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IfoodWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IfoodWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IfoodWebhookEvents.
+     */
+    distinct?: IfoodWebhookEventScalarFieldEnum | IfoodWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * IfoodWebhookEvent findFirstOrThrow
+   */
+  export type IfoodWebhookEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which IfoodWebhookEvent to fetch.
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IfoodWebhookEvents to fetch.
+     */
+    orderBy?: IfoodWebhookEventOrderByWithRelationInput | IfoodWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IfoodWebhookEvents.
+     */
+    cursor?: IfoodWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IfoodWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IfoodWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IfoodWebhookEvents.
+     */
+    distinct?: IfoodWebhookEventScalarFieldEnum | IfoodWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * IfoodWebhookEvent findMany
+   */
+  export type IfoodWebhookEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which IfoodWebhookEvents to fetch.
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IfoodWebhookEvents to fetch.
+     */
+    orderBy?: IfoodWebhookEventOrderByWithRelationInput | IfoodWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing IfoodWebhookEvents.
+     */
+    cursor?: IfoodWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IfoodWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IfoodWebhookEvents.
+     */
+    skip?: number
+    distinct?: IfoodWebhookEventScalarFieldEnum | IfoodWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * IfoodWebhookEvent create
+   */
+  export type IfoodWebhookEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data needed to create a IfoodWebhookEvent.
+     */
+    data: XOR<IfoodWebhookEventCreateInput, IfoodWebhookEventUncheckedCreateInput>
+  }
+
+  /**
+   * IfoodWebhookEvent createMany
+   */
+  export type IfoodWebhookEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many IfoodWebhookEvents.
+     */
+    data: IfoodWebhookEventCreateManyInput | IfoodWebhookEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IfoodWebhookEvent createManyAndReturn
+   */
+  export type IfoodWebhookEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many IfoodWebhookEvents.
+     */
+    data: IfoodWebhookEventCreateManyInput | IfoodWebhookEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IfoodWebhookEvent update
+   */
+  export type IfoodWebhookEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data needed to update a IfoodWebhookEvent.
+     */
+    data: XOR<IfoodWebhookEventUpdateInput, IfoodWebhookEventUncheckedUpdateInput>
+    /**
+     * Choose, which IfoodWebhookEvent to update.
+     */
+    where: IfoodWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * IfoodWebhookEvent updateMany
+   */
+  export type IfoodWebhookEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update IfoodWebhookEvents.
+     */
+    data: XOR<IfoodWebhookEventUpdateManyMutationInput, IfoodWebhookEventUncheckedUpdateManyInput>
+    /**
+     * Filter which IfoodWebhookEvents to update
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * Limit how many IfoodWebhookEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IfoodWebhookEvent updateManyAndReturn
+   */
+  export type IfoodWebhookEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data used to update IfoodWebhookEvents.
+     */
+    data: XOR<IfoodWebhookEventUpdateManyMutationInput, IfoodWebhookEventUncheckedUpdateManyInput>
+    /**
+     * Filter which IfoodWebhookEvents to update
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * Limit how many IfoodWebhookEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IfoodWebhookEvent upsert
+   */
+  export type IfoodWebhookEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * The filter to search for the IfoodWebhookEvent to update in case it exists.
+     */
+    where: IfoodWebhookEventWhereUniqueInput
+    /**
+     * In case the IfoodWebhookEvent found by the `where` argument doesn't exist, create a new IfoodWebhookEvent with this data.
+     */
+    create: XOR<IfoodWebhookEventCreateInput, IfoodWebhookEventUncheckedCreateInput>
+    /**
+     * In case the IfoodWebhookEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<IfoodWebhookEventUpdateInput, IfoodWebhookEventUncheckedUpdateInput>
+  }
+
+  /**
+   * IfoodWebhookEvent delete
+   */
+  export type IfoodWebhookEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter which IfoodWebhookEvent to delete.
+     */
+    where: IfoodWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * IfoodWebhookEvent deleteMany
+   */
+  export type IfoodWebhookEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IfoodWebhookEvents to delete
+     */
+    where?: IfoodWebhookEventWhereInput
+    /**
+     * Limit how many IfoodWebhookEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * IfoodWebhookEvent without action
+   */
+  export type IfoodWebhookEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IfoodWebhookEvent
+     */
+    select?: IfoodWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IfoodWebhookEvent
+     */
+    omit?: IfoodWebhookEventOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -16205,6 +18736,43 @@ export namespace Prisma {
   };
 
   export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+  export const IntegrationOutboxScalarFieldEnum: {
+    id: 'id',
+    topic: 'topic',
+    source: 'source',
+    status: 'status',
+    orderId: 'orderId',
+    idempotencyKey: 'idempotencyKey',
+    payload: 'payload',
+    attempts: 'attempts',
+    nextAttemptAt: 'nextAttemptAt',
+    lastError: 'lastError',
+    lockedAt: 'lockedAt',
+    processedAt: 'processedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type IntegrationOutboxScalarFieldEnum = (typeof IntegrationOutboxScalarFieldEnum)[keyof typeof IntegrationOutboxScalarFieldEnum]
+
+
+  export const IfoodWebhookEventScalarFieldEnum: {
+    id: 'id',
+    eventId: 'eventId',
+    eventType: 'eventType',
+    merchantId: 'merchantId',
+    ifoodOrderId: 'ifoodOrderId',
+    payload: 'payload',
+    payloadHash: 'payloadHash',
+    processingStatus: 'processingStatus',
+    processingError: 'processingError',
+    receivedAt: 'receivedAt',
+    processedAt: 'processedAt'
+  };
+
+  export type IfoodWebhookEventScalarFieldEnum = (typeof IfoodWebhookEventScalarFieldEnum)[keyof typeof IfoodWebhookEventScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -16390,6 +18958,48 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxTopic'
+   */
+  export type EnumIntegrationOutboxTopicFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxTopic'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxTopic[]'
+   */
+  export type ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxTopic[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxSource'
+   */
+  export type EnumIntegrationOutboxSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxSource[]'
+   */
+  export type ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxSource[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxStatus'
+   */
+  export type EnumIntegrationOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'IntegrationOutboxStatus[]'
+   */
+  export type ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IntegrationOutboxStatus[]'>
     
 
 
@@ -17120,6 +19730,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     table?: XOR<TableNullableScalarRelationFilter, TableWhereInput> | null
     items?: OrderItemListRelationFilter
+    integrationOutbox?: IntegrationOutboxListRelationFilter
   }
 
   export type OrderOrderByWithRelationInput = {
@@ -17141,6 +19752,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     table?: TableOrderByWithRelationInput
     items?: OrderItemOrderByRelationAggregateInput
+    integrationOutbox?: IntegrationOutboxOrderByRelationAggregateInput
   }
 
   export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -17165,6 +19777,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     table?: XOR<TableNullableScalarRelationFilter, TableWhereInput> | null
     items?: OrderItemListRelationFilter
+    integrationOutbox?: IntegrationOutboxListRelationFilter
   }, "id">
 
   export type OrderOrderByWithAggregationInput = {
@@ -17281,6 +19894,190 @@ export namespace Prisma {
     unitPrice?: DecimalWithAggregatesFilter<"OrderItem"> | Decimal | DecimalJsLike | number | string
     notes?: StringNullableWithAggregatesFilter<"OrderItem"> | string | null
     choices?: JsonWithAggregatesFilter<"OrderItem">
+  }
+
+  export type IntegrationOutboxWhereInput = {
+    AND?: IntegrationOutboxWhereInput | IntegrationOutboxWhereInput[]
+    OR?: IntegrationOutboxWhereInput[]
+    NOT?: IntegrationOutboxWhereInput | IntegrationOutboxWhereInput[]
+    id?: StringFilter<"IntegrationOutbox"> | string
+    topic?: EnumIntegrationOutboxTopicFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxStatus
+    orderId?: StringFilter<"IntegrationOutbox"> | string
+    idempotencyKey?: StringFilter<"IntegrationOutbox"> | string
+    payload?: JsonFilter<"IntegrationOutbox">
+    attempts?: IntFilter<"IntegrationOutbox"> | number
+    nextAttemptAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    lastError?: StringNullableFilter<"IntegrationOutbox"> | string | null
+    lockedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    processedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    order?: XOR<OrderScalarRelationFilter, OrderWhereInput>
+  }
+
+  export type IntegrationOutboxOrderByWithRelationInput = {
+    id?: SortOrder
+    topic?: SortOrder
+    source?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    idempotencyKey?: SortOrder
+    payload?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    lockedAt?: SortOrderInput | SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    order?: OrderOrderByWithRelationInput
+  }
+
+  export type IntegrationOutboxWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    idempotencyKey?: string
+    AND?: IntegrationOutboxWhereInput | IntegrationOutboxWhereInput[]
+    OR?: IntegrationOutboxWhereInput[]
+    NOT?: IntegrationOutboxWhereInput | IntegrationOutboxWhereInput[]
+    topic?: EnumIntegrationOutboxTopicFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxStatus
+    orderId?: StringFilter<"IntegrationOutbox"> | string
+    payload?: JsonFilter<"IntegrationOutbox">
+    attempts?: IntFilter<"IntegrationOutbox"> | number
+    nextAttemptAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    lastError?: StringNullableFilter<"IntegrationOutbox"> | string | null
+    lockedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    processedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    order?: XOR<OrderScalarRelationFilter, OrderWhereInput>
+  }, "id" | "idempotencyKey">
+
+  export type IntegrationOutboxOrderByWithAggregationInput = {
+    id?: SortOrder
+    topic?: SortOrder
+    source?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    idempotencyKey?: SortOrder
+    payload?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    lockedAt?: SortOrderInput | SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: IntegrationOutboxCountOrderByAggregateInput
+    _avg?: IntegrationOutboxAvgOrderByAggregateInput
+    _max?: IntegrationOutboxMaxOrderByAggregateInput
+    _min?: IntegrationOutboxMinOrderByAggregateInput
+    _sum?: IntegrationOutboxSumOrderByAggregateInput
+  }
+
+  export type IntegrationOutboxScalarWhereWithAggregatesInput = {
+    AND?: IntegrationOutboxScalarWhereWithAggregatesInput | IntegrationOutboxScalarWhereWithAggregatesInput[]
+    OR?: IntegrationOutboxScalarWhereWithAggregatesInput[]
+    NOT?: IntegrationOutboxScalarWhereWithAggregatesInput | IntegrationOutboxScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"IntegrationOutbox"> | string
+    topic?: EnumIntegrationOutboxTopicWithAggregatesFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceWithAggregatesFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusWithAggregatesFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxStatus
+    orderId?: StringWithAggregatesFilter<"IntegrationOutbox"> | string
+    idempotencyKey?: StringWithAggregatesFilter<"IntegrationOutbox"> | string
+    payload?: JsonWithAggregatesFilter<"IntegrationOutbox">
+    attempts?: IntWithAggregatesFilter<"IntegrationOutbox"> | number
+    nextAttemptAt?: DateTimeWithAggregatesFilter<"IntegrationOutbox"> | Date | string
+    lastError?: StringNullableWithAggregatesFilter<"IntegrationOutbox"> | string | null
+    lockedAt?: DateTimeNullableWithAggregatesFilter<"IntegrationOutbox"> | Date | string | null
+    processedAt?: DateTimeNullableWithAggregatesFilter<"IntegrationOutbox"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"IntegrationOutbox"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"IntegrationOutbox"> | Date | string
+  }
+
+  export type IfoodWebhookEventWhereInput = {
+    AND?: IfoodWebhookEventWhereInput | IfoodWebhookEventWhereInput[]
+    OR?: IfoodWebhookEventWhereInput[]
+    NOT?: IfoodWebhookEventWhereInput | IfoodWebhookEventWhereInput[]
+    id?: StringFilter<"IfoodWebhookEvent"> | string
+    eventId?: StringFilter<"IfoodWebhookEvent"> | string
+    eventType?: StringFilter<"IfoodWebhookEvent"> | string
+    merchantId?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    ifoodOrderId?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    payload?: JsonFilter<"IfoodWebhookEvent">
+    payloadHash?: StringFilter<"IfoodWebhookEvent"> | string
+    processingStatus?: StringFilter<"IfoodWebhookEvent"> | string
+    processingError?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    receivedAt?: DateTimeFilter<"IfoodWebhookEvent"> | Date | string
+    processedAt?: DateTimeNullableFilter<"IfoodWebhookEvent"> | Date | string | null
+  }
+
+  export type IfoodWebhookEventOrderByWithRelationInput = {
+    id?: SortOrder
+    eventId?: SortOrder
+    eventType?: SortOrder
+    merchantId?: SortOrderInput | SortOrder
+    ifoodOrderId?: SortOrderInput | SortOrder
+    payload?: SortOrder
+    payloadHash?: SortOrder
+    processingStatus?: SortOrder
+    processingError?: SortOrderInput | SortOrder
+    receivedAt?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+  }
+
+  export type IfoodWebhookEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    eventId?: string
+    AND?: IfoodWebhookEventWhereInput | IfoodWebhookEventWhereInput[]
+    OR?: IfoodWebhookEventWhereInput[]
+    NOT?: IfoodWebhookEventWhereInput | IfoodWebhookEventWhereInput[]
+    eventType?: StringFilter<"IfoodWebhookEvent"> | string
+    merchantId?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    ifoodOrderId?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    payload?: JsonFilter<"IfoodWebhookEvent">
+    payloadHash?: StringFilter<"IfoodWebhookEvent"> | string
+    processingStatus?: StringFilter<"IfoodWebhookEvent"> | string
+    processingError?: StringNullableFilter<"IfoodWebhookEvent"> | string | null
+    receivedAt?: DateTimeFilter<"IfoodWebhookEvent"> | Date | string
+    processedAt?: DateTimeNullableFilter<"IfoodWebhookEvent"> | Date | string | null
+  }, "id" | "eventId">
+
+  export type IfoodWebhookEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    eventId?: SortOrder
+    eventType?: SortOrder
+    merchantId?: SortOrderInput | SortOrder
+    ifoodOrderId?: SortOrderInput | SortOrder
+    payload?: SortOrder
+    payloadHash?: SortOrder
+    processingStatus?: SortOrder
+    processingError?: SortOrderInput | SortOrder
+    receivedAt?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    _count?: IfoodWebhookEventCountOrderByAggregateInput
+    _max?: IfoodWebhookEventMaxOrderByAggregateInput
+    _min?: IfoodWebhookEventMinOrderByAggregateInput
+  }
+
+  export type IfoodWebhookEventScalarWhereWithAggregatesInput = {
+    AND?: IfoodWebhookEventScalarWhereWithAggregatesInput | IfoodWebhookEventScalarWhereWithAggregatesInput[]
+    OR?: IfoodWebhookEventScalarWhereWithAggregatesInput[]
+    NOT?: IfoodWebhookEventScalarWhereWithAggregatesInput | IfoodWebhookEventScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"IfoodWebhookEvent"> | string
+    eventId?: StringWithAggregatesFilter<"IfoodWebhookEvent"> | string
+    eventType?: StringWithAggregatesFilter<"IfoodWebhookEvent"> | string
+    merchantId?: StringNullableWithAggregatesFilter<"IfoodWebhookEvent"> | string | null
+    ifoodOrderId?: StringNullableWithAggregatesFilter<"IfoodWebhookEvent"> | string | null
+    payload?: JsonWithAggregatesFilter<"IfoodWebhookEvent">
+    payloadHash?: StringWithAggregatesFilter<"IfoodWebhookEvent"> | string
+    processingStatus?: StringWithAggregatesFilter<"IfoodWebhookEvent"> | string
+    processingError?: StringNullableWithAggregatesFilter<"IfoodWebhookEvent"> | string | null
+    receivedAt?: DateTimeWithAggregatesFilter<"IfoodWebhookEvent"> | Date | string
+    processedAt?: DateTimeNullableWithAggregatesFilter<"IfoodWebhookEvent"> | Date | string | null
   }
 
   export type CategoryCreateInput = {
@@ -18011,6 +20808,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     table?: TableCreateNestedOneWithoutOrdersInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
+    integrationOutbox?: IntegrationOutboxCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateInput = {
@@ -18031,6 +20829,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    integrationOutbox?: IntegrationOutboxUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUpdateInput = {
@@ -18051,6 +20850,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     table?: TableUpdateOneWithoutOrdersNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
+    integrationOutbox?: IntegrationOutboxUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateInput = {
@@ -18071,6 +20871,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    integrationOutbox?: IntegrationOutboxUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderCreateManyInput = {
@@ -18195,6 +20996,222 @@ export namespace Prisma {
     unitPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     choices?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type IntegrationOutboxCreateInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    order: OrderCreateNestedOneWithoutIntegrationOutboxInput
+  }
+
+  export type IntegrationOutboxUncheckedCreateInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    orderId: string
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationOutboxUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutIntegrationOutboxNestedInput
+  }
+
+  export type IntegrationOutboxUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    orderId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationOutboxCreateManyInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    orderId: string
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationOutboxUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationOutboxUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    orderId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IfoodWebhookEventCreateInput = {
+    id?: string
+    eventId: string
+    eventType: string
+    merchantId?: string | null
+    ifoodOrderId?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    payloadHash: string
+    processingStatus?: string
+    processingError?: string | null
+    receivedAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type IfoodWebhookEventUncheckedCreateInput = {
+    id?: string
+    eventId: string
+    eventType: string
+    merchantId?: string | null
+    ifoodOrderId?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    payloadHash: string
+    processingStatus?: string
+    processingError?: string | null
+    receivedAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type IfoodWebhookEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    eventType?: StringFieldUpdateOperationsInput | string
+    merchantId?: NullableStringFieldUpdateOperationsInput | string | null
+    ifoodOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    payloadHash?: StringFieldUpdateOperationsInput | string
+    processingStatus?: StringFieldUpdateOperationsInput | string
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type IfoodWebhookEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    eventType?: StringFieldUpdateOperationsInput | string
+    merchantId?: NullableStringFieldUpdateOperationsInput | string | null
+    ifoodOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    payloadHash?: StringFieldUpdateOperationsInput | string
+    processingStatus?: StringFieldUpdateOperationsInput | string
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type IfoodWebhookEventCreateManyInput = {
+    id?: string
+    eventId: string
+    eventType: string
+    merchantId?: string | null
+    ifoodOrderId?: string | null
+    payload: JsonNullValueInput | InputJsonValue
+    payloadHash: string
+    processingStatus?: string
+    processingError?: string | null
+    receivedAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type IfoodWebhookEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    eventType?: StringFieldUpdateOperationsInput | string
+    merchantId?: NullableStringFieldUpdateOperationsInput | string | null
+    ifoodOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    payloadHash?: StringFieldUpdateOperationsInput | string
+    processingStatus?: StringFieldUpdateOperationsInput | string
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type IfoodWebhookEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    eventType?: StringFieldUpdateOperationsInput | string
+    merchantId?: NullableStringFieldUpdateOperationsInput | string | null
+    ifoodOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: JsonNullValueInput | InputJsonValue
+    payloadHash?: StringFieldUpdateOperationsInput | string
+    processingStatus?: StringFieldUpdateOperationsInput | string
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -18959,6 +21976,16 @@ export namespace Prisma {
     isNot?: TableWhereInput | null
   }
 
+  export type IntegrationOutboxListRelationFilter = {
+    every?: IntegrationOutboxWhereInput
+    some?: IntegrationOutboxWhereInput
+    none?: IntegrationOutboxWhereInput
+  }
+
+  export type IntegrationOutboxOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type OrderCountOrderByAggregateInput = {
     id?: SortOrder
     status?: SortOrder
@@ -19186,6 +22213,179 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type EnumIntegrationOutboxTopicFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxTopic | EnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel> | $Enums.IntegrationOutboxTopic
+  }
+
+  export type EnumIntegrationOutboxSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxSource | EnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel> | $Enums.IntegrationOutboxSource
+  }
+
+  export type EnumIntegrationOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxStatus | EnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel> | $Enums.IntegrationOutboxStatus
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type IntegrationOutboxCountOrderByAggregateInput = {
+    id?: SortOrder
+    topic?: SortOrder
+    source?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    idempotencyKey?: SortOrder
+    payload?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    lockedAt?: SortOrder
+    processedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationOutboxAvgOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type IntegrationOutboxMaxOrderByAggregateInput = {
+    id?: SortOrder
+    topic?: SortOrder
+    source?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    idempotencyKey?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    lockedAt?: SortOrder
+    processedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationOutboxMinOrderByAggregateInput = {
+    id?: SortOrder
+    topic?: SortOrder
+    source?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    idempotencyKey?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    lockedAt?: SortOrder
+    processedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationOutboxSumOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type EnumIntegrationOutboxTopicWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxTopic | EnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxTopicWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxTopic
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel>
+  }
+
+  export type EnumIntegrationOutboxSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxSource | EnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxSourceWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel>
+  }
+
+  export type EnumIntegrationOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxStatus | EnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type IfoodWebhookEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    eventId?: SortOrder
+    eventType?: SortOrder
+    merchantId?: SortOrder
+    ifoodOrderId?: SortOrder
+    payload?: SortOrder
+    payloadHash?: SortOrder
+    processingStatus?: SortOrder
+    processingError?: SortOrder
+    receivedAt?: SortOrder
+    processedAt?: SortOrder
+  }
+
+  export type IfoodWebhookEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    eventId?: SortOrder
+    eventType?: SortOrder
+    merchantId?: SortOrder
+    ifoodOrderId?: SortOrder
+    payloadHash?: SortOrder
+    processingStatus?: SortOrder
+    processingError?: SortOrder
+    receivedAt?: SortOrder
+    processedAt?: SortOrder
+  }
+
+  export type IfoodWebhookEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    eventId?: SortOrder
+    eventType?: SortOrder
+    merchantId?: SortOrder
+    ifoodOrderId?: SortOrder
+    payloadHash?: SortOrder
+    processingStatus?: SortOrder
+    processingError?: SortOrder
+    receivedAt?: SortOrder
+    processedAt?: SortOrder
   }
 
   export type ProductCreateNestedManyWithoutCategoryInput = {
@@ -19893,11 +23093,25 @@ export namespace Prisma {
     connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
   }
 
+  export type IntegrationOutboxCreateNestedManyWithoutOrderInput = {
+    create?: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput> | IntegrationOutboxCreateWithoutOrderInput[] | IntegrationOutboxUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: IntegrationOutboxCreateOrConnectWithoutOrderInput | IntegrationOutboxCreateOrConnectWithoutOrderInput[]
+    createMany?: IntegrationOutboxCreateManyOrderInputEnvelope
+    connect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+  }
+
   export type OrderItemUncheckedCreateNestedManyWithoutOrderInput = {
     create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
     createMany?: OrderItemCreateManyOrderInputEnvelope
     connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
+  export type IntegrationOutboxUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput> | IntegrationOutboxCreateWithoutOrderInput[] | IntegrationOutboxUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: IntegrationOutboxCreateOrConnectWithoutOrderInput | IntegrationOutboxCreateOrConnectWithoutOrderInput[]
+    createMany?: IntegrationOutboxCreateManyOrderInputEnvelope
+    connect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
   }
 
   export type EnumOrderStatusFieldUpdateOperationsInput = {
@@ -19944,6 +23158,20 @@ export namespace Prisma {
     deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
   }
 
+  export type IntegrationOutboxUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput> | IntegrationOutboxCreateWithoutOrderInput[] | IntegrationOutboxUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: IntegrationOutboxCreateOrConnectWithoutOrderInput | IntegrationOutboxCreateOrConnectWithoutOrderInput[]
+    upsert?: IntegrationOutboxUpsertWithWhereUniqueWithoutOrderInput | IntegrationOutboxUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: IntegrationOutboxCreateManyOrderInputEnvelope
+    set?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    disconnect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    delete?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    connect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    update?: IntegrationOutboxUpdateWithWhereUniqueWithoutOrderInput | IntegrationOutboxUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: IntegrationOutboxUpdateManyWithWhereWithoutOrderInput | IntegrationOutboxUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: IntegrationOutboxScalarWhereInput | IntegrationOutboxScalarWhereInput[]
+  }
+
   export type OrderItemUncheckedUpdateManyWithoutOrderNestedInput = {
     create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
@@ -19956,6 +23184,20 @@ export namespace Prisma {
     update?: OrderItemUpdateWithWhereUniqueWithoutOrderInput | OrderItemUpdateWithWhereUniqueWithoutOrderInput[]
     updateMany?: OrderItemUpdateManyWithWhereWithoutOrderInput | OrderItemUpdateManyWithWhereWithoutOrderInput[]
     deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
+  export type IntegrationOutboxUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput> | IntegrationOutboxCreateWithoutOrderInput[] | IntegrationOutboxUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: IntegrationOutboxCreateOrConnectWithoutOrderInput | IntegrationOutboxCreateOrConnectWithoutOrderInput[]
+    upsert?: IntegrationOutboxUpsertWithWhereUniqueWithoutOrderInput | IntegrationOutboxUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: IntegrationOutboxCreateManyOrderInputEnvelope
+    set?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    disconnect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    delete?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    connect?: IntegrationOutboxWhereUniqueInput | IntegrationOutboxWhereUniqueInput[]
+    update?: IntegrationOutboxUpdateWithWhereUniqueWithoutOrderInput | IntegrationOutboxUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: IntegrationOutboxUpdateManyWithWhereWithoutOrderInput | IntegrationOutboxUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: IntegrationOutboxScalarWhereInput | IntegrationOutboxScalarWhereInput[]
   }
 
   export type OrderCreateNestedOneWithoutItemsInput = {
@@ -19984,6 +23226,36 @@ export namespace Prisma {
     upsert?: ProductUpsertWithoutOrderItemsInput
     connect?: ProductWhereUniqueInput
     update?: XOR<XOR<ProductUpdateToOneWithWhereWithoutOrderItemsInput, ProductUpdateWithoutOrderItemsInput>, ProductUncheckedUpdateWithoutOrderItemsInput>
+  }
+
+  export type OrderCreateNestedOneWithoutIntegrationOutboxInput = {
+    create?: XOR<OrderCreateWithoutIntegrationOutboxInput, OrderUncheckedCreateWithoutIntegrationOutboxInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutIntegrationOutboxInput
+    connect?: OrderWhereUniqueInput
+  }
+
+  export type EnumIntegrationOutboxTopicFieldUpdateOperationsInput = {
+    set?: $Enums.IntegrationOutboxTopic
+  }
+
+  export type EnumIntegrationOutboxSourceFieldUpdateOperationsInput = {
+    set?: $Enums.IntegrationOutboxSource
+  }
+
+  export type EnumIntegrationOutboxStatusFieldUpdateOperationsInput = {
+    set?: $Enums.IntegrationOutboxStatus
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type OrderUpdateOneRequiredWithoutIntegrationOutboxNestedInput = {
+    create?: XOR<OrderCreateWithoutIntegrationOutboxInput, OrderUncheckedCreateWithoutIntegrationOutboxInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutIntegrationOutboxInput
+    upsert?: OrderUpsertWithoutIntegrationOutboxInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutIntegrationOutboxInput, OrderUpdateWithoutIntegrationOutboxInput>, OrderUncheckedUpdateWithoutIntegrationOutboxInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -20328,6 +23600,82 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumIntegrationOutboxTopicFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxTopic | EnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel> | $Enums.IntegrationOutboxTopic
+  }
+
+  export type NestedEnumIntegrationOutboxSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxSource | EnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel> | $Enums.IntegrationOutboxSource
+  }
+
+  export type NestedEnumIntegrationOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxStatus | EnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel> | $Enums.IntegrationOutboxStatus
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedEnumIntegrationOutboxTopicWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxTopic | EnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxTopic[] | ListEnumIntegrationOutboxTopicFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxTopicWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxTopic
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxTopicFilter<$PrismaModel>
+  }
+
+  export type NestedEnumIntegrationOutboxSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxSource | EnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxSource[] | ListEnumIntegrationOutboxSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxSourceWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxSourceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumIntegrationOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IntegrationOutboxStatus | EnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IntegrationOutboxStatus[] | ListEnumIntegrationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumIntegrationOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.IntegrationOutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumIntegrationOutboxStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ProductCreateWithoutCategoryInput = {
@@ -21747,6 +25095,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemCreateNestedManyWithoutOrderInput
+    integrationOutbox?: IntegrationOutboxCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutTableInput = {
@@ -21766,6 +25115,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    integrationOutbox?: IntegrationOutboxUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutTableInput = {
@@ -21863,6 +25213,48 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type IntegrationOutboxCreateWithoutOrderInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationOutboxUncheckedCreateWithoutOrderInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationOutboxCreateOrConnectWithoutOrderInput = {
+    where: IntegrationOutboxWhereUniqueInput
+    create: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput>
+  }
+
+  export type IntegrationOutboxCreateManyOrderInputEnvelope = {
+    data: IntegrationOutboxCreateManyOrderInput | IntegrationOutboxCreateManyOrderInput[]
+    skipDuplicates?: boolean
+  }
+
   export type TableUpsertWithoutOrdersInput = {
     update: XOR<TableUpdateWithoutOrdersInput, TableUncheckedUpdateWithoutOrdersInput>
     create: XOR<TableCreateWithoutOrdersInput, TableUncheckedCreateWithoutOrdersInput>
@@ -21904,6 +25296,42 @@ export namespace Prisma {
     data: XOR<OrderItemUpdateManyMutationInput, OrderItemUncheckedUpdateManyWithoutOrderInput>
   }
 
+  export type IntegrationOutboxUpsertWithWhereUniqueWithoutOrderInput = {
+    where: IntegrationOutboxWhereUniqueInput
+    update: XOR<IntegrationOutboxUpdateWithoutOrderInput, IntegrationOutboxUncheckedUpdateWithoutOrderInput>
+    create: XOR<IntegrationOutboxCreateWithoutOrderInput, IntegrationOutboxUncheckedCreateWithoutOrderInput>
+  }
+
+  export type IntegrationOutboxUpdateWithWhereUniqueWithoutOrderInput = {
+    where: IntegrationOutboxWhereUniqueInput
+    data: XOR<IntegrationOutboxUpdateWithoutOrderInput, IntegrationOutboxUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type IntegrationOutboxUpdateManyWithWhereWithoutOrderInput = {
+    where: IntegrationOutboxScalarWhereInput
+    data: XOR<IntegrationOutboxUpdateManyMutationInput, IntegrationOutboxUncheckedUpdateManyWithoutOrderInput>
+  }
+
+  export type IntegrationOutboxScalarWhereInput = {
+    AND?: IntegrationOutboxScalarWhereInput | IntegrationOutboxScalarWhereInput[]
+    OR?: IntegrationOutboxScalarWhereInput[]
+    NOT?: IntegrationOutboxScalarWhereInput | IntegrationOutboxScalarWhereInput[]
+    id?: StringFilter<"IntegrationOutbox"> | string
+    topic?: EnumIntegrationOutboxTopicFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFilter<"IntegrationOutbox"> | $Enums.IntegrationOutboxStatus
+    orderId?: StringFilter<"IntegrationOutbox"> | string
+    idempotencyKey?: StringFilter<"IntegrationOutbox"> | string
+    payload?: JsonFilter<"IntegrationOutbox">
+    attempts?: IntFilter<"IntegrationOutbox"> | number
+    nextAttemptAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    lastError?: StringNullableFilter<"IntegrationOutbox"> | string | null
+    lockedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    processedAt?: DateTimeNullableFilter<"IntegrationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"IntegrationOutbox"> | Date | string
+  }
+
   export type OrderCreateWithoutItemsInput = {
     id?: string
     status?: $Enums.OrderStatus
@@ -21921,6 +25349,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     table?: TableCreateNestedOneWithoutOrdersInput
+    integrationOutbox?: IntegrationOutboxCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutItemsInput = {
@@ -21940,6 +25369,7 @@ export namespace Prisma {
     externalRefs?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    integrationOutbox?: IntegrationOutboxUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutItemsInput = {
@@ -22020,6 +25450,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     table?: TableUpdateOneWithoutOrdersNestedInput
+    integrationOutbox?: IntegrationOutboxUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutItemsInput = {
@@ -22039,6 +25470,7 @@ export namespace Prisma {
     externalRefs?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    integrationOutbox?: IntegrationOutboxUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type ProductUpsertWithoutOrderItemsInput = {
@@ -22090,6 +25522,102 @@ export namespace Prisma {
     optionInGroups?: CustomizationOptionUncheckedUpdateManyWithoutOptionProductNestedInput
     optionInTemplateGroups?: CustomizationGroupTemplateOptionUncheckedUpdateManyWithoutOptionProductNestedInput
     groupAssignments?: ProductGroupAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  }
+
+  export type OrderCreateWithoutIntegrationOutboxInput = {
+    id?: string
+    status?: $Enums.OrderStatus
+    type: $Enums.OrderType
+    paymentMethod: $Enums.PaymentMethod
+    changeFor?: Decimal | DecimalJsLike | number | string | null
+    pixProvider?: string | null
+    customerName?: string | null
+    customerPhone?: string | null
+    customerEmail?: string | null
+    address?: string | null
+    notes?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    table?: TableCreateNestedOneWithoutOrdersInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutIntegrationOutboxInput = {
+    id?: string
+    status?: $Enums.OrderStatus
+    type: $Enums.OrderType
+    paymentMethod: $Enums.PaymentMethod
+    changeFor?: Decimal | DecimalJsLike | number | string | null
+    pixProvider?: string | null
+    tableId?: string | null
+    customerName?: string | null
+    customerPhone?: string | null
+    customerEmail?: string | null
+    address?: string | null
+    notes?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutIntegrationOutboxInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutIntegrationOutboxInput, OrderUncheckedCreateWithoutIntegrationOutboxInput>
+  }
+
+  export type OrderUpsertWithoutIntegrationOutboxInput = {
+    update: XOR<OrderUpdateWithoutIntegrationOutboxInput, OrderUncheckedUpdateWithoutIntegrationOutboxInput>
+    create: XOR<OrderCreateWithoutIntegrationOutboxInput, OrderUncheckedCreateWithoutIntegrationOutboxInput>
+    where?: OrderWhereInput
+  }
+
+  export type OrderUpdateToOneWithWhereWithoutIntegrationOutboxInput = {
+    where?: OrderWhereInput
+    data: XOR<OrderUpdateWithoutIntegrationOutboxInput, OrderUncheckedUpdateWithoutIntegrationOutboxInput>
+  }
+
+  export type OrderUpdateWithoutIntegrationOutboxInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+    type?: EnumOrderTypeFieldUpdateOperationsInput | $Enums.OrderType
+    paymentMethod?: EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+    changeFor?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    pixProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    table?: TableUpdateOneWithoutOrdersNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutIntegrationOutboxInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+    type?: EnumOrderTypeFieldUpdateOperationsInput | $Enums.OrderType
+    paymentMethod?: EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+    changeFor?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    pixProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    tableId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type ProductCreateManyCategoryInput = {
@@ -22511,6 +26039,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUpdateManyWithoutOrderNestedInput
+    integrationOutbox?: IntegrationOutboxUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutTableInput = {
@@ -22530,6 +26059,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    integrationOutbox?: IntegrationOutboxUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateManyWithoutTableInput = {
@@ -22559,6 +26089,22 @@ export namespace Prisma {
     choices: JsonNullValueInput | InputJsonValue
   }
 
+  export type IntegrationOutboxCreateManyOrderInput = {
+    id?: string
+    topic: $Enums.IntegrationOutboxTopic
+    source?: $Enums.IntegrationOutboxSource
+    status?: $Enums.IntegrationOutboxStatus
+    idempotencyKey: string
+    payload: JsonNullValueInput | InputJsonValue
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    lockedAt?: Date | string | null
+    processedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrderItemUpdateWithoutOrderInput = {
     id?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
@@ -22584,6 +26130,54 @@ export namespace Prisma {
     unitPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     choices?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type IntegrationOutboxUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationOutboxUncheckedUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationOutboxUncheckedUpdateManyWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    topic?: EnumIntegrationOutboxTopicFieldUpdateOperationsInput | $Enums.IntegrationOutboxTopic
+    source?: EnumIntegrationOutboxSourceFieldUpdateOperationsInput | $Enums.IntegrationOutboxSource
+    status?: EnumIntegrationOutboxStatusFieldUpdateOperationsInput | $Enums.IntegrationOutboxStatus
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 
