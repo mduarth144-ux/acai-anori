@@ -115,7 +115,7 @@ export default function AdminProdutosPage() {
       return
     }
     setFeedback(
-      `Estrutura padrão criada/atualizada. Mestres vinculados: ${result.mastersLinked}.`
+      `Estrutura criada/atualizada. Sanduíches vinculados: ${result?.sandwich?.mastersLinked ?? 0}. Bebidas por volume vinculadas: ${result?.volume?.mastersLinked ?? 0}. Produtos com grupos configurados: ${result?.volume?.customizedMasters ?? 0}.`
     )
     await load()
     setLoadingBootstrap(false)
@@ -133,7 +133,9 @@ export default function AdminProdutosPage() {
           onClick={createDefaultComplements}
           className="rounded-lg border border-fuchsia-400 bg-acai-900/80 px-3 py-2 text-sm text-fuchsia-200 hover:bg-acai-800 disabled:opacity-50"
         >
-          {loadingBootstrap ? 'Criando padrão...' : 'Criar padrão Sanduíche/Lanche/Hambúrguer'}
+          {loadingBootstrap
+            ? 'Criando padrão...'
+            : 'Criar padrão (Sanduíches + Bebidas por volume)'}
         </button>
       </div>
 

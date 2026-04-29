@@ -524,7 +524,8 @@ export default function NovoPedidoPage() {
               autoComplete="email"
             />
           </div>
-          <p className="text-acai-300 mt-2 text-xs">Formato: (92) 98475-9201</p>
+          <p className="text-acai-300 mt-2 text-xs">Formato: (99) 999999-9999</p>
+          <br />
           {phoneCaptureMessage ? (
             <p className="mt-1 text-xs text-fuchsia-300">{phoneCaptureMessage}</p>
           ) : null}

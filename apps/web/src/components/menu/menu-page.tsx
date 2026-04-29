@@ -21,6 +21,8 @@ type ProductCustomization = {
   id: string
   label: string
   required: boolean
+  minSelect?: number
+  affectsPrice?: boolean
   options: Array<{ id: string; name: string; priceModifier: number }>
 }
 
@@ -89,6 +91,11 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     return currentCustomization.options.filter((option) => selectedIds.has(option.id))
   }, [currentCustomization, selectedChoicesByCustomization])
 
+  const minRequiredCurrentStep = Math.max(
+    0,
+    currentCustomization?.minSelect ?? (currentCustomization?.required ? 1 : 0)
+  )
+
   function closeWizard() {
     setWizardProduct(null)
     setWizardStep(0)
@@ -136,10 +143,13 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
   function validateCurrentStep() {
     if (!currentCustomization) return true
-    if (!currentCustomization.required) return true
+    const minSelect = minRequiredCurrentStep
+    if (minSelect === 0) return true
     const selected = selectedChoicesByCustomization[currentCustomization.id] ?? []
-    if (selected.length > 0) return true
-    setWizardError('Este passo é obrigatório. Selecione pelo menos uma opção para continuar.')
+    if (selected.length >= minSelect) return true
+    setWizardError(
+      `Selecione pelo menos ${minSelect} item(ns) para continuar neste grupo.`
+    )
     return false
   }
 
@@ -156,7 +166,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       const selectedIds = new Set(selectedChoicesByCustomization[customization.id] ?? [])
       return customization.options
         .filter((option) => selectedIds.has(option.id))
-        .map((option) => ({ name: option.name, priceModifier: option.priceModifier }))
+        .map((option) => ({
+          name: option.name,
+          priceModifier: customization.affectsPrice === false ? 0 : option.priceModifier,
+        }))
     })
 
     addItem({
@@ -259,13 +272,18 @@ export function MenuPage({ categories, products, tableCode }: Props) {
               <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
               <p className="mt-1 text-sm text-acai-300">{currentCustomization.label}</p>
               <p className="mt-1 text-xs text-acai-400">
-                {currentCustomization.required ? 'Obrigatório' : 'Opcional'} • {selectedOptionsForCurrentStep.length} selecionado(s)
+                {minRequiredCurrentStep > 0
+                  ? `Obrigatório (${minRequiredCurrentStep} mínimo)`
+                  : 'Opcional'}{' '}
+                • {selectedOptionsForCurrentStep.length} selecionado(s)
               </p>
             </div>
 
             <div className="max-h-72 space-y-2 overflow-auto pr-1">
               {currentCustomization.options.map((option) => {
                 const selected = (selectedChoicesByCustomization[currentCustomization.id] ?? []).includes(option.id)
+                const effectivePrice =
+                  currentCustomization.affectsPrice === false ? 0 : option.priceModifier
                 return (
                   <button
                     key={option.id}
@@ -280,7 +298,9 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm">{option.name}</span>
                       <span className="text-xs text-fuchsia-300">
-                        {option.priceModifier > 0 ? `+ R$ ${option.priceModifier.toFixed(2)}` : 'Sem custo'}
+                        {effectivePrice > 0
+                          ? `+ R$ ${effectivePrice.toFixed(2)}`
+                          : 'Sem custo'}
                       </span>
                     </div>
                   </button>

@@ -89,6 +89,9 @@ export function SiteHeader() {
             <Link href="/" className="hover:text-fuchsia-300">
               Cardápio
             </Link>
+            <Link href="/pedidos" className="hover:text-fuchsia-300">
+              Meus pedidos
+            </Link>
             <Link href="/admin" className="hover:text-fuchsia-300">
               Admin
             </Link>

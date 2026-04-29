@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
-import { bootstrapSandwichComplements } from '../../../../lib/product-relations-bootstrap'
+import {
+  bootstrapSandwichComplements,
+  bootstrapVolumeComplements,
+} from '../../../../lib/product-relations-bootstrap'
 import { prisma } from '../../../../lib/prisma'
 
 export async function POST() {
-  const result = await bootstrapSandwichComplements(prisma)
-  return NextResponse.json(result)
+  const [sandwich, volume] = await Promise.all([
+    bootstrapSandwichComplements(prisma),
+    bootstrapVolumeComplements(prisma),
+  ])
+  return NextResponse.json({ sandwich, volume })
 }
