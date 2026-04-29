@@ -36,13 +36,17 @@ export function MenuPage({ categories, products, tableCode }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [query, setQuery] = useState('')
   const [wizardProduct, setWizardProduct] = useState<Product | null>(null)
-  const [wizardStep, setWizardStep] = useState(0)
   const [selectedChoicesByCustomization, setSelectedChoicesByCustomization] = useState<Record<string, string[]>>({})
   const [wizardError, setWizardError] = useState<string | null>(null)
   const addItem = useCartStore((state) => state.addItem)
   const items = useCartStore((state) => state.items)
   const total = useCartStore((state) => state.total)
   const itemCount = items.reduce((acc, i) => acc + i.quantity, 0)
+  const bestSellerNames = [
+    'Açaí Frozen Tradicional',
+    'Açaí Frozen Especial',
+    'Açaí Frozen Mix',
+  ]
 
   const filtered = useMemo(() => {
     const frozenPriority = ['tradicional', 'especial', 'casadinha', 'mix', 'litro']
@@ -83,22 +87,16 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     return ranked.map(({ product }) => product)
   }, [activeCategory, products, query])
 
-  const currentCustomization = wizardProduct?.customizations[wizardStep]
-
-  const selectedOptionsForCurrentStep = useMemo(() => {
-    if (!currentCustomization) return []
-    const selectedIds = new Set(selectedChoicesByCustomization[currentCustomization.id] ?? [])
-    return currentCustomization.options.filter((option) => selectedIds.has(option.id))
-  }, [currentCustomization, selectedChoicesByCustomization])
-
-  const minRequiredCurrentStep = Math.max(
-    0,
-    currentCustomization?.minSelect ?? (currentCustomization?.required ? 1 : 0)
+  const bestSellers = useMemo(
+    () =>
+      bestSellerNames
+        .map((name) => products.find((product) => product.name === name))
+        .filter((product): product is Product => Boolean(product)),
+    [products]
   )
 
   function closeWizard() {
     setWizardProduct(null)
-    setWizardStep(0)
     setWizardError(null)
     setSelectedChoicesByCustomization({})
   }
@@ -120,7 +118,6 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       return
     }
     setWizardProduct(product)
-    setWizardStep(0)
     setWizardError(null)
     setSelectedChoicesByCustomization({})
   }
@@ -141,25 +138,22 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     if (wizardError) setWizardError(null)
   }
 
-  function validateCurrentStep() {
-    if (!currentCustomization) return true
-    const minSelect = minRequiredCurrentStep
-    if (minSelect === 0) return true
-    const selected = selectedChoicesByCustomization[currentCustomization.id] ?? []
-    if (selected.length >= minSelect) return true
-    setWizardError(
-      `Selecione pelo menos ${minSelect} item(ns) para continuar neste grupo.`
-    )
-    return false
-  }
-
-  function nextWizardStep() {
+  function addWizardItemToCart() {
     if (!wizardProduct) return
-    if (!validateCurrentStep()) return
-    if (wizardStep < wizardProduct.customizations.length - 1) {
-      setWizardStep((s) => s + 1)
-      setWizardError(null)
-      return
+    for (const customization of wizardProduct.customizations) {
+      const minSelect = Math.max(
+        0,
+        customization.minSelect ?? (customization.required ? 1 : 0)
+      )
+      const selectedCount =
+        selectedChoicesByCustomization[customization.id]?.length ?? 0
+
+      if (selectedCount < minSelect) {
+        setWizardError(
+          `No grupo "${customization.label}", selecione pelo menos ${minSelect} item(ns).`
+        )
+        return
+      }
     }
 
     const allChoices = wizardProduct.customizations.flatMap((customization) => {
@@ -218,6 +212,46 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" className="mb-6 w-full rounded-xl p-3" />
 
+      {bestSellers.length > 0 ? (
+        <section className="mb-6">
+          <h2 className="mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            {bestSellers.map((product) => (
+              <article key={`best-${product.id}`} className="rounded-xl border border-acai-600 bg-acai-900/60 p-3">
+                <div className="mb-2 h-28 overflow-hidden rounded-lg bg-acai-900">
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      width={400}
+                      height={200}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-acai-400">
+                      Sem imagem
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-sm font-semibold text-fuchsia-100">{product.name}</h3>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold text-fuchsia-300">
+                    R$ {product.price.toFixed(2)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => startWizard(product)}
+                    className="rounded-md bg-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-fuchsia-500"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         {filtered.map((product) => (
           <article key={product.id} className="rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
@@ -262,48 +296,76 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </div>
       )}
 
-      {wizardProduct && currentCustomization ? (
+      {wizardProduct ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 md:items-center">
-          <div className="w-full max-w-xl rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl">
+          <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl max-h-[92vh]">
             <div className="mb-4">
               <p className="text-xs uppercase tracking-wide text-fuchsia-300">
                 ESCOLHA UM ACOMPANHAMENTO
               </p>
               <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
-              <p className="mt-1 text-sm text-acai-300">{currentCustomization.label}</p>
-              <p className="mt-1 text-xs text-acai-400">
-                {minRequiredCurrentStep > 0
-                  ? `Obrigatório (${minRequiredCurrentStep} mínimo)`
-                  : 'Opcional'}{' '}
-                • {selectedOptionsForCurrentStep.length} selecionado(s)
-              </p>
             </div>
 
-            <div className="max-h-72 space-y-2 overflow-auto pr-1">
-              {currentCustomization.options.map((option) => {
-                const selected = (selectedChoicesByCustomization[currentCustomization.id] ?? []).includes(option.id)
-                const effectivePrice =
-                  currentCustomization.affectsPrice === false ? 0 : option.priceModifier
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+              {wizardProduct.customizations.map((customization) => {
+                const selectedOptionsCount =
+                  selectedChoicesByCustomization[customization.id]?.length ?? 0
+                const minSelect = Math.max(
+                  0,
+                  customization.minSelect ?? (customization.required ? 1 : 0)
+                )
+
                 return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => toggleChoice(currentCustomization.id, option.id)}
-                    className={`w-full rounded-xl border px-3 py-2 text-left transition ${
-                      selected
-                        ? 'border-fuchsia-400 bg-fuchsia-950/40 text-fuchsia-100'
-                        : 'border-acai-600 bg-acai-800 text-acai-100 hover:bg-acai-700'
-                    }`}
+                  <section
+                    key={customization.id}
+                    className="border-acai-700/60 border-t pt-4 first:border-t-0 first:pt-0"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm">{option.name}</span>
-                      <span className="text-xs text-fuchsia-300">
-                        {effectivePrice > 0
-                          ? `+ R$ ${effectivePrice.toFixed(2)}`
-                          : 'Sem custo'}
-                      </span>
+                    <div className="mb-2">
+                      <p className="text-sm font-semibold text-fuchsia-100">
+                        {customization.label}
+                      </p>
+                      <p className="mt-1 text-xs text-acai-400">
+                        {minSelect > 0
+                          ? `Obrigatório (${minSelect} mínimo)`
+                          : 'Opcional'}{' '}
+                        • {selectedOptionsCount} selecionado(s)
+                      </p>
                     </div>
-                  </button>
+
+                    <div className="space-y-2">
+                      {customization.options.map((option) => {
+                        const selected = (
+                          selectedChoicesByCustomization[customization.id] ?? []
+                        ).includes(option.id)
+                        const effectivePrice =
+                          customization.affectsPrice === false
+                            ? 0
+                            : option.priceModifier
+
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => toggleChoice(customization.id, option.id)}
+                            className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                              selected
+                                ? 'border-fuchsia-400 bg-fuchsia-950/40 text-fuchsia-100'
+                                : 'border-acai-600 bg-acai-800 text-acai-100 hover:bg-acai-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-sm">{option.name}</span>
+                              <span className="text-xs text-fuchsia-300">
+                                {effectivePrice > 0
+                                  ? `+ R$ ${effectivePrice.toFixed(2)}`
+                                  : 'Sem custo'}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
                 )
               })}
             </div>
@@ -313,24 +375,17 @@ export function MenuPage({ categories, products, tableCode }: Props) {
             <div className="mt-5 flex gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  if (wizardStep === 0) {
-                    closeWizard()
-                    return
-                  }
-                  setWizardStep((s) => Math.max(0, s - 1))
-                  setWizardError(null)
-                }}
+                onClick={closeWizard}
                 className="flex-1 rounded-lg border border-acai-500 px-4 py-2 text-sm font-medium text-acai-100 hover:bg-acai-800"
               >
-                {wizardStep === 0 ? 'Cancelar' : 'Voltar'}
+                Cancelar
               </button>
               <button
                 type="button"
-                onClick={nextWizardStep}
+                onClick={addWizardItemToCart}
                 className="flex-1 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-500"
               >
-                {wizardStep === wizardProduct.customizations.length - 1 ? 'Adicionar ao pedido' : 'Próximo'}
+                Adicionar ao pedido
               </button>
             </div>
           </div>

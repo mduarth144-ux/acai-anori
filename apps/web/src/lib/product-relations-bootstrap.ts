@@ -17,6 +17,9 @@ const VOLUME_PRODUCT_PATTERNS = [
   /\blitro(?:s)?\b/i,
 ]
 
+const FREE_GROUP_LABEL = 'Itens gratuitos (1 obrigatório)'
+const PAID_GROUP_LABEL = 'Itens pagos (opcionais)'
+
 export async function bootstrapSandwichComplements(prisma: PrismaClient) {
   const supportCategory = await prisma.category.upsert({
     where: { slug: 'itens-complementares' },
@@ -164,11 +167,25 @@ export async function bootstrapVolumeComplements(prisma: PrismaClient) {
   const excludedIds = [drinksKit.id, ice.id, cup.id, straw.id, lemon.id]
   const products = await prisma.product.findMany({
     where: { id: { notIn: excludedIds } },
-    select: { id: true, name: true, description: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: { select: { name: true, slug: true } },
+    },
   })
 
   const masters = products.filter((product) =>
-    isVolumeProduct(`${product.name} ${product.description ?? ''}`)
+    shouldReceiveFrozenVolumeComplements({
+      name: product.name,
+      description: product.description,
+      categoryName: product.category.name,
+      categorySlug: product.category.slug,
+    })
+  )
+
+  const nonTargetProducts = products.filter(
+    (product) => !masters.some((master) => master.id === product.id)
   )
 
   let createdForMasters = 0
@@ -195,7 +212,7 @@ export async function bootstrapVolumeComplements(prisma: PrismaClient) {
   for (const master of masters) {
     await upsertCustomizationGroup(prisma, {
       productId: master.id,
-      label: 'Itens gratuitos (1 obrigatório)',
+      label: FREE_GROUP_LABEL,
       minSelect: 1,
       affectsPrice: false,
       options: [
@@ -205,7 +222,7 @@ export async function bootstrapVolumeComplements(prisma: PrismaClient) {
     })
     await upsertCustomizationGroup(prisma, {
       productId: master.id,
-      label: 'Itens pagos (opcionais)',
+      label: PAID_GROUP_LABEL,
       minSelect: 0,
       affectsPrice: true,
       options: [
@@ -217,15 +234,213 @@ export async function bootstrapVolumeComplements(prisma: PrismaClient) {
     customizedMasters += 1
   }
 
+  let cleanedProducts = 0
+  for (const product of nonTargetProducts) {
+    const deletedGroups = await prisma.productCustomization.deleteMany({
+      where: {
+        productId: product.id,
+        label: { in: [FREE_GROUP_LABEL, PAID_GROUP_LABEL] },
+      },
+    })
+
+    const deletedRelation = await prisma.productRelation.deleteMany({
+      where: {
+        parentProductId: product.id,
+        childProductId: drinksKit.id,
+      },
+    })
+
+    if (deletedGroups.count > 0 || deletedRelation.count > 0) {
+      cleanedProducts += 1
+    }
+  }
+
   return {
     categoryId: supportCategory.id,
     mastersLinked: masters.length,
     createdForMasters,
     customizedMasters,
+    cleanedProducts,
     kit: {
       drinksKitId: drinksKit.id,
     },
   }
+}
+
+export async function bootstrapTopFrozenProducts(prisma: PrismaClient) {
+  const categorySlugs = {
+    tradicional: 'acai-frozen-tradicional',
+    especial: 'acai-frozen-especial',
+    mix: 'acai-frozen-mix',
+  } as const
+
+  const categories = await prisma.category.findMany({
+    where: { slug: { in: Object.values(categorySlugs) } },
+    select: { id: true, slug: true, name: true },
+  })
+  const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
+
+  const references = await Promise.all(
+    Object.values(categorySlugs).map(async (slug) =>
+      prisma.product.findFirst({
+        where: { category: { slug } },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+        select: { imageUrl: true, description: true },
+      })
+    )
+  )
+
+  const models = [
+    {
+      key: 'tradicional' as const,
+      name: 'Açaí Frozen Tradicional',
+      slug: categorySlugs.tradicional,
+      price: 21,
+      description:
+        'Nosso clássico açaí frozen com montagem personalizada e acompanhamentos.',
+      groups: [
+        {
+          label: 'Itens gratuitos (1 obrigatório)',
+          minSelect: 1,
+          affectsPrice: false,
+          options: [
+            { name: 'Leite ninho', priceModifier: 0 },
+            { name: 'Kit-kat', priceModifier: 0 },
+          ],
+        },
+        {
+          label: 'Itens pagos (opcionais)',
+          minSelect: 0,
+          affectsPrice: true,
+          options: [
+            { name: 'Leite condensado', priceModifier: 1.5 },
+            { name: 'Avelã', priceModifier: 1.5 },
+            { name: 'Aveia', priceModifier: 1.5 },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'especial' as const,
+      name: 'Açaí Frozen Especial',
+      slug: categorySlugs.especial,
+      price: 42,
+      description:
+        'Versão especial com base premium; adicionais caros ficam opcionais para upgrade.',
+      groups: [
+        {
+          label: 'Acompanhamentos premium (opcionais)',
+          minSelect: 0,
+          affectsPrice: true,
+          options: [
+            { name: 'Leite condensado', priceModifier: 1.5 },
+            { name: 'Avelã', priceModifier: 1.5 },
+            { name: 'Aveia', priceModifier: 1.5 },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'mix' as const,
+      name: 'Açaí Frozen Mix',
+      slug: categorySlugs.mix,
+      price: 32,
+      description:
+        'Combinação mix de sabores com acompanhamentos para montar do seu jeito.',
+      groups: [
+        {
+          label: 'Itens gratuitos (1 obrigatório)',
+          minSelect: 1,
+          affectsPrice: false,
+          options: [
+            { name: 'Leite ninho', priceModifier: 0 },
+            { name: 'Kit-kat', priceModifier: 0 },
+          ],
+        },
+        {
+          label: 'Itens pagos (opcionais)',
+          minSelect: 0,
+          affectsPrice: true,
+          options: [
+            { name: 'Leite condensado', priceModifier: 1.5 },
+            { name: 'Avelã', priceModifier: 1.5 },
+            { name: 'Aveia', priceModifier: 1.5 },
+          ],
+        },
+      ],
+    },
+  ]
+
+  let updatedProducts = 0
+  for (const [index, model] of models.entries()) {
+    const category = categoryBySlug.get(model.slug)
+    if (!category) continue
+    const reference = references[index]
+    const existing = await prisma.product.findFirst({
+      where: { name: model.name },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    })
+
+    const product = existing
+      ? await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            categoryId: category.id,
+            price: model.price,
+            available: true,
+            description: model.description,
+            imageUrl: reference?.imageUrl ?? undefined,
+            order: -100 + index,
+          },
+        })
+      : await prisma.product.create({
+          data: {
+            name: model.name,
+            categoryId: category.id,
+            price: model.price,
+            available: true,
+            description: model.description,
+            imageUrl: reference?.imageUrl ?? null,
+            order: -100 + index,
+          },
+        })
+
+    await prisma.productCustomization.deleteMany({
+      where: {
+        productId: product.id,
+        label: {
+          in: [
+            'Itens gratuitos (1 obrigatório)',
+            'Itens pagos (opcionais)',
+            'Acompanhamentos premium (opcionais)',
+          ],
+        },
+      },
+    })
+
+    for (const group of model.groups) {
+      await prisma.productCustomization.create({
+        data: {
+          productId: product.id,
+          label: group.label,
+          required: group.minSelect > 0,
+          minSelect: group.minSelect,
+          affectsPrice: group.affectsPrice,
+          options: {
+            create: group.options.map((option) => ({
+              name: option.name,
+              priceModifier: option.priceModifier,
+            })),
+          },
+        },
+      })
+    }
+
+    updatedProducts += 1
+  }
+
+  return { updatedProducts }
 }
 
 async function upsertFreeProduct(
@@ -273,6 +488,30 @@ async function ensureRelation(
 function isVolumeProduct(text: string) {
   const normalized = normalizeText(text)
   return VOLUME_PRODUCT_PATTERNS.some((pattern) => pattern.test(normalized))
+}
+
+function shouldReceiveFrozenVolumeComplements(input: {
+  name: string
+  description: string | null
+  categoryName: string
+  categorySlug: string
+}) {
+  const text = `${input.name} ${input.description ?? ''}`
+  if (!isVolumeProduct(text)) return false
+
+  const normalizedText = normalizeText(text)
+  if (normalizedText.includes('coca cola') || normalizedText.includes('coca-cola')) {
+    return false
+  }
+
+  const normalizedCategory = normalizeText(`${input.categoryName} ${input.categorySlug}`)
+  const looksLikeAcaiOrFrozen =
+    normalizedText.includes('acai') ||
+    normalizedText.includes('frozen') ||
+    normalizedCategory.includes('acai') ||
+    normalizedCategory.includes('frozen')
+
+  return looksLikeAcaiOrFrozen
 }
 
 function normalizeText(value: string) {

@@ -42,7 +42,7 @@ export default function CarrinhoPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-4">
+    <main className="mx-auto max-w-2xl p-4 pb-52">
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => router.back()}
@@ -141,17 +141,29 @@ export default function CarrinhoPage() {
         })}
       </div>
 
-      <div className="sticky bottom-2 mt-6 rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl ring-1 ring-fuchsia-900/30">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-fuchsia-200">Total do pedido</span>
-          <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
+      <div className="fixed inset-x-0 bottom-0 z-30">
+        <div className="mx-auto w-full max-w-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl ring-1 ring-fuchsia-900/30">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm text-fuchsia-200">Total do pedido</span>
+              <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Link
+                href={menuHref}
+                className="block w-full rounded-xl border border-fuchsia-400/50 py-3 text-center text-sm font-semibold text-acai-50 hover:bg-acai-800/80"
+              >
+                Adicionar mais itens
+              </Link>
+              <Link
+                href={checkoutHref}
+                className="block w-full rounded-xl bg-fuchsia-600 py-3 text-center text-sm font-semibold text-white hover:bg-fuchsia-500"
+              >
+                Finalizar pedido
+              </Link>
+            </div>
+          </div>
         </div>
-        <Link
-          href={checkoutHref}
-          className="block w-full rounded-xl bg-fuchsia-600 py-3 text-center text-sm font-semibold text-white hover:bg-fuchsia-500"
-        >
-          Finalizar pedido
-        </Link>
       </div>
     </main>
   )

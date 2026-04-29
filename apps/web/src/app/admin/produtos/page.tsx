@@ -115,7 +115,7 @@ export default function AdminProdutosPage() {
       return
     }
     setFeedback(
-      `Estrutura criada/atualizada. Sanduíches vinculados: ${result?.sandwich?.mastersLinked ?? 0}. Bebidas por volume vinculadas: ${result?.volume?.mastersLinked ?? 0}. Produtos com grupos configurados: ${result?.volume?.customizedMasters ?? 0}.`
+      `Estrutura criada/atualizada. Sanduíches vinculados: ${result?.sandwich?.mastersLinked ?? 0}. Bebidas por volume vinculadas: ${result?.volume?.mastersLinked ?? 0}. Produtos com grupos configurados: ${result?.volume?.customizedMasters ?? 0}. Mais pedidos atualizados: ${result?.topFrozen?.updatedProducts ?? 0}.`
     )
     await load()
     setLoadingBootstrap(false)

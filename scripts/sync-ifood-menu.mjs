@@ -61,6 +61,8 @@ const VOLUME_PRODUCT_PATTERNS = [
   /\b(?:2|dois)\s+litros?\b/i,
   /\blitro(?:s)?\b/i,
 ]
+const FREE_GROUP_LABEL = 'Itens gratuitos (1 obrigatório)'
+const PAID_GROUP_LABEL = 'Itens pagos (opcionais)'
 
 function normalizeFrozenBaseName(name) {
   let base = name
@@ -153,6 +155,22 @@ function isVolumeProduct(text) {
   return VOLUME_PRODUCT_PATTERNS.some((pattern) => pattern.test(normalized))
 }
 
+function shouldReceiveFrozenVolumeComplements({ name, description, categoryName, categorySlug }) {
+  const text = `${name} ${description ?? ''}`
+  if (!isVolumeProduct(text)) return false
+
+  const normalizedText = normalizeText(text)
+  if (normalizedText.includes('coca cola') || normalizedText.includes('coca-cola')) return false
+
+  const normalizedCategory = normalizeText(`${categoryName} ${categorySlug}`)
+  return (
+    normalizedText.includes('acai') ||
+    normalizedText.includes('frozen') ||
+    normalizedCategory.includes('acai') ||
+    normalizedCategory.includes('frozen')
+  )
+}
+
 async function upsertFreeProduct(prisma, input) {
   const existing = await prisma.product.findFirst({
     where: { name: input.name, categoryId: input.categoryId },
@@ -228,17 +246,30 @@ async function bootstrapVolumeComplementsForImportedMenu(prisma) {
 
   const products = await prisma.product.findMany({
     where: { id: { notIn: [drinksKit.id, ice.id, cup.id, straw.id, lemon.id] } },
-    select: { id: true, name: true, description: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: { select: { name: true, slug: true } },
+    },
   })
   const masters = products.filter((product) =>
-    isVolumeProduct(`${product.name} ${product.description ?? ''}`)
+    shouldReceiveFrozenVolumeComplements({
+      name: product.name,
+      description: product.description,
+      categoryName: product.category.name,
+      categorySlug: product.category.slug,
+    })
+  )
+  const nonTargetProducts = products.filter(
+    (product) => !masters.some((master) => master.id === product.id)
   )
 
   for (const master of masters) {
     await ensureRelation(prisma, master.id, drinksKit.id, false, 0)
     await upsertCustomizationGroup(prisma, {
       productId: master.id,
-      label: 'Itens gratuitos (1 obrigatório)',
+      label: FREE_GROUP_LABEL,
       minSelect: 1,
       affectsPrice: false,
       options: [
@@ -248,7 +279,7 @@ async function bootstrapVolumeComplementsForImportedMenu(prisma) {
     })
     await upsertCustomizationGroup(prisma, {
       productId: master.id,
-      label: 'Itens pagos (opcionais)',
+      label: PAID_GROUP_LABEL,
       minSelect: 0,
       affectsPrice: true,
       options: [
@@ -256,6 +287,15 @@ async function bootstrapVolumeComplementsForImportedMenu(prisma) {
         { name: 'Avelã', priceModifier: 1.5 },
         { name: 'Aveia', priceModifier: 1.5 },
       ],
+    })
+  }
+
+  for (const product of nonTargetProducts) {
+    await prisma.productCustomization.deleteMany({
+      where: { productId: product.id, label: { in: [FREE_GROUP_LABEL, PAID_GROUP_LABEL] } },
+    })
+    await prisma.productRelation.deleteMany({
+      where: { parentProductId: product.id, childProductId: drinksKit.id },
     })
   }
 
