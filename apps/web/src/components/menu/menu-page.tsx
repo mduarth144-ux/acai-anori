@@ -214,11 +214,19 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     <main className="mx-auto max-w-6xl p-4">
       <header className="mb-6 rounded-2xl bg-gradient-to-br from-fuchsia-950 via-purple-950 to-acai-950 p-6 text-acai-50 shadow-lg ring-1 ring-fuchsia-900/40">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold">Anori Acaí Frozen</h1>
-            <p className="mt-1 text-sm text-fuchsia-200/90">Açaí e Açaí Frozen para consumir na loja ou pedir online.</p>
+        <div className="text-left">
+            <h1 className="text-xl font-bold">Cardápio Online</h1>
+            <p className="mt-1 text-sm text-fuchsia-200/90">
+              Açaí em Litro e Açaí Frozen para você e sua família receberem em sua casa
+            </p>
           </div>
-          <Image src="/brand/logo.png" alt="Logo Anori Açaí Frozen" width={120} height={120} className="rounded-xl bg-acai-950/60 p-2 ring-1 ring-white/15" />
+          <Image
+            src="/brand/logo.png"
+            alt="Logo Anori Açaí Frozen"
+            width={220}
+            height={70}
+            className="h-14 w-auto rounded-xl bg-acai-950/60 p-2 ring-1 ring-white/15 sm:h-16"
+          />
         </div>
         {tableCode ? <p className="mt-3 text-sm text-acai-100">Pedido em mesa: <b>{tableCode}</b></p> : null}
       </header>

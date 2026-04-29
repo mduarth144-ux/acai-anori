@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Camera, HelpCircle, Menu, ShoppingBag, UserCircle2, X } from 'lucide-react'
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
@@ -82,8 +83,15 @@ export function SiteHeader() {
     <>
       <header className="sticky top-0 z-20 border-b border-acai-700 bg-acai-950/90 backdrop-blur supports-[backdrop-filter]:bg-acai-950/80">
         <nav className="mx-auto flex max-w-6xl items-center justify-between p-4">
-          <Link href="/" className="font-bold text-fuchsia-300">
-            Anori Acaí Frozen
+          <Link href="/" className="inline-flex items-center">
+            <Image
+              src="/brand/logo-horizontal.png"
+              alt="Anori Açaí Frozen"
+              width={220}
+              height={60}
+              className="h-9 w-auto sm:h-10"
+              priority
+            />
           </Link>
           <div className="hidden gap-4 text-sm text-acai-200 sm:flex">
             <Link href="/" className="hover:text-fuchsia-300">
