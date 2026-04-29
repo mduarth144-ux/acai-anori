@@ -15,11 +15,11 @@ export default async function MesaPage({ params }: Props) {
   const [categories, productsRaw] = await Promise.all([
     prisma.category.findMany({ orderBy: { order: 'asc' } }),
     prisma.product.findMany({
-      where: { available: true },
+      where: { available: true, type: { not: 'ACCOMPANIMENT' } },
       include: {
         category: true,
         customizations: {
-          include: { options: true },
+          include: { options: { include: { optionProduct: true } } },
         },
       },
       orderBy: { order: 'asc' },
@@ -34,6 +34,9 @@ export default async function MesaPage({ params }: Props) {
       options: customization.options.map((option) => ({
         ...option,
         priceModifier: Number(option.priceModifier),
+        optionProduct: option.optionProduct
+          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+          : null,
       })),
     })),
   }))

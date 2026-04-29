@@ -14,6 +14,8 @@ type Product = {
   description: string | null
   price: number
   imageUrl: string | null
+  type?: 'FINAL' | 'COMPOSED' | 'ACCOMPANIMENT'
+  selectionTitle?: string | null
   category: { id: string; name: string; slug: string }
   customizations: ProductCustomization[]
 }
@@ -24,8 +26,15 @@ type ProductCustomization = {
   label: string
   required: boolean
   minSelect?: number
+  maxSelect?: number | null
   affectsPrice?: boolean
-  options: Array<{ id: string; name: string; priceModifier: number }>
+  freeQuantity?: number
+  options: Array<{
+    id: string
+    name: string
+    priceModifier: number
+    optionProduct?: { id: string; name: string } | null
+  }>
 }
 
 type Props = {
@@ -68,6 +77,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     'Açaí Frozen Especial',
     'Açaí Frozen Mix',
   ]
+  const storefrontProducts = useMemo(
+    () => products.filter((product) => product.type !== 'ACCOMPANIMENT'),
+    [products]
+  )
 
   const filtered = useMemo(() => {
     const frozenPriority = ['tradicional', 'especial', 'casadinha', 'mix', 'litro']
@@ -78,7 +91,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
 
-    const ranked = products
+    const ranked = storefrontProducts
       .map((product, index) => ({ product, index }))
       .filter(({ product }) => {
         const categoryMatch = activeCategory === 'all' || product.category.slug === activeCategory
@@ -106,19 +119,42 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       })
 
     return ranked.map(({ product }) => product)
-  }, [activeCategory, products, query])
+  }, [activeCategory, storefrontProducts, query])
 
   const bestSellers = useMemo(
     () =>
       bestSellerNames
-        .map((name) => products.find((product) => product.name === name))
+        .map((name) => storefrontProducts.find((product) => product.name === name))
         .filter((product): product is Product => Boolean(product)),
-    [products]
+    [storefrontProducts]
   )
+  const shouldShowBestSellers = activeCategory === 'all' && query.trim().length === 0
   const visibleProducts = useMemo(
     () => filtered.slice(0, visibleCount),
     [filtered, visibleCount]
   )
+  const visibleProductsByCategory = useMemo(() => {
+    const grouped = new Map<string, { category: Category; products: Product[] }>()
+    const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]))
+
+    for (const product of visibleProducts) {
+      const slug = product.category.slug
+      const category =
+        categoriesBySlug.get(slug) ?? { id: product.category.id, name: product.category.name, slug }
+      const bucket = grouped.get(slug)
+      if (bucket) {
+        bucket.products.push(product)
+      } else {
+        grouped.set(slug, { category, products: [product] })
+      }
+    }
+
+    return Array.from(grouped.values()).sort(
+      (a, b) =>
+        categories.findIndex((category) => category.slug === a.category.slug) -
+        categories.findIndex((category) => category.slug === b.category.slug)
+    )
+  }, [categories, visibleProducts])
   const hasMoreProducts = visibleCount < filtered.length
 
   useEffect(() => {
@@ -217,11 +253,19 @@ export function MenuPage({ categories, products, tableCode }: Props) {
   }
 
   function toggleChoice(customizationId: string, optionId: string) {
+    if (!wizardProduct) return
+    const customization = wizardProduct.customizations.find((item) => item.id === customizationId)
+    if (!customization) return
     setSelectedChoicesByCustomization((prev) => {
       const selected = new Set(prev[customizationId] ?? [])
+      const maxSelect = customization.maxSelect ?? null
       if (selected.has(optionId)) {
         selected.delete(optionId)
       } else {
+        if (typeof maxSelect === 'number' && maxSelect > 0 && selected.size >= maxSelect) {
+          setWizardError(`No grupo "${customization.label}", selecione no máximo ${maxSelect} item(ns).`)
+          return prev
+        }
         selected.add(optionId)
       }
       return {
@@ -239,6 +283,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         0,
         customization.minSelect ?? (customization.required ? 1 : 0)
       )
+      const maxSelect = customization.maxSelect ?? null
       const selectedCount =
         selectedChoicesByCustomization[customization.id]?.length ?? 0
 
@@ -248,15 +293,30 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         )
         return
       }
+      if (typeof maxSelect === 'number' && maxSelect > 0 && selectedCount > maxSelect) {
+        setWizardError(
+          `No grupo "${customization.label}", selecione no máximo ${maxSelect} item(ns).`
+        )
+        return
+      }
     }
 
     const allChoices = wizardProduct.customizations.flatMap((customization) => {
       const selectedIds = new Set(selectedChoicesByCustomization[customization.id] ?? [])
+      let freeSlotsRemaining =
+        customization.affectsPrice === false ? Number.MAX_SAFE_INTEGER : Math.max(0, customization.freeQuantity ?? 0)
       return customization.options
         .filter((option) => selectedIds.has(option.id))
         .map((option) => ({
-          name: option.name,
-          priceModifier: customization.affectsPrice === false ? 0 : option.priceModifier,
+          name: option.optionProduct?.name ?? option.name,
+          priceModifier: (() => {
+            if (customization.affectsPrice === false) return 0
+            if (freeSlotsRemaining > 0) {
+              freeSlotsRemaining -= 1
+              return 0
+            }
+            return option.priceModifier
+          })(),
         }))
     })
 
@@ -383,7 +443,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" className="mb-6 w-full rounded-xl p-3" />
 
-      {bestSellers.length > 0 ? (
+      {shouldShowBestSellers && bestSellers.length > 0 ? (
         <section className="mb-6">
           <h2 className="mb-3 text-xl font-bold text-fuchsia-100">Os mais pedidos</h2>
           <div className="grid grid-cols-3 gap-3">
@@ -423,24 +483,31 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </section>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        {visibleProducts.map((product) => (
-          <article key={product.id} className="flex h-full flex-col rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
-            <div className="mb-3 h-40 overflow-hidden rounded-xl bg-acai-900">
-              {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} width={600} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-acai-400">Sem imagem</div>}
+      <div className="space-y-8">
+        {visibleProductsByCategory.map(({ category, products: categoryProducts }) => (
+          <section key={category.slug} className="rounded-2xl border border-acai-700/70 bg-acai-900/40 p-4 shadow-lg ring-1 ring-acai-700/40">
+            <h2 className="mb-4 text-xl font-bold text-fuchsia-100">{category.name}</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              {categoryProducts.map((product) => (
+                <article key={product.id} className="flex h-full flex-col rounded-2xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg shadow-black/20 ring-1 ring-acai-700/50">
+                  <div className="mb-3 h-40 overflow-hidden rounded-xl bg-acai-900">
+                    {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} width={600} height={300} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-acai-400">Sem imagem</div>}
+                  </div>
+                  <h3 className="text-xl font-semibold text-fuchsia-100">{product.name}</h3>
+                  <p className="my-2 text-sm text-acai-300">{product.description ?? 'Açaí artesanal com ingredientes selecionados.'}</p>
+                  <div className="mt-auto flex items-center justify-between pt-2">
+                    <span className="font-bold text-fuchsia-300">R$ {product.price.toFixed(2)}</span>
+                    <button
+                      onClick={() => startWizard(product)}
+                      className="rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
-            <h2 className="text-xl font-semibold text-fuchsia-100">{product.name}</h2>
-            <p className="my-2 text-sm text-acai-300">{product.description ?? 'Açaí artesanal com ingredientes selecionados.'}</p>
-            <div className="mt-auto flex items-center justify-between pt-2">
-              <span className="font-bold text-fuchsia-300">R$ {product.price.toFixed(2)}</span>
-              <button
-                onClick={() => startWizard(product)}
-                className="rounded-lg bg-fuchsia-600 px-3 py-2 text-sm text-white shadow hover:bg-fuchsia-500"
-              >
-                Adicionar
-              </button>
-            </div>
-          </article>
+          </section>
         ))}
       </div>
       <div ref={loadMoreRef} className="h-4 w-full" />
@@ -478,7 +545,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-acai-600 bg-acai-900 p-5 shadow-2xl max-h-[92vh]">
             <div className="mb-4">
               <p className="text-xs uppercase tracking-wide text-fuchsia-300">
-                ESCOLHA UM ACOMPANHAMENTO
+                {wizardProduct.selectionTitle?.trim() || 'PERSONALIZE SEU PRODUTO'}
               </p>
               <h3 className="mt-1 text-lg font-bold text-fuchsia-100">{wizardProduct.name}</h3>
             </div>
@@ -504,7 +571,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                       <p className="mt-1 text-xs text-acai-400">
                         {minSelect > 0
                           ? `Obrigatório (${minSelect} mínimo)`
-                          : 'Opcional'}{' '}
+                          : 'Opcional'}
+                        {typeof customization.maxSelect === 'number' && customization.maxSelect > 0
+                          ? ` • máximo ${customization.maxSelect}`
+                          : ''}{' '}
                         • {selectedOptionsCount} selecionado(s)
                       </p>
                     </div>
@@ -531,7 +601,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                             }`}
                           >
                             <div className="flex items-center justify-between gap-3">
-                              <span className="text-sm">{option.name}</span>
+                              <span className="text-sm">{option.optionProduct?.name ?? option.name}</span>
                               <span className="text-xs text-fuchsia-300">
                                 {effectivePrice > 0
                                   ? `+ R$ ${effectivePrice.toFixed(2)}`

@@ -3,21 +3,10 @@
 import Image from 'next/image'
 import { Edit3, Plus, Search, Trash2 } from 'lucide-react'
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ProductFormModal, PendingGroup, PendingGroupOption, ProductType } from '../../../components/admin/product-form-modal'
 import { ThemedSelect } from '../../../components/ui/themed-select'
 
 type Category = { id: string; name: string }
-type RelatedProduct = {
-  id: string
-  name: string
-  price: number
-  category: { id: string; name: string }
-}
-
-type ProductRelation = {
-  id: string
-  isPaid: boolean
-  child: RelatedProduct
-}
 
 type Product = {
   id: string
@@ -26,13 +15,25 @@ type Product = {
   description: string | null
   imageUrl?: string | null
   available: boolean
+  type: ProductType
+  selectionTitle?: string | null
   category: { id: string; name: string }
-  parentRelations: ProductRelation[]
-}
-
-type PendingRelation = {
-  childProductId: string
-  isPaid: boolean
+  customizations: Array<{
+    id: string
+    label: string
+    required: boolean
+    minSelect: number
+    maxSelect?: number | null
+    affectsPrice: boolean
+    freeQuantity: number
+    options: Array<{
+      id: string
+      optionProductId?: string | null
+      name: string
+      priceModifier: number
+      optionProduct?: { id: string; name: string; price: number } | null
+    }>
+  }>
 }
 
 const PRODUCTS_BATCH_SIZE = 12
@@ -42,13 +43,15 @@ export default function AdminProdutosPage() {
   const [price, setPrice] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [productType, setProductType] = useState<ProductType>('FINAL')
+  const [selectionTitle, setSelectionTitle] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [available, setAvailable] = useState(true)
   const [filterName, setFilterName] = useState('')
   const [filterDescription, setFilterDescription] = useState('')
   const [filterAvailability, setFilterAvailability] = useState<'all' | 'active' | 'inactive'>('all')
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_BATCH_SIZE)
-  const [relatedItems, setRelatedItems] = useState<PendingRelation[]>([])
+  const [customizationGroups, setCustomizationGroups] = useState<PendingGroup[]>([])
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
@@ -81,8 +84,10 @@ export default function AdminProdutosPage() {
     setName('')
     setDescription('')
     setPrice('')
+    setProductType('FINAL')
+    setSelectionTitle('')
     setAvailable(true)
-    setRelatedItems([])
+    setCustomizationGroups([])
     setEditingProductId(null)
     setShowForm(false)
   }
@@ -94,11 +99,22 @@ export default function AdminProdutosPage() {
     setDescription(product.description ?? '')
     setPrice(String(Number(product.price)))
     setCategoryId(product.category.id)
+    setProductType(product.type ?? 'FINAL')
+    setSelectionTitle(product.selectionTitle ?? '')
     setAvailable(product.available)
-    setRelatedItems(
-      product.parentRelations.map((relation) => ({
-        childProductId: relation.child.id,
-        isPaid: relation.isPaid,
+    setCustomizationGroups(
+      (product.customizations ?? []).map((group) => ({
+        label: group.label,
+        required: group.required,
+        minSelect: String(group.minSelect ?? 0),
+        maxSelect: group.maxSelect == null ? '' : String(group.maxSelect),
+        affectsPrice: group.affectsPrice ?? true,
+        freeQuantity: String(group.freeQuantity ?? 0),
+        options: (group.options ?? []).map((option) => ({
+          optionProductId: option.optionProductId ?? option.optionProduct?.id ?? '',
+          optionName: option.optionProduct?.name ?? option.name,
+          priceModifier: String(Number(option.priceModifier ?? option.optionProduct?.price ?? 0)),
+        })),
       }))
     )
     setFeedback(null)
@@ -107,17 +123,34 @@ export default function AdminProdutosPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setFeedback(null)
+    const groupsError = validateCustomizationGroups()
+    if (groupsError) {
+      setFeedback(groupsError)
+      return
+    }
     setIsSaving(true)
     const payload = {
       name,
       description: description || null,
       price: Number(price),
       categoryId,
+      type: productType,
+      selectionTitle: selectionTitle || null,
       available,
-      relatedItems: relatedItems.map((item, index) => ({
-        childProductId: item.childProductId,
-        isPaid: item.isPaid,
-        order: index,
+      customizationGroups: (productType === 'COMPOSED' ? customizationGroups : []).map((group) => ({
+        label: group.label.trim(),
+        required: group.required,
+        minSelect: Number(group.minSelect || 0),
+        maxSelect: group.maxSelect.trim() ? Number(group.maxSelect) : null,
+        affectsPrice: group.affectsPrice,
+        freeQuantity: Number(group.freeQuantity || 0),
+        options: group.options
+          .filter((option) => option.optionProductId)
+          .map((option) => ({
+            optionProductId: option.optionProductId,
+            name: option.optionName,
+            priceModifier: Number(option.priceModifier || 0),
+          })),
       })),
     }
     const response = await fetch(
@@ -139,20 +172,101 @@ export default function AdminProdutosPage() {
     setIsSaving(false)
   }
 
-  function addRelatedItem() {
-    setRelatedItems((prev) => [...prev, { childProductId: '', isPaid: false }])
+  function addCustomizationGroup() {
+    setCustomizationGroups((prev) => [
+      ...prev,
+      {
+        label: '',
+        required: false,
+        minSelect: '0',
+        maxSelect: '',
+        affectsPrice: true,
+        freeQuantity: '0',
+        options: [],
+      },
+    ])
   }
 
-  function removeRelatedItem(index: number) {
-    setRelatedItems((prev) => prev.filter((_, itemIndex) => itemIndex !== index))
+  function removeCustomizationGroup(groupIndex: number) {
+    setCustomizationGroups((prev) => prev.filter((_, index) => index !== groupIndex))
   }
 
-  function updateRelatedItem(index: number, patch: Partial<PendingRelation>) {
-    setRelatedItems((prev) =>
-      prev.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, ...patch } : item
+  function updateCustomizationGroup(groupIndex: number, patch: Partial<PendingGroup>) {
+    setCustomizationGroups((prev) =>
+      prev.map((group, index) =>
+        index === groupIndex ? { ...group, ...patch } : group
       )
     )
+  }
+
+  function addGroupOption(groupIndex: number) {
+    setCustomizationGroups((prev) =>
+      prev.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              options: [...group.options, { optionProductId: '', optionName: '', priceModifier: '0' }],
+            }
+          : group
+      )
+    )
+  }
+
+  function removeGroupOption(groupIndex: number, optionIndex: number) {
+    setCustomizationGroups((prev) =>
+      prev.map((group, index) =>
+        index === groupIndex
+          ? { ...group, options: group.options.filter((_, current) => current !== optionIndex) }
+          : group
+      )
+    )
+  }
+
+  function updateGroupOption(
+    groupIndex: number,
+    optionIndex: number,
+    patch: Partial<PendingGroupOption>
+  ) {
+    setCustomizationGroups((prev) =>
+      prev.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              options: group.options.map((option, current) =>
+                current === optionIndex ? { ...option, ...patch } : option
+              ),
+            }
+          : group
+      )
+    )
+  }
+
+  function validateCustomizationGroups(): string | null {
+    if (productType !== 'COMPOSED') return null
+    if (customizationGroups.length === 0) {
+      return 'Adicione pelo menos um grupo para produto composto.'
+    }
+
+    for (const [groupIndex, group] of customizationGroups.entries()) {
+      if (!group.label.trim()) return `Grupo ${groupIndex + 1}: informe o nome do grupo.`
+      if (!/^\d+$/.test(group.minSelect || '0')) return `Grupo ${groupIndex + 1}: mínimo inválido.`
+      if (group.maxSelect.trim() && !/^\d+$/.test(group.maxSelect)) return `Grupo ${groupIndex + 1}: máximo inválido.`
+      if (!/^\d+$/.test(group.freeQuantity || '0')) return `Grupo ${groupIndex + 1}: quantidade grátis inválida.`
+
+      const min = Number(group.minSelect || 0)
+      const max = group.maxSelect.trim() ? Number(group.maxSelect) : null
+      if (max != null && max < min) return `Grupo ${groupIndex + 1}: máximo não pode ser menor que mínimo.`
+      if (group.options.length === 0) return `Grupo ${groupIndex + 1}: adicione ao menos um item.`
+
+      const seen = new Set<string>()
+      for (const [optionIndex, option] of group.options.entries()) {
+        if (!option.optionProductId) return `Grupo ${groupIndex + 1}, item ${optionIndex + 1}: selecione um acompanhamento.`
+        if (seen.has(option.optionProductId)) return `Grupo ${groupIndex + 1}: item duplicado no mesmo grupo.`
+        seen.add(option.optionProductId)
+      }
+    }
+
+    return null
   }
 
   async function deleteProduct(product: Product) {
@@ -173,7 +287,16 @@ export default function AdminProdutosPage() {
     setIsDeletingId(null)
   }
 
-  const possibleChildren = products
+  const accompanimentProducts = products.filter(
+    (product) => product.type === 'ACCOMPANIMENT' && product.id !== editingProductId
+  )
+  const accompanimentByNormalizedName = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const product of accompanimentProducts) {
+      map.set(product.name.trim().toLowerCase(), product.id)
+    }
+    return map
+  }, [accompanimentProducts])
   const filteredProducts = useMemo(() => {
     const normalizedName = filterName.trim().toLowerCase()
     const normalizedDescription = filterDescription.trim().toLowerCase()
@@ -217,6 +340,20 @@ export default function AdminProdutosPage() {
     observer.observe(observerTarget)
     return () => observer.disconnect()
   }, [filteredProducts.length, hasMoreProducts])
+
+  useEffect(() => {
+    if (accompanimentByNormalizedName.size === 0) return
+    setCustomizationGroups((prev) =>
+      prev.map((group) => ({
+        ...group,
+        options: group.options.map((option) => {
+          if (option.optionProductId) return option
+          const byName = accompanimentByNormalizedName.get(String(option.optionName ?? '').trim().toLowerCase())
+          return byName ? { ...option, optionProductId: byName } : option
+        }),
+      }))
+    )
+  }, [accompanimentByNormalizedName])
 
   return (
     <main className="w-full">
@@ -278,97 +415,41 @@ export default function AdminProdutosPage() {
         </div>
       </div>
 
-      {showForm ? (
-        <form onSubmit={onSubmit} className="mb-4 space-y-3 rounded-xl border border-acai-600 bg-acai-800/90 p-4 shadow-lg">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-fuchsia-200">
-              {editingProductId ? 'Editando produto' : 'Cadastro de produto'}
-            </p>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-md border border-acai-500 px-3 py-1 text-xs text-acai-100 hover:bg-acai-700/60"
-            >
-              Cancelar
-            </button>
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <input required value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg p-2" placeholder="Nome" />
-            <input required value={price} onChange={(e) => setPrice(e.target.value)} className="rounded-lg p-2" placeholder="Preço" />
-            <ThemedSelect
-              value={categoryId}
-              onChange={(nextValue) => setCategoryId(nextValue)}
-              options={categories.map((c) => ({ value: c.id, label: c.name }))}
-              className="w-full"
-            />
-            <label className="flex items-center gap-2 rounded-lg border border-acai-600 px-3 text-sm text-acai-100">
-              <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
-              Disponível para venda
-            </label>
-          </div>
-
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="min-h-20 w-full rounded-lg p-2"
-            placeholder="Descrição (opcional)"
-          />
-
-          <div className="rounded-lg border border-acai-600 bg-acai-900/40 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-medium text-acai-100">Produtos relacionados (filhos)</h2>
-              <button type="button" onClick={addRelatedItem} className="rounded-md bg-fuchsia-700 px-2 py-1 text-xs text-white">
-                Adicionar relação
-              </button>
-            </div>
-            <div className="space-y-2">
-              {relatedItems.length === 0 ? (
-                <p className="text-xs text-acai-300">Nenhuma relação adicionada.</p>
-              ) : null}
-              {relatedItems.map((relation, index) => (
-                <div key={`${relation.childProductId}-${index}`} className="grid gap-2 md:grid-cols-[1fr_140px_110px]">
-                  <ThemedSelect
-                    value={relation.childProductId}
-                    onChange={(nextValue) =>
-                      updateRelatedItem(index, { childProductId: nextValue })
-                    }
-                    options={[
-                      { value: '', label: 'Selecione um item filho' },
-                      ...possibleChildren.map((product) => ({
-                        value: product.id,
-                        label: `${product.name} (${product.category.name})`,
-                      })),
-                    ]}
-                    className="w-full"
-                  />
-                  <ThemedSelect
-                    value={relation.isPaid ? 'paid' : 'free'}
-                    onChange={(nextValue) =>
-                      updateRelatedItem(index, { isPaid: nextValue === 'paid' })
-                    }
-                    options={[
-                      { value: 'free', label: 'Gratuito' },
-                      { value: 'paid', label: 'Pago' },
-                    ]}
-                    className="w-full"
-                  />
-                  <button type="button" onClick={() => removeRelatedItem(index)} className="rounded-md border border-red-500 px-2 text-red-300 hover:bg-red-500/10">
-                    Remover
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-lg bg-fuchsia-600 p-2 text-white hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? 'Salvando...' : editingProductId ? 'Atualizar produto' : 'Salvar'}
-          </button>
-        </form>
-      ) : null}
+      <ProductFormModal
+        isOpen={showForm}
+        isSaving={isSaving}
+        isEditing={Boolean(editingProductId)}
+        name={name}
+        price={price}
+        description={description}
+        categoryId={categoryId}
+        productType={productType}
+        selectionTitle={selectionTitle}
+        available={available}
+        customizationGroups={customizationGroups}
+        categories={categories}
+        accompanimentProducts={accompanimentProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          categoryName: p.category.name,
+          price: Number(p.price),
+        }))}
+        onClose={resetForm}
+        onSubmit={onSubmit}
+        setName={setName}
+        setPrice={setPrice}
+        setDescription={setDescription}
+        setCategoryId={setCategoryId}
+        setProductType={setProductType}
+        setSelectionTitle={setSelectionTitle}
+        setAvailable={setAvailable}
+        addCustomizationGroup={addCustomizationGroup}
+        removeCustomizationGroup={removeCustomizationGroup}
+        updateCustomizationGroup={updateCustomizationGroup}
+        addGroupOption={addGroupOption}
+        removeGroupOption={removeGroupOption}
+        updateGroupOption={updateGroupOption}
+      />
       {feedback ? <p className="mb-3 text-sm text-fuchsia-200">{feedback}</p> : null}
       <div className="space-y-2">
         {isLoading
@@ -443,7 +524,7 @@ export default function AdminProdutosPage() {
                   </button>
                 </div>
                 <span className="rounded-full border border-acai-500 bg-acai-800 px-2 py-0.5 text-xs text-acai-200">
-                  {p.parentRelations.length} relacionamento(s)
+                  {p.type === 'ACCOMPANIMENT' ? 'Acompanhamento' : p.type === 'COMPOSED' ? 'Composto' : 'Final'} • {p.customizations.filter((g) => g.options.some((o) => o.optionProductId || o.optionProduct?.id)).length} grupo(s)
                 </span>
               </div>
             </div>

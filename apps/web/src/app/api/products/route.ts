@@ -9,6 +9,9 @@ export async function GET(request: Request) {
     where: isAdmin ? undefined : { available: true },
     include: {
       category: true,
+      customizations: {
+        include: { options: { include: { optionProduct: true } } },
+      },
       parentRelations: {
         include: { child: { include: { category: true } } },
         orderBy: { order: 'asc' },
@@ -21,6 +24,16 @@ export async function GET(request: Request) {
     data.map((item) => ({
       ...item,
       price: Number(item.price),
+      customizations: item.customizations.map((customization) => ({
+        ...customization,
+        options: customization.options.map((option) => ({
+          ...option,
+          priceModifier: Number(option.priceModifier),
+          optionProduct: option.optionProduct
+            ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+            : null,
+        })),
+      })),
       parentRelations: item.parentRelations.map((relation) => ({
         ...relation,
         child: { ...relation.child, price: Number(relation.child.price) },
@@ -31,6 +44,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
+  const customizationGroupsInput = Array.isArray(body.customizationGroups)
+    ? body.customizationGroups
+    : []
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -49,6 +65,37 @@ export async function POST(request: Request) {
       price: body.price,
       categoryId: body.categoryId,
       available: body.available ?? true,
+      type: body.type ?? 'FINAL',
+      selectionTitle: body.selectionTitle?.trim() || null,
+      customizations: customizationGroupsInput.length > 0
+        ? {
+            create: customizationGroupsInput.map((group: {
+              label?: string
+              required?: boolean
+              minSelect?: number
+              maxSelect?: number | null
+              affectsPrice?: boolean
+              freeQuantity?: number
+              options?: Array<{ optionProductId?: string; priceModifier?: number; name?: string }>
+            }) => ({
+              label: String(group.label ?? '').trim() || 'Grupo',
+              required: Boolean(group.required),
+              minSelect: Math.max(0, Number(group.minSelect ?? 0)),
+              maxSelect: Number.isFinite(group.maxSelect) ? Math.max(0, Number(group.maxSelect)) : null,
+              affectsPrice: Boolean(group.affectsPrice ?? true),
+              freeQuantity: Math.max(0, Number(group.freeQuantity ?? 0)),
+              options: {
+                create: (group.options ?? [])
+                  .filter((option) => option?.optionProductId)
+                  .map((option) => ({
+                    optionProductId: String(option.optionProductId),
+                    name: String(option.name ?? '').trim() || 'Item',
+                    priceModifier: Number(option.priceModifier ?? 0),
+                  })),
+              },
+            })),
+          }
+        : undefined,
       parentRelations: relatedItems.length > 0
         ? {
             create: relatedItems
@@ -63,6 +110,9 @@ export async function POST(request: Request) {
     },
     include: {
       category: true,
+      customizations: {
+        include: { options: { include: { optionProduct: true } } },
+      },
       parentRelations: {
         include: { child: { include: { category: true } } },
         orderBy: { order: 'asc' },
@@ -72,6 +122,16 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ...data,
     price: Number(data.price),
+    customizations: data.customizations.map((customization) => ({
+      ...customization,
+      options: customization.options.map((option) => ({
+        ...option,
+        priceModifier: Number(option.priceModifier),
+        optionProduct: option.optionProduct
+          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+          : null,
+      })),
+    })),
     parentRelations: data.parentRelations.map((relation) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },
@@ -85,6 +145,9 @@ export async function PATCH(request: Request) {
   if (!id) return NextResponse.json({ message: 'id obrigatório' }, { status: 400 })
 
   const body = await request.json()
+  const customizationGroupsInput = Array.isArray(body.customizationGroups)
+    ? body.customizationGroups
+    : []
   const relatedItemsInput = Array.isArray(body.relatedItems) ? body.relatedItems : []
   const dedupedRelationMap = new Map<string, { childProductId: string; isPaid: boolean; order: number }>()
   for (const [index, item] of relatedItemsInput.entries()) {
@@ -105,6 +168,36 @@ export async function PATCH(request: Request) {
       price: body.price,
       categoryId: body.categoryId,
       available: body.available ?? true,
+      type: body.type ?? 'FINAL',
+      selectionTitle: body.selectionTitle?.trim() || null,
+      customizations: {
+        deleteMany: {},
+        create: customizationGroupsInput.map((group: {
+          label?: string
+          required?: boolean
+          minSelect?: number
+          maxSelect?: number | null
+          affectsPrice?: boolean
+          freeQuantity?: number
+          options?: Array<{ optionProductId?: string; priceModifier?: number; name?: string }>
+        }) => ({
+          label: String(group.label ?? '').trim() || 'Grupo',
+          required: Boolean(group.required),
+          minSelect: Math.max(0, Number(group.minSelect ?? 0)),
+          maxSelect: Number.isFinite(group.maxSelect) ? Math.max(0, Number(group.maxSelect)) : null,
+          affectsPrice: Boolean(group.affectsPrice ?? true),
+          freeQuantity: Math.max(0, Number(group.freeQuantity ?? 0)),
+          options: {
+            create: (group.options ?? [])
+              .filter((option) => option?.optionProductId)
+              .map((option) => ({
+                optionProductId: String(option.optionProductId),
+                name: String(option.name ?? '').trim() || 'Item',
+                priceModifier: Number(option.priceModifier ?? 0),
+              })),
+          },
+        })),
+      },
       parentRelations: {
         deleteMany: {},
         create: relatedItems.map((item) => ({
@@ -116,6 +209,9 @@ export async function PATCH(request: Request) {
     },
     include: {
       category: true,
+      customizations: {
+        include: { options: { include: { optionProduct: true } } },
+      },
       parentRelations: {
         include: { child: { include: { category: true } } },
         orderBy: { order: 'asc' },
@@ -126,6 +222,16 @@ export async function PATCH(request: Request) {
   return NextResponse.json({
     ...data,
     price: Number(data.price),
+    customizations: data.customizations.map((customization) => ({
+      ...customization,
+      options: customization.options.map((option) => ({
+        ...option,
+        priceModifier: Number(option.priceModifier),
+        optionProduct: option.optionProduct
+          ? { ...option.optionProduct, price: Number(option.optionProduct.price) }
+          : null,
+      })),
+    })),
     parentRelations: data.parentRelations.map((relation) => ({
       ...relation,
       child: { ...relation.child, price: Number(relation.child.price) },
