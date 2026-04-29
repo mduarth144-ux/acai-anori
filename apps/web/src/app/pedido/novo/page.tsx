@@ -35,6 +35,7 @@ export default function NovoPedidoPage() {
   const clearCart = useCartStore((state) => state.clearCart)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
   const [cepDigits, setCepDigits] = useState('')
   const [street, setStreet] = useState('')
   const [number, setNumber] = useState('')
@@ -67,6 +68,7 @@ export default function NovoPedidoPage() {
       const saved = JSON.parse(raw) as {
         customerName?: string
         customerPhone?: string
+        customerEmail?: string
         cepDigits?: string
         street?: string
         number?: string
@@ -74,6 +76,7 @@ export default function NovoPedidoPage() {
       }
       if (saved.customerName) setCustomerName(saved.customerName)
       if (saved.customerPhone) setCustomerPhone(formatPhoneDisplay(saved.customerPhone))
+      if (saved.customerEmail) setCustomerEmail(saved.customerEmail)
       if (saved.cepDigits) setCepDigits(onlyDigits(saved.cepDigits, 8))
       if (saved.street) setStreet(saved.street)
       if (saved.number) setNumber(saved.number)
@@ -99,6 +102,7 @@ export default function NovoPedidoPage() {
         JSON.stringify({
           customerName,
           customerPhone,
+          customerEmail,
           cepDigits,
           street,
           number,
@@ -108,7 +112,7 @@ export default function NovoPedidoPage() {
     } catch {
       // Ignore storage quota/availability errors to avoid blocking checkout.
     }
-  }, [customerName, customerPhone, cepDigits, street, number, neighborhood])
+  }, [customerName, customerPhone, customerEmail, cepDigits, street, number, neighborhood])
 
   const address = useMemo(
     () => buildDeliveryAddressLine({ cepDigits, street, number, neighborhood }),
@@ -326,6 +330,7 @@ export default function NovoPedidoPage() {
               : undefined,
           customerName,
           customerPhone,
+          customerEmail,
           address: type === 'DELIVERY' ? address : undefined,
           notes,
           items: cart,
@@ -510,6 +515,14 @@ export default function NovoPedidoPage() {
                 <Smartphone size={16} />
               </button>
             </div>
+            <input
+              className="rounded-lg p-3 md:col-span-2"
+              placeholder="E-mail (opcional)"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              inputMode="email"
+              autoComplete="email"
+            />
           </div>
           <p className="text-acai-300 mt-2 text-xs">Formato: (92) 98475-9201</p>
           {phoneCaptureMessage ? (

@@ -1,8 +1,26 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
 
-export async function GET() {
-  const data = await prisma.order.findMany({ orderBy: { createdAt: 'desc' }, take: 100 })
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const phone = searchParams.get('phone')?.trim()
+  const email = searchParams.get('email')?.trim().toLowerCase()
+
+  const where =
+    phone || email
+      ? {
+          OR: [
+            ...(phone ? [{ customerPhone: phone }] : []),
+            ...(email ? [{ customerEmail: email }] : []),
+          ],
+        }
+      : undefined
+
+  const data = await prisma.order.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  })
   return NextResponse.json(data)
 }
 
@@ -20,6 +38,10 @@ export async function POST(request: Request) {
       changeFor: body.changeFor,
       customerName: body.customerName,
       customerPhone: body.customerPhone,
+      customerEmail:
+        typeof body.customerEmail === 'string' && body.customerEmail.trim().length > 0
+          ? body.customerEmail.trim().toLowerCase()
+          : null,
       address: body.address,
       notes: body.notes,
       tableId: table?.id,

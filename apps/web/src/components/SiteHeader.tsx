@@ -4,12 +4,10 @@ import Link from 'next/link'
 import { Camera, HelpCircle, Menu, ShoppingBag, UserCircle2, X } from 'lucide-react'
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 
-type SavedOrder = { id: string; createdAt: string; status: string; total?: number }
-type Profile = { name: string; phone: string; photoDataUrl: string | null }
-type DrawerSection = 'menu' | 'help' | 'contact' | 'about' | 'orders' | 'profile'
+type Profile = { name: string; phone: string; email: string; photoDataUrl: string | null }
+type DrawerSection = 'menu' | 'help' | 'contact' | 'about' | 'profile'
 
 const PROFILE_STORAGE_KEY = 'app.profile.v1'
-const ORDERS_STORAGE_KEY = 'app.orders.v1'
 
 export function SiteHeader() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -17,11 +15,11 @@ export function SiteHeader() {
   const [profile, setProfile] = useState<Profile>({
     name: '',
     phone: '',
+    email: '',
     photoDataUrl: null,
   })
-  const [savedOrders, setSavedOrders] = useState<SavedOrder[]>([])
 
-  useEffect(() => {
+  function loadPersistedData() {
     try {
       const rawProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY)
       if (rawProfile) {
@@ -29,13 +27,25 @@ export function SiteHeader() {
         setProfile({
           name: parsed.name ?? '',
           phone: parsed.phone ?? '',
+          email: parsed.email ?? '',
           photoDataUrl: parsed.photoDataUrl ?? null,
         })
       }
-      const rawOrders = window.localStorage.getItem(ORDERS_STORAGE_KEY)
-      if (rawOrders) setSavedOrders(JSON.parse(rawOrders) as SavedOrder[])
     } catch {
       // Ignore localStorage issues and keep in-memory defaults.
+    }
+  }
+
+  useEffect(() => {
+    loadPersistedData()
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === PROFILE_STORAGE_KEY) {
+        loadPersistedData()
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('storage', onStorage)
     }
   }, [])
 
@@ -52,7 +62,6 @@ export function SiteHeader() {
       { key: 'help' as const, label: 'Ajuda', icon: HelpCircle },
       { key: 'contact' as const, label: 'Contato', icon: UserCircle2 },
       { key: 'about' as const, label: 'Sobre', icon: ShoppingBag },
-      { key: 'orders' as const, label: 'Meus pedidos', icon: ShoppingBag },
       { key: 'profile' as const, label: 'Perfil', icon: UserCircle2 },
     ],
     []
@@ -88,6 +97,7 @@ export function SiteHeader() {
             type="button"
             className="inline-flex items-center justify-center rounded-lg border border-acai-600 bg-acai-900 p-2 text-fuchsia-200 sm:hidden"
             onClick={() => {
+              loadPersistedData()
               setSection('menu')
               setIsDrawerOpen(true)
             }}
@@ -135,11 +145,21 @@ export function SiteHeader() {
                 >
                   Admin
                 </Link>
+                <Link
+                  href="/pedidos"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="border-acai-700 bg-acai-900/60 block rounded-lg border px-3 py-2 text-acai-100"
+                >
+                  Meus pedidos
+                </Link>
                 {menuItems.map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setSection(key)}
+                    onClick={() => {
+                      if (key === 'profile') loadPersistedData()
+                      setSection(key)
+                    }}
                     className="border-acai-700 bg-acai-900/60 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-acai-100"
                   >
                     <Icon className="h-4 w-4 text-fuchsia-300" />
@@ -178,33 +198,6 @@ export function SiteHeader() {
                   <div className="border-acai-700 rounded-xl border bg-acai-900/50 p-3 text-sm text-acai-200">
                     Anori Acaí Frozen - plataforma digital para pedidos em mesa,
                     retirada e entrega.
-                  </div>
-                ) : null}
-
-                {section === 'orders' ? (
-                  <div className="space-y-2">
-                    {savedOrders.length === 0 ? (
-                      <p className="text-acai-300 text-sm">
-                        Nenhum pedido salvo neste dispositivo.
-                      </p>
-                    ) : (
-                      savedOrders.map((order) => (
-                        <Link
-                          key={order.id}
-                          href={`/pedido/${order.id}`}
-                          onClick={() => setIsDrawerOpen(false)}
-                          className="border-acai-700 bg-acai-900/50 block rounded-lg border px-3 py-2"
-                        >
-                          <p className="text-acai-100 text-sm font-medium">
-                            Pedido #{order.id.slice(0, 8)}
-                          </p>
-                          <p className="text-acai-300 text-xs">
-                            {new Date(order.createdAt).toLocaleString('pt-BR')} -{' '}
-                            {order.status}
-                          </p>
-                        </Link>
-                      ))
-                    )}
                   </div>
                 ) : null}
 
@@ -250,6 +243,14 @@ export function SiteHeader() {
                       value={profile.phone}
                       onChange={(e) =>
                         setProfile((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                    />
+                    <input
+                      className="w-full rounded-lg p-3"
+                      placeholder="E-mail"
+                      value={profile.email}
+                      onChange={(e) =>
+                        setProfile((prev) => ({ ...prev, email: e.target.value }))
                       }
                     />
                     <p className="text-acai-400 text-xs">
