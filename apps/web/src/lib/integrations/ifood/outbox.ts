@@ -14,6 +14,19 @@ type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } }
 }>
 
+type IntegrationOutboxDelegate = {
+  create: (...args: any[]) => Promise<any>
+  update: (...args: any[]) => Promise<any>
+  findMany: (...args: any[]) => Promise<any[]>
+  updateMany: (...args: any[]) => Promise<{ count: number }>
+}
+
+function getIntegrationOutboxDelegate(): IntegrationOutboxDelegate | null {
+  const delegate = (prisma as unknown as { integrationOutbox?: IntegrationOutboxDelegate })
+    .integrationOutbox
+  return delegate ?? null
+}
+
 function nextAttemptDate(attempts: number): Date {
   const seconds = Math.min(300, 5 * 2 ** Math.max(0, attempts))
   return new Date(Date.now() + seconds * 1000)
@@ -53,7 +66,13 @@ async function buildCreatePayload(order: OrderWithItems) {
 }
 
 export async function enqueueOrderCreate(orderId: string) {
-  await prisma.integrationOutbox.create({
+  const outbox = getIntegrationOutboxDelegate()
+  if (!outbox) {
+    logIntegration('warn', 'integrationOutbox indisponivel; pulando enqueue de criacao', { orderId })
+    return
+  }
+
+  await outbox.create({
     data: {
       orderId,
       topic: IntegrationOutboxTopic.IFOOD_ORDER_CREATE,
@@ -71,7 +90,16 @@ export async function enqueueStatusUpdate(params: {
 }) {
   if (params.source === 'IFOOD_WEBHOOK') return
 
-  await prisma.integrationOutbox.create({
+  const outbox = getIntegrationOutboxDelegate()
+  if (!outbox) {
+    logIntegration('warn', 'integrationOutbox indisponivel; pulando enqueue de status', {
+      orderId: params.orderId,
+      status: params.status,
+    })
+    return
+  }
+
+  await outbox.create({
     data: {
       orderId: params.orderId,
       topic: IntegrationOutboxTopic.IFOOD_ORDER_STATUS_UPDATE,
@@ -83,7 +111,10 @@ export async function enqueueStatusUpdate(params: {
 }
 
 async function markFailed(itemId: string, attempts: number, error: string) {
-  await prisma.integrationOutbox.update({
+  const outbox = getIntegrationOutboxDelegate()
+  if (!outbox) return
+
+  await outbox.update({
     where: { id: itemId },
     data: {
       status: attempts >= 6 ? IntegrationOutboxStatus.FAILED : IntegrationOutboxStatus.PENDING,
@@ -96,7 +127,16 @@ async function markFailed(itemId: string, attempts: number, error: string) {
 }
 
 export async function processOutboxBatch(limit = 20) {
-  const pending = await prisma.integrationOutbox.findMany({
+  const outbox = getIntegrationOutboxDelegate()
+  if (!outbox) {
+    logIntegration('warn', 'integrationOutbox indisponivel; processOutboxBatch ignorado')
+    return {
+      totalPending: 0,
+      processed: 0,
+    }
+  }
+
+  const pending = await outbox.findMany({
     where: {
       status: IntegrationOutboxStatus.PENDING,
       nextAttemptAt: { lte: new Date() },
@@ -107,7 +147,7 @@ export async function processOutboxBatch(limit = 20) {
 
   let processed = 0
   for (const item of pending) {
-    const lock = await prisma.integrationOutbox.updateMany({
+    const lock = await outbox.updateMany({
       where: {
         id: item.id,
         status: IntegrationOutboxStatus.PENDING,
@@ -173,7 +213,7 @@ export async function processOutboxBatch(limit = 20) {
         })
       }
 
-      await prisma.integrationOutbox.update({
+      await outbox.update({
         where: { id: item.id },
         data: {
           status: IntegrationOutboxStatus.PROCESSED,

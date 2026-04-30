@@ -114,20 +114,20 @@ export default function CarrinhoPage() {
                 )}
 
                 <div className="mt-auto flex items-center justify-between">
-                  <div className="flex items-center gap-2 rounded-xl border border-acai-600 bg-acai-900/80 p-1">
+                  <div className="cart-quantity-control flex items-center gap-2 rounded-xl border border-acai-600 bg-acai-900/80 p-1">
                     <button
                       onClick={() => updateQuantity(itemId, item.quantity - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800 disabled:opacity-30"
+                      className="cart-quantity-button flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800 disabled:opacity-30"
                       aria-label="Diminuir"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="min-w-[1.5rem] text-center text-sm font-semibold text-fuchsia-100">
+                    <span className="cart-quantity-value min-w-[1.5rem] text-center text-sm font-semibold text-fuchsia-100">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(itemId, item.quantity + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800"
+                      className="cart-quantity-button flex h-7 w-7 items-center justify-center rounded-lg text-fuchsia-300 hover:bg-acai-800"
                       aria-label="Aumentar"
                     >
                       <Plus className="h-3.5 w-3.5" />

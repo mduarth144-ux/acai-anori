@@ -129,13 +129,18 @@ export default function MeusPedidosPage() {
           <Link
             key={order.id}
             href={`/pedido/${order.id}`}
-            className="orders-item-card border-acai-600 bg-acai-800/90 block rounded-xl border p-4 shadow-lg"
+            className="orders-item-card block rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-500 p-4 text-white shadow-lg transition-transform hover:scale-[1.01]"
           >
-            <p className="orders-item-id text-acai-400 text-sm">#{order.id}</p>
-            <p className="orders-item-title font-semibold text-fuchsia-200">
-              {orderTypeLabel(order.type)} - R$ {Number(order.total).toFixed(2)}
-            </p>
-            <p className="orders-item-meta text-acai-300 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="orders-item-id text-xs font-medium text-fuchsia-100/90">Pedido #{order.id}</p>
+                <p className="orders-item-title truncate text-base font-semibold">
+                  {orderTypeLabel(order.type)}
+                </p>
+              </div>
+              <p className="shrink-0 text-base font-bold">R$ {Number(order.total).toFixed(2)}</p>
+            </div>
+            <p className="orders-item-meta mt-1 text-sm text-fuchsia-100/90">
               {new Date(order.createdAt).toLocaleString('pt-BR')} -{' '}
               {orderStatusLabel(order.status)}
             </p>
