@@ -42,7 +42,7 @@ export default function CarrinhoPage() {
   }
 
   return (
-    <main className="cart-page mx-auto max-w-2xl p-4 pb-52">
+    <main className="cart-page mx-auto max-w-2xl p-4 pb-[calc(14rem+env(safe-area-inset-bottom))]">
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => router.back()}
@@ -141,23 +141,25 @@ export default function CarrinhoPage() {
         })}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30">
-        <div className="mx-auto w-full max-w-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="cart-summary rounded-2xl border border-acai-600 bg-gradient-to-r from-acai-900 via-purple-950 to-acai-950 p-4 text-acai-50 shadow-2xl ring-1 ring-fuchsia-900/30">
+      <div className="fixed inset-x-0 bottom-16 z-40">
+        <div className="w-full">
+          <div className="cart-summary rounded-t-2xl border border-b-0 border-acai-600 bg-gradient-to-r from-[#2b0f2c] via-[#4a3545] to-[#2b0f2c] p-4 text-acai-50 shadow-2xl ring-1 ring-[#4a3545]/50">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-fuchsia-200">Total do pedido</span>
+              <span className="text-sm text-purple-100/90">
+                Total do pedido ({items.length} {items.length === 1 ? 'item' : 'itens'})
+              </span>
               <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               <Link
                 href={menuHref}
-                className="block w-full rounded-xl border border-fuchsia-400/50 py-3 text-center text-sm font-semibold text-acai-50 hover:bg-acai-800/80"
+                className="flex h-12 w-full items-center justify-center rounded-xl border border-acai-100/40 bg-acai-50/5 px-3 text-center text-sm font-semibold text-acai-50 transition hover:bg-acai-50/15"
               >
                 Adicionar mais itens
               </Link>
               <Link
                 href={checkoutHref}
-                className="block w-full rounded-xl bg-fuchsia-600 py-3 text-center text-sm font-semibold text-white hover:bg-fuchsia-500"
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-[#6f4f68] px-3 text-center text-sm font-semibold text-white transition hover:bg-[#7c5a74]"
               >
                 Finalizar pedido
               </Link>

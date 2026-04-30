@@ -363,6 +363,14 @@ export default function NovoPedidoPage() {
       }
       clearCart()
       router.push(`/pedido/${data.id}`)
+    } catch (error) {
+      if (error instanceof TypeError) {
+        setSubmitError(
+          'Não foi possível conectar ao servidor para confirmar o pedido. Verifique sua conexão e tente novamente.'
+        )
+        return
+      }
+      setSubmitError('Ocorreu um erro inesperado ao confirmar o pedido. Tente novamente.')
     } finally {
       setIsSubmitting(false)
     }
@@ -404,9 +412,20 @@ export default function NovoPedidoPage() {
       : type === 'TABLE'
         ? isTableValid
         : true)
+  const summaryLabel = `${cart.length} ${cart.length === 1 ? 'item' : 'itens'}`
+  const primaryActionDisabled =
+    checkoutStep === 1
+      ? !canContinueToPayment || isSubmitting
+      : isSubmitting || (type !== 'TABLE' && paymentTab === 'ONLINE')
+  const primaryActionLabel =
+    checkoutStep === 1
+      ? 'Pagamento'
+      : isSubmitting
+        ? 'Confirmando pedido...'
+        : 'Confirmar pedido'
 
   return (
-    <main className="checkout-page mx-auto max-w-3xl p-4">
+    <main className="checkout-page mx-auto max-w-3xl p-4 pb-[calc(14rem+env(safe-area-inset-bottom))]">
       <h1 className="checkout-title mb-4 text-2xl font-bold text-fuchsia-100">
         Finalizar pedido
       </h1>
@@ -699,27 +718,6 @@ export default function NovoPedidoPage() {
               <p className="mt-3 text-sm text-amber-400">{submitError}</p>
             ) : null}
 
-            <div className="mt-5 grid gap-2 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                disabled={isSubmitting}
-                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                ← Voltar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmitError(null)
-                  setCheckoutStep(2)
-                }}
-                disabled={!canContinueToPayment || isSubmitting}
-                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Pagamento →
-              </button>
-            </div>
           </>
         </div>
       ) : (
@@ -847,28 +845,6 @@ export default function NovoPedidoPage() {
               <p className="mt-3 text-sm text-amber-400">{submitError}</p>
             ) : null}
 
-            <div className="mt-5 grid gap-2 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmitError(null)
-                  setCheckoutStep(1)
-                }}
-                disabled={isSubmitting}
-                className="w-full rounded-xl border border-acai-500 py-3 text-base font-semibold text-acai-100 hover:bg-acai-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                ← Voltar
-              </button>
-              <button
-                onClick={submitOrder}
-                disabled={
-                  isSubmitting || (type !== 'TABLE' && paymentTab === 'ONLINE')
-                }
-                className="w-full rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? 'Confirmando pedido...' : 'Confirmar pedido'}
-              </button>
-            </div>
           </>
         </div>
       )}
@@ -877,6 +853,48 @@ export default function NovoPedidoPage() {
         marketplaces (iFood/99Food) através do campo externalRefs da entidade
         Order.
       </p>
+      <div className="fixed inset-x-0 bottom-16 z-40">
+        <div className="w-full">
+          <div className="rounded-t-2xl border border-b-0 border-acai-600 bg-gradient-to-r from-[#2b0f2c] via-[#4a3545] to-[#2b0f2c] p-4 text-acai-50 shadow-2xl ring-1 ring-[#4a3545]/50">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm text-purple-100/90">Resumo ({summaryLabel})</span>
+              <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmitError(null)
+                  if (checkoutStep === 1) {
+                    router.back()
+                    return
+                  }
+                  setCheckoutStep(1)
+                }}
+                disabled={isSubmitting}
+                className="flex h-12 w-full items-center justify-center rounded-xl border border-acai-100/40 bg-acai-50/5 px-3 text-base font-semibold text-acai-50 transition hover:bg-acai-50/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (checkoutStep === 1) {
+                    setSubmitError(null)
+                    setCheckoutStep(2)
+                    return
+                  }
+                  void submitOrder()
+                }}
+                disabled={primaryActionDisabled}
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-[#6f4f68] px-3 text-base font-semibold text-white shadow transition hover:bg-[#7c5a74] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {primaryActionLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   )
 }

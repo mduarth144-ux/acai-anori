@@ -6,15 +6,11 @@ import {
   CheckCircle2,
   ChefHat,
   Clock3,
-  ClipboardList,
-  Home,
   Minus,
   Plus,
   Search,
   ShoppingBag,
-  Tag,
   Truck,
-  User,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -416,7 +412,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
   return (
     <main className="menu-page min-h-screen bg-[#05020b]">
-      <header className="menu-page-hero relative mb-6">
+      <header className="menu-page-hero relative mb-4">
         <div className="menu-page-hero-banner relative h-40 w-full overflow-hidden bg-[#4f1b67] sm:h-48 lg:h-56">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(203,124,245,0.42),transparent_36%),radial-gradient(circle_at_78%_20%,rgba(186,106,237,0.3),transparent_34%),radial-gradient(circle_at_55%_70%,rgba(148,98,232,0.34),transparent_44%),linear-gradient(180deg,#6b2a8f_0%,#582178_52%,#3f1458_100%)]" />
           {[...Array(16)].map((_, index) => (
@@ -435,22 +431,22 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           ))}
           <div className="absolute inset-x-0 bottom-0 h-10 bg-[linear-gradient(to_top,rgba(255,255,255,0.12),transparent)]" />
         </div>
-        <div className="menu-page-hero-strip pointer-events-none absolute inset-x-0 bottom-0 h-11 bg-[#ececef]" />
-        <div className="absolute bottom-11 left-1/2 z-20 -translate-x-1/2 translate-y-1/2">
-          <div className="h-24 w-24 rounded-full bg-white p-1 shadow-[0_10px_24px_-10px_rgba(15,23,42,0.8)] ring-2 ring-white sm:h-28 sm:w-28">
-            <div className="h-full w-full overflow-hidden rounded-full bg-[#4a1d74]">
-              <Image
-                src="/brand/logo.png"
-                alt="Logo Açaí Legal"
-                width={112}
-                height={112}
-                className="h-full w-full object-cover object-center"
-              />
+        <div className="menu-page-hero-strip pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-[#ececef]" />
+          <div className="absolute bottom-9 left-1/2 z-20 -translate-x-1/2 translate-y-1/2">
+            <div className="h-[134px] w-[134px] rounded-full bg-white p-1 shadow-[0_10px_24px_-10px_rgba(15,23,42,0.8)] ring-2 ring-white sm:h-[157px] sm:w-[157px]">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#4f1779] p-2 sm:p-2.5">
+                <Image
+                  src="/brand/logo.png"
+                  alt="Logo Açaí Legal"
+                  width={157}
+                  height={157}
+                  className="h-full w-full object-contain object-center"
+                />
+              </div>
             </div>
           </div>
-        </div>
       </header>
-      <div className="mx-auto max-w-6xl p-4 pb-36 pt-11">
+      <div className="mx-auto max-w-6xl p-4 pb-36 pt-7">
 
       {activeOrder ? (
         <section className="order-progress-card border-acai-600 bg-acai-800/90 mb-6 rounded-2xl border p-4 shadow-lg ring-1 ring-fuchsia-900/30">
@@ -513,29 +509,31 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         </section>
       ) : null}
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(220px,280px)_1fr]">
-        <ThemedSelect
-          id="category-filter"
-          value={activeCategory}
-          onChange={(nextValue) => setActiveCategory(nextValue)}
-          className="w-full"
-          options={[
-            { value: 'all', label: 'Lista de categorias' },
-            ...categories.map((category) => ({
-              value: category.slug,
-              label: category.name,
-            })),
-          ]}
-        />
-        <label className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 text-zinc-500 shadow-sm transition hover:border-zinc-400 focus-within:border-fuchsia-500 focus-within:ring-2 focus-within:ring-fuchsia-500/30">
-          <Search className="h-4 w-4 text-zinc-400" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Busque por um produto"
-            className="h-full w-full border-0 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
+      <div className="mb-6 rounded-2xl border border-acai-700/70 bg-acai-900/30 p-3 shadow-lg shadow-black/10 backdrop-blur-sm">
+        <div className="grid gap-3 sm:grid-cols-[minmax(220px,280px)_1fr]">
+          <ThemedSelect
+            id="category-filter"
+            value={activeCategory}
+            onChange={(nextValue) => setActiveCategory(nextValue)}
+            className="w-full"
+            options={[
+              { value: 'all', label: 'Lista de categorias' },
+              ...categories.map((category) => ({
+                value: category.slug,
+                label: category.name,
+              })),
+            ]}
           />
-        </label>
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 text-zinc-500 shadow-sm transition hover:border-zinc-400 focus-within:border-fuchsia-500 focus-within:ring-2 focus-within:ring-fuchsia-500/30">
+            <Search className="h-4 w-4 text-zinc-400" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Busque por um produto"
+              className="h-full w-full border-0 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
+            />
+          </label>
+        </div>
       </div>
 
       {shouldShowBestSellers && featuredProducts.length > 0 ? (
@@ -646,20 +644,25 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       ) : null}
 
       {itemCount > 0 ? (
-        <div className="fixed inset-x-0 bottom-16 z-40 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-fuchsia-500 px-3 py-2 text-white shadow-2xl shadow-black/40 sm:px-4">
-          <div className="flex items-center justify-between gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-2 py-2 text-xs font-semibold sm:px-3 sm:text-sm">
+        <div className="fixed inset-x-0 bottom-16 z-40 rounded-t-2xl border border-b-0 border-acai-600 bg-gradient-to-r from-[#2b0f2c] via-[#4a3545] to-[#2b0f2c] px-4 py-4 text-white shadow-2xl shadow-black/40 ring-1 ring-[#4a3545]/50">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span className="text-sm text-purple-100/90">
+              Resumo ({itemCount} {itemCount === 1 ? 'item' : 'itens'})
+            </span>
+            <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex h-12 items-center justify-center gap-2 rounded-xl border border-acai-100/40 bg-acai-50/5 px-3 text-sm font-semibold text-acai-50">
               <ShoppingBag className="h-4 w-4" />
               <span>{itemCount}</span>
             </div>
             <Link
               href={tableCode ? `/carrinho?mesa=${tableCode}` : '/carrinho'}
-              aria-label="Abrir sacola"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 text-lg font-semibold text-white transition hover:bg-white/20"
+              aria-label="Ver pedido"
+              className="flex h-12 items-center justify-center rounded-xl bg-[#6f4f68] px-3 text-sm font-semibold text-white transition hover:bg-[#7c5a74]"
             >
-              +
+              Ver pedido
             </Link>
-            <span className="text-right text-xs font-semibold sm:text-sm">R$ {total().toFixed(2)}</span>
           </div>
         </div>
       ) : null}
@@ -873,38 +876,6 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         }
       `}</style>
       </div>
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-[#ececef]">
-        <nav className="mx-auto grid h-16 w-full max-w-3xl grid-cols-4 items-center">
-          <Link
-            href="/"
-            className="flex flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-fuchsia-600"
-          >
-            <Home className="h-5 w-5" />
-            <span>Início</span>
-          </Link>
-          <Link
-            href="/promocoes"
-            className="flex flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-zinc-500 transition hover:text-fuchsia-600"
-          >
-            <Tag className="h-5 w-5" />
-            <span>Promoções</span>
-          </Link>
-          <Link
-            href={tableCode ? `/pedido/novo?mesa=${tableCode}` : '/pedido/novo'}
-            className="flex flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-zinc-500 transition hover:text-fuchsia-600"
-          >
-            <ClipboardList className="h-5 w-5" />
-            <span>Pedidos</span>
-          </Link>
-          <Link
-            href="/perfil"
-            className="flex flex-col items-center justify-center gap-1 text-[0.7rem] font-medium text-zinc-500 transition hover:text-fuchsia-600"
-          >
-            <User className="h-5 w-5" />
-            <span>Perfil</span>
-          </Link>
-        </nav>
-      </footer>
     </main>
   )
 }

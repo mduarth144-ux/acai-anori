@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { BottomNav } from '../components/BottomNav'
 import { SiteHeader } from '../components/SiteHeader'
 import './global.css'
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SiteHeader />
         {children}
+        <BottomNav />
       </body>
     </html>
   )

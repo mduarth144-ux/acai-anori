@@ -94,7 +94,7 @@ export default function PedidoStatusPage({ params }: Props) {
     : null
 
   return (
-    <main className="order-status-page mx-auto max-w-2xl p-4">
+    <main className="order-status-page mx-auto max-w-2xl p-4 pb-[calc(14rem+env(safe-area-inset-bottom))]">
       <h1 className="order-status-title text-2xl font-bold text-fuchsia-100">
         Acompanhamento do pedido
       </h1>
@@ -174,20 +174,30 @@ export default function PedidoStatusPage({ params }: Props) {
           <p className="order-status-muted text-acai-300 text-sm">Entrega em: {order.address}</p>
         ) : null}
       </div>
-      <footer className="mt-5 grid gap-2 sm:grid-cols-2">
-        <Link
-          href="/ajuda"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow transition hover:bg-fuchsia-500"
-        >
-          Ajuda
-        </Link>
-        <Link
-          href="/"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-fuchsia-600 py-3 text-base font-semibold text-white shadow transition hover:bg-fuchsia-500"
-        >
-          Voltar para página inicial
-        </Link>
-      </footer>
+      <div className="fixed inset-x-0 bottom-16 z-40">
+        <div className="w-full">
+          <footer className="rounded-t-2xl border border-b-0 border-acai-600 bg-gradient-to-r from-[#2b0f2c] via-[#4a3545] to-[#2b0f2c] p-4 text-acai-50 shadow-2xl ring-1 ring-[#4a3545]/50">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm text-purple-100/90">Pedido {orderId || '--'}</span>
+              <span className="text-sm font-semibold text-acai-50">{orderStatusLabel(status)}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/ajuda"
+                className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-acai-100/40 bg-acai-50/5 px-3 text-base font-semibold text-acai-50 transition hover:bg-acai-50/15"
+              >
+                Ajuda
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#6f4f68] px-3 text-base font-semibold text-white shadow transition hover:bg-[#7c5a74]"
+              >
+                Voltar ao início
+              </Link>
+            </div>
+          </footer>
+        </div>
+      </div>
     </main>
   )
 }
