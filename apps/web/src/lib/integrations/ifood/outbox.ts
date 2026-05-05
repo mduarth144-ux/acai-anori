@@ -6,9 +6,9 @@ import {
 } from '@prisma/client'
 import { prisma } from '../../prisma'
 import { mapLocalStatusToIfood } from './status-map'
-import { createIfoodOrder, requestIfoodDelivery, updateIfoodOrderStatus } from './client'
+import { requestIfoodDelivery, updateIfoodOrderStatus } from './client'
 import { logIntegration } from './logging'
-import { mergeIfoodRefs } from './external-refs'
+import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } }
@@ -37,31 +37,14 @@ function ensureNumber(value: Prisma.Decimal | number): number {
   return Number(value)
 }
 
-async function buildCreatePayload(order: OrderWithItems) {
+async function buildOrderContext() {
   const merchantId = process.env.IFOOD_MERCHANT_ID?.trim()
   if (!merchantId) {
     throw new Error('IFOOD_MERCHANT_ID nao configurado')
   }
 
   return {
-    externalOrderId: order.id,
     merchantId,
-    customer: {
-      name: order.customerName,
-      phone: order.customerPhone,
-      email: order.customerEmail,
-    },
-    orderType: order.type,
-    paymentMethod: order.paymentMethod,
-    total: ensureNumber(order.total),
-    notes: order.notes,
-    items: order.items.map((item) => ({
-      id: item.productId,
-      name: item.product.name,
-      quantity: item.quantity,
-      unitPrice: ensureNumber(item.unitPrice),
-      notes: item.notes,
-    })),
   }
 }
 
@@ -93,6 +76,19 @@ export async function enqueueStatusUpdate(params: {
   const outbox = getIntegrationOutboxDelegate()
   if (!outbox) {
     logIntegration('warn', 'integrationOutbox indisponivel; pulando enqueue de status', {
+      orderId: params.orderId,
+      status: params.status,
+    })
+    return
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: params.orderId },
+    select: { externalRefs: true },
+  })
+  const ifoodRefs = getIfoodRefs(order?.externalRefs)
+  if (!ifoodRefs.ifoodOrderId) {
+    logIntegration('info', 'Pedido sem ifoodOrderId; pulando enqueue de status', {
       orderId: params.orderId,
       status: params.status,
     })
@@ -169,8 +165,7 @@ export async function processOutboxBatch(limit = 20) {
       }
 
       if (item.topic === IntegrationOutboxTopic.IFOOD_ORDER_CREATE) {
-        const payload = await buildCreatePayload(order)
-        const result = await createIfoodOrder(payload, item.idempotencyKey)
+        const context = await buildOrderContext()
         let deliveryQuoteId: string | undefined
         let deliveryId: string | undefined
         let deliveryStatus: string | undefined
@@ -179,14 +174,14 @@ export async function processOutboxBatch(limit = 20) {
           const shipping = await requestIfoodDelivery({
             idempotencyKey: item.idempotencyKey,
             quotePayload: {
-              merchantId: payload.merchantId,
+              merchantId: context.merchantId,
               externalOrderId: order.id,
               orderValue: ensureNumber(order.total),
               pickupAddress: process.env.IFOOD_PICKUP_ADDRESS?.trim() || 'Endereco de retirada nao informado',
               deliveryAddress: order.address,
             },
             orderPayloadBuilder: (quoteId) => ({
-              merchantId: payload.merchantId,
+              merchantId: context.merchantId,
               externalOrderId: order.id,
               quoteId,
               recipient: {
@@ -208,7 +203,6 @@ export async function processOutboxBatch(limit = 20) {
           where: { id: order.id },
           data: {
             externalRefs: mergeIfoodRefs(order.externalRefs, {
-              ifoodOrderId: result.ifoodOrderId,
               deliveryQuoteId,
               deliveryId,
               deliveryStatus,
@@ -224,9 +218,8 @@ export async function processOutboxBatch(limit = 20) {
         if (typeof status !== 'string') {
           throw new Error('Payload de status invalido')
         }
-        const ifoodRefs = mergeIfoodRefs(order.externalRefs, {})
-        const nested = ifoodRefs.ifood as Record<string, unknown> | undefined
-        const ifoodOrderId = nested?.ifoodOrderId
+        const ifoodRefs = getIfoodRefs(order.externalRefs)
+        const ifoodOrderId = ifoodRefs.ifoodOrderId
         if (typeof ifoodOrderId !== 'string' || !ifoodOrderId) {
           throw new Error('Pedido sem ifoodOrderId para sync de status')
         }
