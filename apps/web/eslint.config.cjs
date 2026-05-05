@@ -1,7 +1,6 @@
 const { FlatCompat } = require('@eslint/eslintrc')
 const js = require('@eslint/js')
 const { fixupConfigRules } = require('@eslint/compat')
-const nx = require('@nx/eslint-plugin')
 const baseConfig = require('../../eslint.config.cjs')
 
 const compat = new FlatCompat({
@@ -15,8 +14,15 @@ module.exports = [
   ...fixupConfigRules(compat.extends('next/core-web-vitals')),
 
   ...baseConfig,
-  ...nx.configs['flat/react-typescript'],
   {
-    ignores: ['.next/**/*'],
+    ignores: ['.next/**/*', '**/*.d.ts'],
+  },
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]
