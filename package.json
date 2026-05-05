@@ -1,14 +1,13 @@
 {
-  "name": "@anori-acai-frozen/cardapio-facil",
+  "name": "@anori-acai-frozen/cardapio-digital",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "prisma generate && npx tsc -b && next build apps/web --no-lint",
-    "dev": "next dev apps/web",
+    "build": "prisma generate && nx build web",
+    "dev": "nx dev web",
     "verify-commit-message": "commitlint --edit",
     "format": "prettier --write .",
-    "lint": "eslint apps/web",
-    "typecheck": "npx tsc -b",
+    "lint": "nx lint web",
     "lint-staged": "lint-staged",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

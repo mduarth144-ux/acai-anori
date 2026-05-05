@@ -7,15 +7,5 @@
     "env": {
       "NX_NO_CLOUD": "true"
     }
-  },
-  "crons": [
-    {
-      "path": "/api/integrations/ifood/outbox",
-      "schedule": "*/1 * * * *"
-    },
-    {
-      "path": "/api/integrations/ifood/reconcile",
-      "schedule": "*/10 * * * *"
-    }
-  ]
+  }
 }
