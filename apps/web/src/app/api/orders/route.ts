@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
-import { enqueueOrderCreate, enqueueStatusUpdate } from '../../../lib/integrations/ifood/outbox'
+import { enqueueOrderCreate, enqueueStatusUpdate, processOutboxBatch } from '../../../lib/integrations/ifood/outbox'
 import { isValidLocalTransition } from '../../../lib/integrations/ifood/status-map'
-import { mergeIfoodRefs } from '../../../lib/integrations/ifood/external-refs'
+import { getIfoodRefs, mergeIfoodRefs } from '../../../lib/integrations/ifood/external-refs'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -85,7 +85,64 @@ export async function POST(request: Request) {
 
   await enqueueOrderCreate(created.id)
 
-  return NextResponse.json(created)
+  const shouldProcessIfoodOnCreate =
+    (process.env.IFOOD_SYNC_ON_ORDER_CREATE?.trim() || 'true').toLowerCase() !== 'false'
+
+  if (shouldProcessIfoodOnCreate) {
+    try {
+      await processOutboxBatch(5)
+    } catch {
+      // O retorno da API ainda deve funcionar mesmo se o processamento imediato falhar.
+    }
+  }
+
+  const [latestOrderState, latestOutbox] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: created.id },
+      select: { externalRefs: true },
+    }),
+    prisma.integrationOutbox.findFirst({
+      where: {
+        orderId: created.id,
+        topic: 'IFOOD_ORDER_CREATE',
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        status: true,
+        attempts: true,
+        lastError: true,
+        nextAttemptAt: true,
+        processedAt: true,
+        updatedAt: true,
+      },
+    }),
+  ])
+
+  const ifoodRefs = getIfoodRefs(latestOrderState?.externalRefs ?? created.externalRefs)
+
+  return NextResponse.json({
+    ...created,
+    externalRefs: latestOrderState?.externalRefs ?? created.externalRefs,
+    integration: {
+      ifood: {
+        syncState: ifoodRefs.syncState ?? 'pending',
+        syncError: ifoodRefs.syncError ?? null,
+        ifoodOrderId: ifoodRefs.ifoodOrderId ?? null,
+        deliveryId: ifoodRefs.deliveryId ?? null,
+        deliveryStatus: ifoodRefs.deliveryStatus ?? null,
+        outbox: latestOutbox
+          ? {
+              status: latestOutbox.status,
+              attempts: latestOutbox.attempts,
+              lastError: latestOutbox.lastError,
+              nextAttemptAt: latestOutbox.nextAttemptAt,
+              processedAt: latestOutbox.processedAt,
+              updatedAt: latestOutbox.updatedAt,
+            }
+          : null,
+      },
+    },
+  })
 }
 
 export async function PATCH(request: Request) {

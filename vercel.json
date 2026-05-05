@@ -2,5 +2,15 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm ci --legacy-peer-deps",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": "apps/web/.next",
+  "crons": [
+    {
+      "path": "/api/integrations/ifood/outbox",
+      "schedule": "*/1 * * * *"
+    },
+    {
+      "path": "/api/integrations/ifood/reconcile",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }
