@@ -4,7 +4,6 @@ import type {
   IfoodOrderCreatePayload,
   IfoodOrderStatus,
   IfoodShippingOrderPayload,
-  IfoodShippingQuotePayload,
 } from './types'
 
 type AuthCache = {
@@ -159,8 +158,9 @@ export async function updateIfoodOrderStatus(params: {
 }
 
 export async function requestIfoodDelivery(params: {
-  quotePayload: IfoodShippingQuotePayload
-  orderPayloadBuilder: (quoteId: string) => IfoodShippingOrderPayload
+  merchantId: string
+  externalOrderId: string
+  orderPayload: IfoodShippingOrderPayload
   idempotencyKey: string
 }) {
   const env = getIfoodEnv()
@@ -168,32 +168,16 @@ export async function requestIfoodDelivery(params: {
     return { skipped: true as const }
   }
 
-  const quoteResponse = await ifoodRequest(env.shippingQuotePath, {
-    method: 'POST',
-    headers: {
-      'x-idempotency-key': `${params.idempotencyKey}:quote`,
-    },
-    body: JSON.stringify(params.quotePayload),
-  })
+  const shippingPath = env.shippingOrderPath.includes('{merchantId}')
+    ? env.shippingOrderPath.replace('{merchantId}', encodeURIComponent(params.merchantId))
+    : `/shipping/v1.0/merchants/${encodeURIComponent(params.merchantId)}/orders`
 
-  if (!quoteResponse.ok) {
-    const body = await quoteResponse.text()
-    throw new Error(`Falha ao cotar entrega iFood: ${quoteResponse.status} ${body}`)
-  }
-
-  const quoteData = (await quoteResponse.json()) as { quoteId?: string; id?: string }
-  const quoteId = quoteData.quoteId ?? quoteData.id
-  if (!quoteId) {
-    throw new Error('Resposta de cotacao iFood sem quoteId')
-  }
-
-  const orderPayload = params.orderPayloadBuilder(quoteId)
-  const orderResponse = await ifoodRequest(env.shippingOrderPath, {
+  const orderResponse = await ifoodRequest(shippingPath, {
     method: 'POST',
     headers: {
       'x-idempotency-key': `${params.idempotencyKey}:delivery`,
     },
-    body: JSON.stringify(orderPayload),
+    body: JSON.stringify(params.orderPayload),
   })
 
   if (!orderResponse.ok) {
@@ -206,6 +190,7 @@ export async function requestIfoodDelivery(params: {
     orderId?: string
     id?: string
     status?: string
+    trackingUrl?: string
   }
   const deliveryId = orderData.deliveryId ?? orderData.orderId ?? orderData.id
   if (!deliveryId) {
@@ -213,15 +198,15 @@ export async function requestIfoodDelivery(params: {
   }
 
   logIntegration('info', 'Entregador iFood solicitado', {
-    externalOrderId: params.quotePayload.externalOrderId,
-    quoteId,
+    externalOrderId: params.externalOrderId,
     deliveryId,
   })
 
   return {
     skipped: false as const,
-    quoteId,
+    quoteId: undefined,
     deliveryId,
     status: orderData.status ?? 'REQUESTED',
+    trackingUrl: orderData.trackingUrl,
   }
 }

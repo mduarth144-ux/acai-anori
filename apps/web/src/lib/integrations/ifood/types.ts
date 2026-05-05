@@ -54,12 +54,48 @@ export type IfoodShippingQuotePayload = {
 }
 
 export type IfoodShippingOrderPayload = {
-  merchantId: string
-  externalOrderId: string
-  quoteId: string
-  recipient: {
-    name?: string | null
-    phone?: string | null
+  customer: {
+    name: string
+    phone: {
+      countryCode: string
+      areaCode: string
+      number: string
+      type: 'CUSTOMER'
+    }
   }
-  notes?: string | null
+  delivery: {
+    merchantFee: number
+    quoteId?: string
+    deliveryAddress: {
+      postalCode: string
+      streetNumber: string
+      streetName: string
+      neighborhood: string
+      city: string
+      state: string
+      country: string
+      coordinates: {
+        latitude: number
+        longitude: number
+      }
+    }
+  }
+  items: Array<{
+    id: string
+    name: string
+    quantity: number
+    unitPrice: number
+    price: number
+    optionsPrice: number
+    totalPrice: number
+  }>
+  payments: {
+    methods: Array<{
+      method: 'CASH' | 'CREDIT' | 'DEBIT' | 'PIX'
+      type: 'OFFLINE'
+      value: number
+      card?: { brand: string }
+      cash?: { changeFor: number }
+    }>
+  }
 }

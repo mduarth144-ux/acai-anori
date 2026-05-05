@@ -28,6 +28,7 @@ export function getIfoodEnv(): IfoodEnv {
     authUrl: process.env.IFOOD_AUTH_URL?.trim() || 'https://merchant-api.ifood.com.br/authentication/v1.0/oauth/token',
     shippingEnabled: (process.env.IFOOD_SHIPPING_ENABLED?.trim() || 'true').toLowerCase() !== 'false',
     shippingQuotePath: process.env.IFOOD_SHIPPING_QUOTE_PATH?.trim() || '/shipping/v1.0/quotes',
-    shippingOrderPath: process.env.IFOOD_SHIPPING_ORDER_PATH?.trim() || '/shipping/v1.0/orders',
+    shippingOrderPath:
+      process.env.IFOOD_SHIPPING_ORDER_PATH?.trim() || '/shipping/v1.0/merchants/{merchantId}/orders',
   }
 }

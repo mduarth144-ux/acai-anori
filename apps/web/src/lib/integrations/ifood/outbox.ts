@@ -4,6 +4,7 @@ import {
   IntegrationOutboxTopic,
   Prisma,
 } from '@prisma/client'
+import { randomUUID } from 'node:crypto'
 import { prisma } from '../../prisma'
 import { mapLocalStatusToIfood } from './status-map'
 import { requestIfoodDelivery, updateIfoodOrderStatus } from './client'
@@ -35,6 +36,40 @@ function nextAttemptDate(attempts: number): Date {
 function ensureNumber(value: Prisma.Decimal | number): number {
   if (typeof value === 'number') return value
   return Number(value)
+}
+
+function parseCustomerPhone(phone: string | null | undefined) {
+  const digits = (phone ?? '').replace(/\D/g, '')
+  const normalized = digits.length >= 11 ? digits.slice(-11) : '92999999999'
+  return {
+    countryCode: '55',
+    areaCode: normalized.slice(0, 2),
+    number: normalized.slice(2),
+    type: 'CUSTOMER' as const,
+  }
+}
+
+function parseDeliveryAddress(address: string | null | undefined) {
+  const lines = (address ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const postalCode = (lines[0]?.match(/\d{5}-?\d{3}/)?.[0] ?? '69000000').replace(/\D/g, '')
+  const streetLine = lines[1] ?? 'Rua Tito Bittencourt, 83'
+  const [streetNameRaw, streetNumberRaw] = streetLine.split(',').map((part) => part?.trim() ?? '')
+  return {
+    postalCode,
+    streetNumber: streetNumberRaw || 'S/N',
+    streetName: streetNameRaw || 'Rua nao informada',
+    neighborhood: lines[2] || 'Centro',
+    city: process.env.IFOOD_DELIVERY_CITY?.trim() || 'Manaus',
+    state: process.env.IFOOD_DELIVERY_STATE?.trim() || 'AM',
+    country: 'BR',
+    coordinates: {
+      latitude: Number(process.env.IFOOD_DEFAULT_LATITUDE || '-3.1190275'),
+      longitude: Number(process.env.IFOOD_DEFAULT_LONGITUDE || '-60.0217314'),
+    },
+  }
 }
 
 async function buildOrderContext() {
@@ -171,25 +206,58 @@ export async function processOutboxBatch(limit = 20) {
         let deliveryStatus: string | undefined
 
         if (order.type === 'DELIVERY' && order.address?.trim()) {
+          const paymentMethod =
+            order.paymentMethod === 'CREDIT' || order.paymentMethod === 'DEBIT'
+              ? order.paymentMethod
+              : 'CASH'
+          const unitPrice = ensureNumber(order.items[0]?.unitPrice ?? ensureNumber(order.total))
+          const quantity = Math.max(1, order.items[0]?.quantity ?? 1)
+          const price = unitPrice * quantity
+          const optionsPrice = Math.max(0, ensureNumber(order.total) - price)
+          const totalPrice = ensureNumber(order.total)
+
           const shipping = await requestIfoodDelivery({
             idempotencyKey: item.idempotencyKey,
-            quotePayload: {
-              merchantId: context.merchantId,
-              externalOrderId: order.id,
-              orderValue: ensureNumber(order.total),
-              pickupAddress: process.env.IFOOD_PICKUP_ADDRESS?.trim() || 'Endereco de retirada nao informado',
-              deliveryAddress: order.address,
-            },
-            orderPayloadBuilder: (quoteId) => ({
-              merchantId: context.merchantId,
-              externalOrderId: order.id,
-              quoteId,
-              recipient: {
-                name: order.customerName,
-                phone: order.customerPhone,
+            merchantId: context.merchantId,
+            externalOrderId: order.id,
+            orderPayload: {
+              customer: {
+                name: order.customerName?.trim() || 'Cliente',
+                phone: parseCustomerPhone(order.customerPhone),
               },
-              notes: order.notes,
-            }),
+              delivery: {
+                merchantFee: 0,
+                deliveryAddress: parseDeliveryAddress(order.address),
+              },
+              items: [
+                {
+                  id: randomUUID(),
+                  name: order.items[0]?.product?.name || 'Pedido',
+                  quantity,
+                  unitPrice,
+                  price,
+                  optionsPrice,
+                  totalPrice,
+                },
+              ],
+              payments: {
+                methods: [
+                  paymentMethod === 'CASH'
+                    ? {
+                        method: paymentMethod,
+                        type: 'OFFLINE',
+                        value: totalPrice,
+                        cash: { changeFor: ensureNumber(order.changeFor ?? totalPrice) },
+                      }
+                    : {
+                        method: paymentMethod,
+                        type: 'OFFLINE',
+                        value: totalPrice,
+                        card: { brand: 'VISA' },
+                      },
+                ],
+              },
+            },
           })
 
           if (!shipping.skipped) {

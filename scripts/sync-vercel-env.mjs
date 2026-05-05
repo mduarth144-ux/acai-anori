@@ -35,6 +35,16 @@ const ALLOWLIST = [
   { key: 'SUPABASE_JWT_SECRET', sensitive: true },
   { key: 'NEXT_PUBLIC_SITE_URL' },
   { key: 'SUPABASE_PROJECT_ID' },
+  { key: 'IFOOD_CLIENT_ID', sensitive: true },
+  { key: 'IFOOD_CLIENT_SECRET', sensitive: true },
+  { key: 'IFOOD_MERCHANT_ID', sensitive: true },
+  { key: 'IFOOD_WEBHOOK_SECRET', sensitive: true },
+  { key: 'IFOOD_API_BASE_URL' },
+  { key: 'IFOOD_AUTH_URL' },
+  { key: 'IFOOD_SHIPPING_ENABLED' },
+  { key: 'IFOOD_SHIPPING_QUOTE_PATH' },
+  { key: 'IFOOD_SHIPPING_ORDER_PATH' },
+  { key: 'IFOOD_PICKUP_ADDRESS' },
 ]
 
 function parseEnvFile(filePath) {
