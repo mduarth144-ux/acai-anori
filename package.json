@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "prisma generate && nx build web",
+    "build": "prisma generate && next build apps/web --no-lint",
     "dev": "nx dev web",
     "verify-commit-message": "commitlint --edit",
     "format": "prettier --write .",
