@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChefHat,
   Clock3,
+  LucideIcon,
   Minus,
   Plus,
   Search,
@@ -17,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
 import { orderStatusLabel } from '../../lib/order-labels'
+import { getCategoryIcon } from '../../lib/category-icons'
 
 type Product = {
   id: string
@@ -180,6 +182,14 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         categories.findIndex((category) => category.slug === b.category.slug)
     )
   }, [categories, visibleProducts])
+
+  const iconByCategorySlug = useMemo(() => {
+    const map = new Map<string, LucideIcon>()
+    for (const category of categories) {
+      map.set(category.slug, getCategoryIcon(category.slug, category.name))
+    }
+    return map
+  }, [categories])
   const hasMoreProducts = visibleCount < filtered.length
 
   useEffect(() => {
@@ -589,7 +599,13 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       <div className="space-y-8">
         {visibleProductsByCategory.map(({ category, products: categoryProducts }) => (
           <section key={category.slug} className="rounded-2xl border border-acai-700/70 bg-acai-900/40 p-4 shadow-lg ring-1 ring-acai-700/40">
-            <h2 className="mb-4 text-xl font-bold text-fuchsia-100">{category.name}</h2>
+            <h2 className="mb-4 inline-flex items-center gap-2 text-xl font-bold text-fuchsia-100">
+              {(() => {
+                const Icon = iconByCategorySlug.get(category.slug)
+                return Icon ? <Icon className="h-5 w-5 text-fuchsia-300" /> : null
+              })()}
+              <span>{category.name}</span>
+            </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {categoryProducts.map((product) => (
                 <article
@@ -668,10 +684,10 @@ export function MenuPage({ categories, products, tableCode }: Props) {
       ) : null}
 
       {wizardProduct ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 md:items-center md:p-4">
-          <div className="wizard-modal flex h-[100dvh] w-full flex-col overflow-hidden bg-[#f2f2f4] text-zinc-800 md:h-auto md:max-h-[92vh] md:max-w-5xl md:flex-row md:rounded-2xl md:border md:border-zinc-200 md:bg-white md:shadow-2xl">
-            <div className="hidden bg-zinc-100 md:block md:w-[48%] md:p-6">
-              <div className="h-full overflow-hidden rounded-2xl bg-zinc-200">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 md:items-center md:p-4">
+          <div className="wizard-modal flex h-[100dvh] w-full flex-col overflow-hidden bg-[#130d1f] text-fuchsia-100 md:h-auto md:max-h-[92vh] md:max-w-5xl md:flex-row md:rounded-2xl md:border md:border-fuchsia-900/60 md:shadow-2xl">
+            <div className="hidden bg-[#100a1c] md:block md:w-[48%] md:p-6">
+              <div className="h-full overflow-hidden rounded-2xl bg-[#221733]">
                 {wizardProduct.imageUrl ? (
                   <Image
                     src={wizardProduct.imageUrl}
@@ -681,7 +697,7 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full min-h-64 items-center justify-center text-sm text-zinc-500">
+                  <div className="flex h-full min-h-64 items-center justify-center text-sm text-fuchsia-300/70">
                     Sem imagem
                   </div>
                 )}
@@ -689,18 +705,18 @@ export function MenuPage({ categories, products, tableCode }: Props) {
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-4 md:bg-white md:px-5">
+              <div className="border-b border-fuchsia-900/50 bg-[#1a1128] px-4 py-4 md:px-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="wizard-modal-title text-2xl font-bold text-zinc-700">{wizardProduct.name}</h3>
+                    <h3 className="wizard-modal-title text-2xl font-bold text-fuchsia-100">{wizardProduct.name}</h3>
                     {wizardProduct.description ? (
-                      <p className="mt-1 text-sm text-zinc-500">{wizardProduct.description}</p>
+                      <p className="mt-1 text-sm text-fuchsia-200/80">{wizardProduct.description}</p>
                     ) : null}
                   </div>
                   <button
                     type="button"
                     onClick={closeWizard}
-                    className="rounded-full bg-zinc-200 p-2 text-zinc-500 hover:bg-zinc-300"
+                    className="rounded-full bg-fuchsia-900/50 p-2 text-fuchsia-200 transition hover:bg-fuchsia-800/70"
                     aria-label="Fechar customização"
                   >
                     <X className="h-5 w-5" />
@@ -723,20 +739,20 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                 return (
                   <section
                     key={customization.id}
-                    className="wizard-modal-group border-t border-zinc-200 first:border-t-0"
+                    className="wizard-modal-group border-t border-fuchsia-900/50 first:border-t-0"
                   >
-                    <div className="bg-zinc-100 px-4 py-3">
-                      <p className="wizard-modal-group-title text-[1.7rem] font-semibold text-zinc-700">
+                    <div className="bg-[#1a1128] px-4 py-3">
+                      <p className="wizard-modal-group-title text-[1.7rem] font-semibold text-fuchsia-100">
                         {customization.label}
                       </p>
-                      <p className="wizard-modal-group-hint mt-1 text-sm text-zinc-500">
+                      <p className="wizard-modal-group-hint mt-1 text-sm text-fuchsia-200/80">
                         {typeof customization.maxSelect === 'number' && customization.maxSelect > 0
                           ? `Escolha até ${customization.maxSelect} ${customization.maxSelect === 1 ? 'opção' : 'opções'}`
                           : minSelect > 0
                             ? `Escolha no mínimo ${minSelect} ${minSelect === 1 ? 'opção' : 'opções'}`
                             : 'Opcional'}
                       </p>
-                      <p className="mt-1 text-xs font-semibold text-zinc-600">
+                      <p className="mt-1 text-xs font-semibold text-fuchsia-300/90">
                         {selectedOptionsCount}/{customization.maxSelect ?? (selectedOptionsCount || 1)}{' '}
                         {minSelect > 0 ? 'OBRIGATÓRIO' : 'OPCIONAL'}
                       </p>
@@ -758,9 +774,9 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                         return (
                           <div
                             key={option.id}
-                            className="wizard-modal-option flex items-center gap-3 border-b border-zinc-200 px-4 py-3 text-left"
+                            className="wizard-modal-option flex items-center gap-3 border-b border-fuchsia-900/40 px-4 py-3 text-left"
                           >
-                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-zinc-200">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#2a1e3a]">
                               {optionImageUrl ? (
                                 <Image
                                   src={optionImageUrl}
@@ -772,8 +788,8 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                               ) : null}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-lg text-zinc-700">{option.optionProduct?.name ?? option.name}</p>
-                              <span className="wizard-modal-option-price text-sm font-semibold text-zinc-600">
+                              <p className="text-lg text-fuchsia-100">{option.optionProduct?.name ?? option.name}</p>
+                              <span className="wizard-modal-option-price text-sm font-semibold text-fuchsia-300">
                                 {effectivePrice > 0
                                   ? `+ R$ ${effectivePrice.toFixed(2)}`
                                   : ''}
@@ -786,18 +802,18 @@ export function MenuPage({ categories, products, tableCode }: Props) {
                                   <button
                                     type="button"
                                     onClick={() => updateOptionQuantity(customization.id, option.id, -1)}
-                                    className="text-fuchsia-500 hover:text-fuchsia-600"
+                                    className="text-fuchsia-300 transition hover:text-fuchsia-200"
                                     aria-label={`Diminuir ${option.optionProduct?.name ?? option.name}`}
                                   >
                                     <Minus className="h-5 w-5" />
                                   </button>
-                                  <span className="w-4 text-center text-lg text-zinc-700">{selectedQty}</span>
+                                  <span className="w-4 text-center text-lg text-fuchsia-100">{selectedQty}</span>
                                 </>
                               ) : null}
                               <button
                                 type="button"
                                 onClick={() => updateOptionQuantity(customization.id, option.id, 1)}
-                                className="text-fuchsia-500 hover:text-fuchsia-600"
+                                className="text-fuchsia-300 transition hover:text-fuchsia-200"
                                 aria-label={`Adicionar ${option.optionProduct?.name ?? option.name}`}
                               >
                                 <Plus className="h-5 w-5" />
@@ -814,37 +830,37 @@ export function MenuPage({ categories, products, tableCode }: Props) {
 
             {wizardError ? <p className="wizard-modal-error mt-3 text-sm text-amber-400">{wizardError}</p> : null}
 
-              <div className="border-t border-zinc-200 px-4 py-3">
-                <label className="mb-3 block text-base text-zinc-500">
+              <div className="border-t border-fuchsia-900/50 bg-[#1a1128] px-4 py-3">
+                <label className="mb-3 block text-base text-fuchsia-200/90">
                   Alguma observação?
-                  <span className="ml-2 text-xs">{wizardNotes.length} / 140</span>
+                  <span className="ml-2 text-xs text-fuchsia-300/70">{wizardNotes.length} / 140</span>
                 </label>
                 <textarea
                   value={wizardNotes}
                   onChange={(e) => setWizardNotes(e.target.value.slice(0, 140))}
-                  className="h-20 w-full resize-none rounded-md border border-zinc-300 p-3 text-sm outline-none focus:border-fuchsia-500"
+                  className="h-20 w-full resize-none rounded-md border border-fuchsia-800 bg-[#2a1e3a] p-3 text-sm text-fuchsia-100 outline-none placeholder:text-fuchsia-300/60 focus:border-fuchsia-500"
                 />
               </div>
 
-              <div className="sticky bottom-0 border-t border-zinc-200 bg-white px-4 py-3">
+              <div className="sticky bottom-0 border-t border-fuchsia-900/50 bg-[#130d1f] px-4 py-3">
                 {wizardError ? (
                   <p className="wizard-modal-error mb-2 text-sm font-medium text-rose-500">{wizardError}</p>
                 ) : null}
                 <div className="flex gap-2">
-                  <div className="flex items-center gap-4 rounded-lg bg-zinc-100 px-4">
+                  <div className="flex items-center gap-4 rounded-lg border border-fuchsia-800 bg-[#2a1e3a] px-4">
                     <button
                       type="button"
                       onClick={() => setWizardQuantity((current) => Math.max(1, current - 1))}
-                      className="text-zinc-500 hover:text-zinc-700"
+                      className="text-fuchsia-300 transition hover:text-fuchsia-100"
                       aria-label="Diminuir quantidade do produto"
                     >
                       <Minus className="h-5 w-5" />
                     </button>
-                    <span className="min-w-4 text-lg text-zinc-700">{wizardQuantity}</span>
+                    <span className="min-w-4 text-lg text-fuchsia-100">{wizardQuantity}</span>
                     <button
                       type="button"
                       onClick={() => setWizardQuantity((current) => current + 1)}
-                      className="text-zinc-500 hover:text-zinc-700"
+                      className="text-fuchsia-300 transition hover:text-fuchsia-100"
                       aria-label="Aumentar quantidade do produto"
                     >
                       <Plus className="h-5 w-5" />
@@ -873,6 +889,13 @@ export function MenuPage({ categories, products, tableCode }: Props) {
           50% {
             transform: translate3d(0, -10px, 0) scale(1.2);
           }
+        }
+      `}</style>
+      <style jsx global>{`
+        html.theme-white .wizard-modal {
+          background: #f2f2f4 !important;
+          color: #27272a !important;
+          border-color: #e4e4e7 !important;
         }
       `}</style>
       </div>

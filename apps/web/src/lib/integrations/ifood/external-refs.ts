@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client'
+
 type IntegrationSyncState = 'pending' | 'processing' | 'synced' | 'failed'
 
 export type IfoodExternalRefs = {
@@ -28,16 +30,21 @@ export function getIfoodRefs(externalRefs: unknown): IfoodExternalRefs {
 export function mergeIfoodRefs(
   currentExternalRefs: unknown,
   patch: Partial<IfoodExternalRefs>
-): Record<string, unknown> {
+): Prisma.InputJsonObject {
   const base =
     currentExternalRefs && typeof currentExternalRefs === 'object' && !Array.isArray(currentExternalRefs)
-      ? ({ ...(currentExternalRefs as Record<string, unknown>) } as Record<string, unknown>)
+      ? ({ ...(currentExternalRefs as Record<string, Prisma.InputJsonValue>) } as Record<
+          string,
+          Prisma.InputJsonValue
+        >)
       : {}
 
   const ifood = getIfoodRefs(currentExternalRefs)
-  base.ifood = {
-    ...ifood,
-    ...patch,
-  }
-  return base
+  return {
+    ...base,
+    ifood: {
+      ...ifood,
+      ...patch,
+    } as Prisma.InputJsonObject,
+  } as Prisma.InputJsonObject
 }

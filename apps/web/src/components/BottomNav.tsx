@@ -1,17 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { ClipboardList, Home, Tag, User } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { CircleHelp, ClipboardList, Home, User } from 'lucide-react'
 
 const baseItemClass =
   'flex flex-col items-center justify-center gap-1 text-[0.7rem] font-medium transition hover:text-fuchsia-600'
 
 export function BottomNav() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const tableCode = searchParams.get('mesa')?.trim()
-  const orderHref = tableCode ? `/pedido/novo?mesa=${encodeURIComponent(tableCode)}` : '/pedido/novo'
 
   const isActive = (path: string) => pathname === path
 
@@ -23,14 +20,14 @@ export function BottomNav() {
           <span>Início</span>
         </Link>
         <Link
-          href="/promocoes"
-          className={`${baseItemClass} ${isActive('/promocoes') ? 'text-fuchsia-600' : 'text-zinc-500'}`}
+          href="/ajuda"
+          className={`${baseItemClass} ${isActive('/ajuda') ? 'text-fuchsia-600' : 'text-zinc-500'}`}
         >
-          <Tag className="h-5 w-5" />
-          <span>Promoções</span>
+          <CircleHelp className="h-5 w-5" />
+          <span>Ajuda</span>
         </Link>
         <Link
-          href={orderHref}
+          href="/pedido/novo"
           className={`${baseItemClass} ${isActive('/pedido/novo') ? 'text-fuchsia-600' : 'text-zinc-500'}`}
         >
           <ClipboardList className="h-5 w-5" />

@@ -148,24 +148,25 @@ model Table {
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  status        OrderStatus   @default(PENDING)
-  type          OrderType
-  paymentMethod PaymentMethod
-  changeFor     Decimal?      @db.Decimal(10, 2)
-  pixProvider   String?
-  table         Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  tableId       String?
-  customerName  String?
-  customerPhone String?
-  customerEmail String?
-  address       String?
-  notes         String?
-  total         Decimal       @db.Decimal(10, 2)
-  items         OrderItem[]
-  externalRefs  Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                String              @id @default(cuid())
+  status            OrderStatus         @default(PENDING)
+  type              OrderType
+  paymentMethod     PaymentMethod
+  changeFor         Decimal?            @db.Decimal(10, 2)
+  pixProvider       String?
+  table             Table?              @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableId           String?
+  customerName      String?
+  customerPhone     String?
+  customerEmail     String?
+  address           String?
+  notes             String?
+  total             Decimal             @db.Decimal(10, 2)
+  items             OrderItem[]
+  externalRefs      Json?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  integrationOutbox IntegrationOutbox[]
 }
 
 model OrderItem {
@@ -200,4 +201,56 @@ enum PaymentMethod {
   DEBIT
   CREDIT
   PIX
+}
+
+model IntegrationOutbox {
+  id             String                  @id @default(cuid())
+  topic          IntegrationOutboxTopic
+  source         IntegrationOutboxSource @default(INTERNAL)
+  status         IntegrationOutboxStatus @default(PENDING)
+  order          Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        String
+  idempotencyKey String                  @unique
+  payload        Json
+  attempts       Int                     @default(0)
+  nextAttemptAt  DateTime                @default(now())
+  lastError      String?
+  lockedAt       DateTime?
+  processedAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([orderId, topic])
+}
+
+enum IntegrationOutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum IntegrationOutboxTopic {
+  IFOOD_ORDER_CREATE
+  IFOOD_ORDER_STATUS_UPDATE
+}
+
+enum IntegrationOutboxSource {
+  INTERNAL
+  IFOOD_WEBHOOK
+}
+
+model IfoodWebhookEvent {
+  id               String    @id @default(cuid())
+  eventId          String    @unique
+  eventType        String
+  merchantId       String?
+  ifoodOrderId     String?
+  payload          Json
+  payloadHash      String
+  processingStatus String    @default("RECEIVED")
+  processingError  String?
+  receivedAt       DateTime  @default(now())
+  processedAt      DateTime?
 }
