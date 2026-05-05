@@ -6,7 +6,7 @@ import {
 } from '@prisma/client'
 import { prisma } from '../../prisma'
 import { mapLocalStatusToIfood } from './status-map'
-import { createIfoodOrder, updateIfoodOrderStatus } from './client'
+import { createIfoodOrder, requestIfoodDelivery, updateIfoodOrderStatus } from './client'
 import { logIntegration } from './logging'
 import { mergeIfoodRefs } from './external-refs'
 
@@ -171,11 +171,47 @@ export async function processOutboxBatch(limit = 20) {
       if (item.topic === IntegrationOutboxTopic.IFOOD_ORDER_CREATE) {
         const payload = await buildCreatePayload(order)
         const result = await createIfoodOrder(payload, item.idempotencyKey)
+        let deliveryQuoteId: string | undefined
+        let deliveryId: string | undefined
+        let deliveryStatus: string | undefined
+
+        if (order.type === 'DELIVERY' && order.address?.trim()) {
+          const shipping = await requestIfoodDelivery({
+            idempotencyKey: item.idempotencyKey,
+            quotePayload: {
+              merchantId: payload.merchantId,
+              externalOrderId: order.id,
+              orderValue: ensureNumber(order.total),
+              pickupAddress: process.env.IFOOD_PICKUP_ADDRESS?.trim() || 'Endereco de retirada nao informado',
+              deliveryAddress: order.address,
+            },
+            orderPayloadBuilder: (quoteId) => ({
+              merchantId: payload.merchantId,
+              externalOrderId: order.id,
+              quoteId,
+              recipient: {
+                name: order.customerName,
+                phone: order.customerPhone,
+              },
+              notes: order.notes,
+            }),
+          })
+
+          if (!shipping.skipped) {
+            deliveryQuoteId = shipping.quoteId
+            deliveryId = shipping.deliveryId
+            deliveryStatus = shipping.status
+          }
+        }
+
         await prisma.order.update({
           where: { id: order.id },
           data: {
             externalRefs: mergeIfoodRefs(order.externalRefs, {
               ifoodOrderId: result.ifoodOrderId,
+              deliveryQuoteId,
+              deliveryId,
+              deliveryStatus,
               syncState: 'synced',
               syncError: null,
               source: 'internal',

@@ -1,6 +1,11 @@
 import { getIfoodEnv } from './env'
 import { logIntegration } from './logging'
-import type { IfoodOrderCreatePayload, IfoodOrderStatus } from './types'
+import type {
+  IfoodOrderCreatePayload,
+  IfoodOrderStatus,
+  IfoodShippingOrderPayload,
+  IfoodShippingQuotePayload,
+} from './types'
 
 type AuthCache = {
   token: string
@@ -151,4 +156,72 @@ export async function updateIfoodOrderStatus(params: {
     ifoodOrderId: params.ifoodOrderId,
     status: params.status,
   })
+}
+
+export async function requestIfoodDelivery(params: {
+  quotePayload: IfoodShippingQuotePayload
+  orderPayloadBuilder: (quoteId: string) => IfoodShippingOrderPayload
+  idempotencyKey: string
+}) {
+  const env = getIfoodEnv()
+  if (!env.shippingEnabled) {
+    return { skipped: true as const }
+  }
+
+  const quoteResponse = await ifoodRequest(env.shippingQuotePath, {
+    method: 'POST',
+    headers: {
+      'x-idempotency-key': `${params.idempotencyKey}:quote`,
+    },
+    body: JSON.stringify(params.quotePayload),
+  })
+
+  if (!quoteResponse.ok) {
+    const body = await quoteResponse.text()
+    throw new Error(`Falha ao cotar entrega iFood: ${quoteResponse.status} ${body}`)
+  }
+
+  const quoteData = (await quoteResponse.json()) as { quoteId?: string; id?: string }
+  const quoteId = quoteData.quoteId ?? quoteData.id
+  if (!quoteId) {
+    throw new Error('Resposta de cotacao iFood sem quoteId')
+  }
+
+  const orderPayload = params.orderPayloadBuilder(quoteId)
+  const orderResponse = await ifoodRequest(env.shippingOrderPath, {
+    method: 'POST',
+    headers: {
+      'x-idempotency-key': `${params.idempotencyKey}:delivery`,
+    },
+    body: JSON.stringify(orderPayload),
+  })
+
+  if (!orderResponse.ok) {
+    const body = await orderResponse.text()
+    throw new Error(`Falha ao solicitar entregador iFood: ${orderResponse.status} ${body}`)
+  }
+
+  const orderData = (await orderResponse.json()) as {
+    deliveryId?: string
+    orderId?: string
+    id?: string
+    status?: string
+  }
+  const deliveryId = orderData.deliveryId ?? orderData.orderId ?? orderData.id
+  if (!deliveryId) {
+    throw new Error('Resposta da solicitacao de entrega iFood sem deliveryId')
+  }
+
+  logIntegration('info', 'Entregador iFood solicitado', {
+    externalOrderId: params.quotePayload.externalOrderId,
+    quoteId,
+    deliveryId,
+  })
+
+  return {
+    skipped: false as const,
+    quoteId,
+    deliveryId,
+    status: orderData.status ?? 'REQUESTED',
+  }
 }

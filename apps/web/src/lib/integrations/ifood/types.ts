@@ -44,3 +44,22 @@ export type IfoodOrderCreatePayload = {
     notes?: string | null
   }>
 }
+
+export type IfoodShippingQuotePayload = {
+  merchantId: string
+  externalOrderId: string
+  orderValue: number
+  pickupAddress: string
+  deliveryAddress: string
+}
+
+export type IfoodShippingOrderPayload = {
+  merchantId: string
+  externalOrderId: string
+  quoteId: string
+  recipient: {
+    name?: string | null
+    phone?: string | null
+  }
+  notes?: string | null
+}

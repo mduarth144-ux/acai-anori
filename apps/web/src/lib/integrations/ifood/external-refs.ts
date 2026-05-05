@@ -2,6 +2,9 @@ type IntegrationSyncState = 'pending' | 'processing' | 'synced' | 'failed'
 
 export type IfoodExternalRefs = {
   ifoodOrderId?: string
+  deliveryQuoteId?: string
+  deliveryId?: string
+  deliveryStatus?: string
   syncState?: IntegrationSyncState
   syncError?: string | null
   source?: 'internal' | 'ifood-webhook'

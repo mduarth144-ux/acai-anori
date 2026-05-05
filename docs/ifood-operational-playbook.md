@@ -8,6 +8,10 @@
 - `IFOOD_WEBHOOK_SECRET`
 - `IFOOD_API_BASE_URL` (opcional)
 - `IFOOD_AUTH_URL` (opcional)
+- `IFOOD_SHIPPING_ENABLED` (opcional, default `true`)
+- `IFOOD_SHIPPING_QUOTE_PATH` (opcional, default `/shipping/v1.0/quotes`)
+- `IFOOD_SHIPPING_ORDER_PATH` (opcional, default `/shipping/v1.0/orders`)
+- `IFOOD_PICKUP_ADDRESS` (obrigatorio para pedidos `DELIVERY`)
 - `INTERNAL_JOB_SECRET` (recomendado)
 
 ## Jobs recorrentes
