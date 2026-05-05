@@ -1,6 +1,15 @@
 import { Prisma } from '@prisma/client'
 
 type IntegrationSyncState = 'pending' | 'processing' | 'synced' | 'failed'
+type CancellationState =
+  | 'NONE'
+  | 'REQUESTED'
+  | 'REQUEST_ACCEPTED'
+  | 'REQUEST_REJECTED'
+  | 'AGREEMENT_PROPOSED'
+  | 'AGREEMENT_ACCEPTED'
+  | 'AGREEMENT_REJECTED'
+  | 'CANCELLED'
 
 export type IfoodExternalRefs = {
   ifoodOrderId?: string
@@ -13,6 +22,7 @@ export type IfoodExternalRefs = {
   lastSyncAt?: string
   lastWebhookEventId?: string
   lastStatusSyncedAt?: string
+  cancellationState?: CancellationState
 }
 
 export function getIfoodRefs(externalRefs: unknown): IfoodExternalRefs {

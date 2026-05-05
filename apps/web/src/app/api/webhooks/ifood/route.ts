@@ -4,6 +4,7 @@ import { prisma } from '../../../../lib/prisma'
 import { mapIfoodStatusToLocal } from '../../../../lib/integrations/ifood/status-map'
 import { mergeIfoodRefs } from '../../../../lib/integrations/ifood/external-refs'
 import { validateIfoodSignature } from '../../../../lib/integrations/ifood/webhook-security'
+import { acknowledgeIfoodEvent } from '../../../../lib/integrations/ifood/client'
 
 function statusToLocal(status: string) {
   const normalized = status as
@@ -68,6 +69,8 @@ export async function POST(request: Request) {
   })
 
   try {
+    await acknowledgeIfoodEvent(event.eventId)
+
     const externalOrderId = (event.payload as Record<string, unknown> | undefined)
       ?.externalOrderId
     if (typeof externalOrderId !== 'string') {

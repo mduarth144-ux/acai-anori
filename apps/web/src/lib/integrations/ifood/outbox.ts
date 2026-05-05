@@ -7,7 +7,12 @@ import {
 import { randomUUID } from 'node:crypto'
 import { prisma } from '../../prisma'
 import { mapLocalStatusToIfood } from './status-map'
-import { requestIfoodDelivery, updateIfoodOrderStatus } from './client'
+import {
+  notifyOrderOutForDelivery,
+  notifyOrderReadyForPickup,
+  requestIfoodDelivery,
+  updateIfoodOrderStatus,
+} from './client'
 import { logIntegration } from './logging'
 import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
 
@@ -291,13 +296,20 @@ export async function processOutboxBatch(limit = 20) {
         if (typeof ifoodOrderId !== 'string' || !ifoodOrderId) {
           throw new Error('Pedido sem ifoodOrderId para sync de status')
         }
-        await updateIfoodOrderStatus({
-          ifoodOrderId,
-          status: mapLocalStatusToIfood(
-            status as 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
-          ),
-          idempotencyKey: item.idempotencyKey,
-        })
+        const mappedStatus = mapLocalStatusToIfood(
+          status as 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
+        )
+        if (mappedStatus === 'READY_FOR_DELIVERY') {
+          await notifyOrderReadyForPickup(ifoodOrderId, item.idempotencyKey)
+        } else if (mappedStatus === 'DELIVERED') {
+          await notifyOrderOutForDelivery(ifoodOrderId, item.idempotencyKey)
+        } else {
+          await updateIfoodOrderStatus({
+            ifoodOrderId,
+            status: mappedStatus,
+            idempotencyKey: item.idempotencyKey,
+          })
+        }
         await prisma.order.update({
           where: { id: order.id },
           data: {
