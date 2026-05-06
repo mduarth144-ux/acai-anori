@@ -11,6 +11,7 @@ import {
   ShoppingCart,
 } from 'lucide-react'
 import { orderStatusLabel, orderTypeLabel } from '../../lib/order-labels'
+import Link from 'next/link'
 
 type DashboardOrder = {
   id: string
@@ -147,13 +148,23 @@ export default function AdminPage() {
   return (
     <main className="w-full space-y-5">
       <header className="border-acai-700/70 bg-acai-900/70 rounded-2xl border p-5">
-        <h1 className="text-xl font-bold text-fuchsia-100 md:text-2xl">
-          Dashboard administrativo
-        </h1>
-        <p className="text-acai-300 mt-1 text-sm">
-          Visão consolidada de pedidos e vendas com atualização automática a cada 10
-          segundos.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-fuchsia-100 md:text-2xl">
+              Dashboard administrativo
+            </h1>
+            <p className="text-acai-300 mt-1 text-sm">
+              Visão consolidada de pedidos e vendas com atualização automática a cada 10
+              segundos.
+            </p>
+          </div>
+          <Link
+            href="/admin/integracoes/ifood"
+            className="rounded-md border border-fuchsia-500/70 px-3 py-2 text-sm font-medium text-fuchsia-100 hover:bg-fuchsia-500/10"
+          >
+            Configurar área iFood
+          </Link>
+        </div>
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

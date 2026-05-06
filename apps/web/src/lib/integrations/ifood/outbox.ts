@@ -10,6 +10,7 @@ import { mapLocalStatusToIfood } from './status-map'
 import { requestIfoodDelivery, updateIfoodOrderStatus } from './client'
 import { logIntegration } from './logging'
 import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
+import { getIfoodDeliveryAreaConfig } from './delivery-area-config'
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: { items: { include: { product: true } } }
@@ -49,7 +50,15 @@ function parseCustomerPhone(phone: string | null | undefined) {
   }
 }
 
-function parseDeliveryAddress(address: string | null | undefined) {
+function parseDeliveryAddress(
+  address: string | null | undefined,
+  config: {
+    city: string
+    state: string
+    defaultLatitude: number
+    defaultLongitude: number
+  }
+) {
   const lines = (address ?? '')
     .split('\n')
     .map((line) => line.trim())
@@ -62,13 +71,38 @@ function parseDeliveryAddress(address: string | null | undefined) {
     streetNumber: streetNumberRaw || 'S/N',
     streetName: streetNameRaw || 'Rua nao informada',
     neighborhood: lines[2] || 'Centro',
-    city: process.env.IFOOD_DELIVERY_CITY?.trim() || 'Manaus',
-    state: process.env.IFOOD_DELIVERY_STATE?.trim() || 'AM',
+    city: config.city,
+    state: config.state,
     country: 'BR',
     coordinates: {
-      latitude: Number(process.env.IFOOD_DEFAULT_LATITUDE || '-3.1190275'),
-      longitude: Number(process.env.IFOOD_DEFAULT_LONGITUDE || '-60.0217314'),
+      latitude: config.defaultLatitude,
+      longitude: config.defaultLongitude,
     },
+  }
+}
+
+function assertAddressWithinConfiguredArea(
+  address: ReturnType<typeof parseDeliveryAddress>,
+  config: {
+    allowedCities: string[]
+    allowedNeighborhoods: string[]
+  }
+) {
+  if (config.allowedCities.length) {
+    const city = address.city.trim().toLowerCase()
+    if (!config.allowedCities.includes(city)) {
+      throw new Error(
+        `Endereco fora da area configurada: cidade "${address.city}" nao permitida`
+      )
+    }
+  }
+  if (config.allowedNeighborhoods.length) {
+    const neighborhood = address.neighborhood.trim().toLowerCase()
+    if (!config.allowedNeighborhoods.includes(neighborhood)) {
+      throw new Error(
+        `Endereco fora da area configurada: bairro "${address.neighborhood}" nao permitido`
+      )
+    }
   }
 }
 
@@ -201,6 +235,7 @@ export async function processOutboxBatch(limit = 20) {
 
       if (item.topic === IntegrationOutboxTopic.IFOOD_ORDER_CREATE) {
         const context = await buildOrderContext()
+        const deliveryAreaConfig = await getIfoodDeliveryAreaConfig()
         let deliveryQuoteId: string | undefined
         let deliveryId: string | undefined
         let deliveryStatus: string | undefined
@@ -216,6 +251,9 @@ export async function processOutboxBatch(limit = 20) {
           const optionsPrice = Math.max(0, ensureNumber(order.total) - price)
           const totalPrice = ensureNumber(order.total)
 
+          const deliveryAddress = parseDeliveryAddress(order.address, deliveryAreaConfig)
+          assertAddressWithinConfiguredArea(deliveryAddress, deliveryAreaConfig)
+
           const shipping = await requestIfoodDelivery({
             idempotencyKey: item.idempotencyKey,
             merchantId: context.merchantId,
@@ -227,7 +265,7 @@ export async function processOutboxBatch(limit = 20) {
               },
               delivery: {
                 merchantFee: 0,
-                deliveryAddress: parseDeliveryAddress(order.address),
+                deliveryAddress,
               },
               items: [
                 {
