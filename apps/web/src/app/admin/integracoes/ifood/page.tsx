@@ -79,7 +79,8 @@ export default function IfoodIntegrationSettingsPage() {
           iFood Shipping - Área de entrega
         </h1>
         <p className="mt-1 text-sm text-acai-300">
-          Configure cidade/estado padrão e filtros de área para evitar erro de distância.
+          Configure cidade/estado e coordenadas padrão usadas no payload do Shipping externo.
+          A cobertura final sempre é validada pelo iFood.
         </p>
       </header>
 

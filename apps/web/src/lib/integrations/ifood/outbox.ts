@@ -81,31 +81,6 @@ function parseDeliveryAddress(
   }
 }
 
-function assertAddressWithinConfiguredArea(
-  address: ReturnType<typeof parseDeliveryAddress>,
-  config: {
-    allowedCities: string[]
-    allowedNeighborhoods: string[]
-  }
-) {
-  if (config.allowedCities.length) {
-    const city = address.city.trim().toLowerCase()
-    if (!config.allowedCities.includes(city)) {
-      throw new Error(
-        `Endereco fora da area configurada: cidade "${address.city}" nao permitida`
-      )
-    }
-  }
-  if (config.allowedNeighborhoods.length) {
-    const neighborhood = address.neighborhood.trim().toLowerCase()
-    if (!config.allowedNeighborhoods.includes(neighborhood)) {
-      throw new Error(
-        `Endereco fora da area configurada: bairro "${address.neighborhood}" nao permitido`
-      )
-    }
-  }
-}
-
 async function buildOrderContext() {
   const merchantId = process.env.IFOOD_MERCHANT_ID?.trim()
   if (!merchantId) {
@@ -252,7 +227,6 @@ export async function processOutboxBatch(limit = 20) {
           const totalPrice = ensureNumber(order.total)
 
           const deliveryAddress = parseDeliveryAddress(order.address, deliveryAreaConfig)
-          assertAddressWithinConfiguredArea(deliveryAddress, deliveryAreaConfig)
 
           const shipping = await requestIfoodDelivery({
             idempotencyKey: item.idempotencyKey,
