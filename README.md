@@ -44,3 +44,4 @@ Aplicacao de cardapio digital com fluxo completo de pedido: vitrine de produtos,
 
 - O projeto usa menu inferior fixo e barras de acao fixas no rodape das telas de compra.
 - Para deploy, utilize os scripts de integracao com Vercel ja definidos no `package.json`.
+- Para prevenir regressao de acesso publico (ex.: `403 Forbidden` sem cookies/storage), rode `npm run vercel:preflight` apos cada deploy.
