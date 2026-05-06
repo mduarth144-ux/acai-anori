@@ -8,11 +8,18 @@
 
 html.theme-white {
   color-scheme: light;
+  --white-bg: #f4f2f5;
+  --white-surface: #ffffff;
+  --white-surface-soft: #f9f7fa;
+  --white-border: #ddd4db;
+  --white-text: #2f222e;
+  --white-text-muted: #6f5b6d;
+  --white-primary: #4a3545;
 }
 
 html.theme-white body {
-  background-color: #f4f2f5;
-  color: #2f222e;
+  background-color: var(--white-bg);
+  color: var(--white-text);
   transition: background-color 180ms ease, color 180ms ease;
 }
 
@@ -587,11 +594,23 @@ html.theme-white .themed-select-option:hover {
 }
 
 html.theme-white .bg-acai-800\/90,
+html.theme-white .bg-acai-800\/80,
+html.theme-white .bg-acai-800\/95,
 html.theme-white .bg-acai-900\/60,
+html.theme-white .bg-acai-900\/70,
+html.theme-white .bg-acai-900\/80,
+html.theme-white .bg-acai-900\/90,
+html.theme-white .bg-acai-900\/95,
 html.theme-white .bg-acai-900\/50,
 html.theme-white .bg-acai-900\/40,
-html.theme-white .bg-acai-900\/30 {
-  background: #ffffff !important;
+html.theme-white .bg-acai-900\/30,
+html.theme-white .bg-acai-950\/95,
+html.theme-white .bg-acai-950\/80,
+html.theme-white .bg-acai-950\/60,
+html.theme-white .bg-acai-950,
+html.theme-white .bg-acai-900,
+html.theme-white .bg-acai-800 {
+  background: var(--white-surface) !important;
 }
 
 html.theme-white .border-acai-600,
@@ -609,6 +628,7 @@ html.theme-white .text-fuchsia-400 {
 }
 
 html.theme-white .text-acai-100,
+html.theme-white .text-acai-50,
 html.theme-white .text-acai-200 {
   color: #3a2a38 !important;
 }
