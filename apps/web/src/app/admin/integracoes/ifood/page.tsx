@@ -57,6 +57,8 @@ export default function IfoodIntegrationSettingsPage() {
   }
 
   async function onSave() {
+    if (!config) return
+    const currentConfig = config
     setSaving(true)
     setMessage(null)
     try {
@@ -64,8 +66,8 @@ export default function IfoodIntegrationSettingsPage() {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          ...config,
-          radiusKm: Number(config.radiusKm),
+          ...currentConfig,
+          radiusKm: Number(currentConfig.radiusKm),
         }),
       })
       const data = (await response.json()) as { message?: string; config?: DeliveryAreaConfig }
@@ -189,11 +191,15 @@ export default function IfoodIntegrationSettingsPage() {
   }
 
   function onMapPick(nextLatitude: number, nextLongitude: number) {
-    setConfig({
-      ...config,
-      defaultLatitude: Number(nextLatitude.toFixed(6)),
-      defaultLongitude: Number(nextLongitude.toFixed(6)),
-    })
+    setConfig((current) =>
+      current
+        ? {
+            ...current,
+            defaultLatitude: Number(nextLatitude.toFixed(6)),
+            defaultLongitude: Number(nextLongitude.toFixed(6)),
+          }
+        : current
+    )
     setMessage('Pin atualizado pelo mapa. Clique em salvar para persistir.')
   }
 

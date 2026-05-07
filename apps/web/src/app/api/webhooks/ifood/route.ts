@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../../lib/prisma'
 import { mapIfoodStatusToLocal } from '../../../../lib/integrations/ifood/status-map'
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
       eventType,
       merchantId: event.merchantId,
       ifoodOrderId: event.orderId,
-      payload: event.payload ?? event,
+      payload: (event.payload ?? event) as Prisma.InputJsonValue,
       payloadHash,
       processingStatus: 'RECEIVED',
     },

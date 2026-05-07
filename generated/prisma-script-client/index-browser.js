@@ -277,6 +277,13 @@ exports.Prisma.IfoodWebhookEventScalarFieldEnum = {
   processedAt: 'processedAt'
 };
 
+exports.Prisma.IntegrationConfigScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -365,7 +372,8 @@ exports.Prisma.ModelName = {
   Order: 'Order',
   OrderItem: 'OrderItem',
   IntegrationOutbox: 'IntegrationOutbox',
-  IfoodWebhookEvent: 'IfoodWebhookEvent'
+  IfoodWebhookEvent: 'IfoodWebhookEvent',
+  IntegrationConfig: 'IntegrationConfig'
 };
 
 /**

@@ -1,7 +1,7 @@
 'use client'
 
 import { MapContainer, Marker, TileLayer, Circle, useMapEvents } from 'react-leaflet'
-import { divIcon } from 'leaflet'
+import { divIcon, type LeafletMouseEvent } from 'leaflet'
 
 const pinIcon = divIcon({
   className: 'delivery-map-pin',
@@ -12,7 +12,7 @@ const pinIcon = divIcon({
 
 function MapClickHandler(props: { onPick: (latitude: number, longitude: number) => void }) {
   useMapEvents({
-    click(event) {
+    click(event: LeafletMouseEvent) {
       props.onPick(event.latlng.lat, event.latlng.lng)
     },
   })

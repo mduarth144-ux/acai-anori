@@ -83,6 +83,11 @@ export type IntegrationOutbox = $Result.DefaultSelection<Prisma.$IntegrationOutb
  * 
  */
 export type IfoodWebhookEvent = $Result.DefaultSelection<Prisma.$IfoodWebhookEventPayload>
+/**
+ * Model IntegrationConfig
+ * 
+ */
+export type IntegrationConfig = $Result.DefaultSelection<Prisma.$IntegrationConfigPayload>
 
 /**
  * Enums
@@ -440,6 +445,16 @@ export class PrismaClient<
     * ```
     */
   get ifoodWebhookEvent(): Prisma.IfoodWebhookEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.integrationConfig`: Exposes CRUD operations for the **IntegrationConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more IntegrationConfigs
+    * const integrationConfigs = await prisma.integrationConfig.findMany()
+    * ```
+    */
+  get integrationConfig(): Prisma.IntegrationConfigDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -894,7 +909,8 @@ export namespace Prisma {
     Order: 'Order',
     OrderItem: 'OrderItem',
     IntegrationOutbox: 'IntegrationOutbox',
-    IfoodWebhookEvent: 'IfoodWebhookEvent'
+    IfoodWebhookEvent: 'IfoodWebhookEvent',
+    IntegrationConfig: 'IntegrationConfig'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -913,7 +929,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "category" | "macroCategory" | "product" | "productRelation" | "productCustomization" | "customizationOption" | "customizationGroupTemplate" | "customizationGroupTemplateOption" | "productGroupAssignment" | "table" | "order" | "orderItem" | "integrationOutbox" | "ifoodWebhookEvent"
+      modelProps: "category" | "macroCategory" | "product" | "productRelation" | "productCustomization" | "customizationOption" | "customizationGroupTemplate" | "customizationGroupTemplateOption" | "productGroupAssignment" | "table" | "order" | "orderItem" | "integrationOutbox" | "ifoodWebhookEvent" | "integrationConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1953,6 +1969,80 @@ export namespace Prisma {
           }
         }
       }
+      IntegrationConfig: {
+        payload: Prisma.$IntegrationConfigPayload<ExtArgs>
+        fields: Prisma.IntegrationConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.IntegrationConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.IntegrationConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.IntegrationConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.IntegrationConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          findMany: {
+            args: Prisma.IntegrationConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>[]
+          }
+          create: {
+            args: Prisma.IntegrationConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          createMany: {
+            args: Prisma.IntegrationConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.IntegrationConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.IntegrationConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          update: {
+            args: Prisma.IntegrationConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.IntegrationConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.IntegrationConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.IntegrationConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.IntegrationConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IntegrationConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.IntegrationConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIntegrationConfig>
+          }
+          groupBy: {
+            args: Prisma.IntegrationConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<IntegrationConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.IntegrationConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<IntegrationConfigCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2063,6 +2153,7 @@ export namespace Prisma {
     orderItem?: OrderItemOmit
     integrationOutbox?: IntegrationOutboxOmit
     ifoodWebhookEvent?: IfoodWebhookEventOmit
+    integrationConfig?: IntegrationConfigOmit
   }
 
   /* Types for Logging */
@@ -18564,6 +18655,984 @@ export namespace Prisma {
 
 
   /**
+   * Model IntegrationConfig
+   */
+
+  export type AggregateIntegrationConfig = {
+    _count: IntegrationConfigCountAggregateOutputType | null
+    _min: IntegrationConfigMinAggregateOutputType | null
+    _max: IntegrationConfigMaxAggregateOutputType | null
+  }
+
+  export type IntegrationConfigMinAggregateOutputType = {
+    key: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type IntegrationConfigMaxAggregateOutputType = {
+    key: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type IntegrationConfigCountAggregateOutputType = {
+    key: number
+    value: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type IntegrationConfigMinAggregateInputType = {
+    key?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type IntegrationConfigMaxAggregateInputType = {
+    key?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type IntegrationConfigCountAggregateInputType = {
+    key?: true
+    value?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type IntegrationConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IntegrationConfig to aggregate.
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationConfigs to fetch.
+     */
+    orderBy?: IntegrationConfigOrderByWithRelationInput | IntegrationConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: IntegrationConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned IntegrationConfigs
+    **/
+    _count?: true | IntegrationConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: IntegrationConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: IntegrationConfigMaxAggregateInputType
+  }
+
+  export type GetIntegrationConfigAggregateType<T extends IntegrationConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateIntegrationConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateIntegrationConfig[P]>
+      : GetScalarType<T[P], AggregateIntegrationConfig[P]>
+  }
+
+
+
+
+  export type IntegrationConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IntegrationConfigWhereInput
+    orderBy?: IntegrationConfigOrderByWithAggregationInput | IntegrationConfigOrderByWithAggregationInput[]
+    by: IntegrationConfigScalarFieldEnum[] | IntegrationConfigScalarFieldEnum
+    having?: IntegrationConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: IntegrationConfigCountAggregateInputType | true
+    _min?: IntegrationConfigMinAggregateInputType
+    _max?: IntegrationConfigMaxAggregateInputType
+  }
+
+  export type IntegrationConfigGroupByOutputType = {
+    key: string
+    value: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: IntegrationConfigCountAggregateOutputType | null
+    _min: IntegrationConfigMinAggregateOutputType | null
+    _max: IntegrationConfigMaxAggregateOutputType | null
+  }
+
+  type GetIntegrationConfigGroupByPayload<T extends IntegrationConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<IntegrationConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof IntegrationConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], IntegrationConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], IntegrationConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type IntegrationConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["integrationConfig"]>
+
+  export type IntegrationConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["integrationConfig"]>
+
+  export type IntegrationConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["integrationConfig"]>
+
+  export type IntegrationConfigSelectScalar = {
+    key?: boolean
+    value?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type IntegrationConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "value" | "createdAt" | "updatedAt", ExtArgs["result"]["integrationConfig"]>
+
+  export type $IntegrationConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "IntegrationConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      value: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["integrationConfig"]>
+    composites: {}
+  }
+
+  type IntegrationConfigGetPayload<S extends boolean | null | undefined | IntegrationConfigDefaultArgs> = $Result.GetResult<Prisma.$IntegrationConfigPayload, S>
+
+  type IntegrationConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<IntegrationConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: IntegrationConfigCountAggregateInputType | true
+    }
+
+  export interface IntegrationConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IntegrationConfig'], meta: { name: 'IntegrationConfig' } }
+    /**
+     * Find zero or one IntegrationConfig that matches the filter.
+     * @param {IntegrationConfigFindUniqueArgs} args - Arguments to find a IntegrationConfig
+     * @example
+     * // Get one IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends IntegrationConfigFindUniqueArgs>(args: SelectSubset<T, IntegrationConfigFindUniqueArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one IntegrationConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {IntegrationConfigFindUniqueOrThrowArgs} args - Arguments to find a IntegrationConfig
+     * @example
+     * // Get one IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends IntegrationConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, IntegrationConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IntegrationConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigFindFirstArgs} args - Arguments to find a IntegrationConfig
+     * @example
+     * // Get one IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends IntegrationConfigFindFirstArgs>(args?: SelectSubset<T, IntegrationConfigFindFirstArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IntegrationConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigFindFirstOrThrowArgs} args - Arguments to find a IntegrationConfig
+     * @example
+     * // Get one IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends IntegrationConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, IntegrationConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more IntegrationConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all IntegrationConfigs
+     * const integrationConfigs = await prisma.integrationConfig.findMany()
+     * 
+     * // Get first 10 IntegrationConfigs
+     * const integrationConfigs = await prisma.integrationConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const integrationConfigWithKeyOnly = await prisma.integrationConfig.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends IntegrationConfigFindManyArgs>(args?: SelectSubset<T, IntegrationConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a IntegrationConfig.
+     * @param {IntegrationConfigCreateArgs} args - Arguments to create a IntegrationConfig.
+     * @example
+     * // Create one IntegrationConfig
+     * const IntegrationConfig = await prisma.integrationConfig.create({
+     *   data: {
+     *     // ... data to create a IntegrationConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends IntegrationConfigCreateArgs>(args: SelectSubset<T, IntegrationConfigCreateArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many IntegrationConfigs.
+     * @param {IntegrationConfigCreateManyArgs} args - Arguments to create many IntegrationConfigs.
+     * @example
+     * // Create many IntegrationConfigs
+     * const integrationConfig = await prisma.integrationConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends IntegrationConfigCreateManyArgs>(args?: SelectSubset<T, IntegrationConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many IntegrationConfigs and returns the data saved in the database.
+     * @param {IntegrationConfigCreateManyAndReturnArgs} args - Arguments to create many IntegrationConfigs.
+     * @example
+     * // Create many IntegrationConfigs
+     * const integrationConfig = await prisma.integrationConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many IntegrationConfigs and only return the `key`
+     * const integrationConfigWithKeyOnly = await prisma.integrationConfig.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends IntegrationConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, IntegrationConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a IntegrationConfig.
+     * @param {IntegrationConfigDeleteArgs} args - Arguments to delete one IntegrationConfig.
+     * @example
+     * // Delete one IntegrationConfig
+     * const IntegrationConfig = await prisma.integrationConfig.delete({
+     *   where: {
+     *     // ... filter to delete one IntegrationConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends IntegrationConfigDeleteArgs>(args: SelectSubset<T, IntegrationConfigDeleteArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one IntegrationConfig.
+     * @param {IntegrationConfigUpdateArgs} args - Arguments to update one IntegrationConfig.
+     * @example
+     * // Update one IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends IntegrationConfigUpdateArgs>(args: SelectSubset<T, IntegrationConfigUpdateArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more IntegrationConfigs.
+     * @param {IntegrationConfigDeleteManyArgs} args - Arguments to filter IntegrationConfigs to delete.
+     * @example
+     * // Delete a few IntegrationConfigs
+     * const { count } = await prisma.integrationConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends IntegrationConfigDeleteManyArgs>(args?: SelectSubset<T, IntegrationConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IntegrationConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many IntegrationConfigs
+     * const integrationConfig = await prisma.integrationConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends IntegrationConfigUpdateManyArgs>(args: SelectSubset<T, IntegrationConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IntegrationConfigs and returns the data updated in the database.
+     * @param {IntegrationConfigUpdateManyAndReturnArgs} args - Arguments to update many IntegrationConfigs.
+     * @example
+     * // Update many IntegrationConfigs
+     * const integrationConfig = await prisma.integrationConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more IntegrationConfigs and only return the `key`
+     * const integrationConfigWithKeyOnly = await prisma.integrationConfig.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends IntegrationConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, IntegrationConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one IntegrationConfig.
+     * @param {IntegrationConfigUpsertArgs} args - Arguments to update or create a IntegrationConfig.
+     * @example
+     * // Update or create a IntegrationConfig
+     * const integrationConfig = await prisma.integrationConfig.upsert({
+     *   create: {
+     *     // ... data to create a IntegrationConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the IntegrationConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends IntegrationConfigUpsertArgs>(args: SelectSubset<T, IntegrationConfigUpsertArgs<ExtArgs>>): Prisma__IntegrationConfigClient<$Result.GetResult<Prisma.$IntegrationConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of IntegrationConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigCountArgs} args - Arguments to filter IntegrationConfigs to count.
+     * @example
+     * // Count the number of IntegrationConfigs
+     * const count = await prisma.integrationConfig.count({
+     *   where: {
+     *     // ... the filter for the IntegrationConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends IntegrationConfigCountArgs>(
+      args?: Subset<T, IntegrationConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], IntegrationConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a IntegrationConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends IntegrationConfigAggregateArgs>(args: Subset<T, IntegrationConfigAggregateArgs>): Prisma.PrismaPromise<GetIntegrationConfigAggregateType<T>>
+
+    /**
+     * Group by IntegrationConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IntegrationConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends IntegrationConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: IntegrationConfigGroupByArgs['orderBy'] }
+        : { orderBy?: IntegrationConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, IntegrationConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIntegrationConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the IntegrationConfig model
+   */
+  readonly fields: IntegrationConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for IntegrationConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__IntegrationConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the IntegrationConfig model
+   */
+  interface IntegrationConfigFieldRefs {
+    readonly key: FieldRef<"IntegrationConfig", 'String'>
+    readonly value: FieldRef<"IntegrationConfig", 'Json'>
+    readonly createdAt: FieldRef<"IntegrationConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"IntegrationConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * IntegrationConfig findUnique
+   */
+  export type IntegrationConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which IntegrationConfig to fetch.
+     */
+    where: IntegrationConfigWhereUniqueInput
+  }
+
+  /**
+   * IntegrationConfig findUniqueOrThrow
+   */
+  export type IntegrationConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which IntegrationConfig to fetch.
+     */
+    where: IntegrationConfigWhereUniqueInput
+  }
+
+  /**
+   * IntegrationConfig findFirst
+   */
+  export type IntegrationConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which IntegrationConfig to fetch.
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationConfigs to fetch.
+     */
+    orderBy?: IntegrationConfigOrderByWithRelationInput | IntegrationConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IntegrationConfigs.
+     */
+    cursor?: IntegrationConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IntegrationConfigs.
+     */
+    distinct?: IntegrationConfigScalarFieldEnum | IntegrationConfigScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationConfig findFirstOrThrow
+   */
+  export type IntegrationConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which IntegrationConfig to fetch.
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationConfigs to fetch.
+     */
+    orderBy?: IntegrationConfigOrderByWithRelationInput | IntegrationConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IntegrationConfigs.
+     */
+    cursor?: IntegrationConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IntegrationConfigs.
+     */
+    distinct?: IntegrationConfigScalarFieldEnum | IntegrationConfigScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationConfig findMany
+   */
+  export type IntegrationConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which IntegrationConfigs to fetch.
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IntegrationConfigs to fetch.
+     */
+    orderBy?: IntegrationConfigOrderByWithRelationInput | IntegrationConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing IntegrationConfigs.
+     */
+    cursor?: IntegrationConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IntegrationConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IntegrationConfigs.
+     */
+    skip?: number
+    distinct?: IntegrationConfigScalarFieldEnum | IntegrationConfigScalarFieldEnum[]
+  }
+
+  /**
+   * IntegrationConfig create
+   */
+  export type IntegrationConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to create a IntegrationConfig.
+     */
+    data: XOR<IntegrationConfigCreateInput, IntegrationConfigUncheckedCreateInput>
+  }
+
+  /**
+   * IntegrationConfig createMany
+   */
+  export type IntegrationConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many IntegrationConfigs.
+     */
+    data: IntegrationConfigCreateManyInput | IntegrationConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IntegrationConfig createManyAndReturn
+   */
+  export type IntegrationConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many IntegrationConfigs.
+     */
+    data: IntegrationConfigCreateManyInput | IntegrationConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IntegrationConfig update
+   */
+  export type IntegrationConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to update a IntegrationConfig.
+     */
+    data: XOR<IntegrationConfigUpdateInput, IntegrationConfigUncheckedUpdateInput>
+    /**
+     * Choose, which IntegrationConfig to update.
+     */
+    where: IntegrationConfigWhereUniqueInput
+  }
+
+  /**
+   * IntegrationConfig updateMany
+   */
+  export type IntegrationConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update IntegrationConfigs.
+     */
+    data: XOR<IntegrationConfigUpdateManyMutationInput, IntegrationConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which IntegrationConfigs to update
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * Limit how many IntegrationConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IntegrationConfig updateManyAndReturn
+   */
+  export type IntegrationConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update IntegrationConfigs.
+     */
+    data: XOR<IntegrationConfigUpdateManyMutationInput, IntegrationConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which IntegrationConfigs to update
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * Limit how many IntegrationConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IntegrationConfig upsert
+   */
+  export type IntegrationConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * The filter to search for the IntegrationConfig to update in case it exists.
+     */
+    where: IntegrationConfigWhereUniqueInput
+    /**
+     * In case the IntegrationConfig found by the `where` argument doesn't exist, create a new IntegrationConfig with this data.
+     */
+    create: XOR<IntegrationConfigCreateInput, IntegrationConfigUncheckedCreateInput>
+    /**
+     * In case the IntegrationConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<IntegrationConfigUpdateInput, IntegrationConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * IntegrationConfig delete
+   */
+  export type IntegrationConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+    /**
+     * Filter which IntegrationConfig to delete.
+     */
+    where: IntegrationConfigWhereUniqueInput
+  }
+
+  /**
+   * IntegrationConfig deleteMany
+   */
+  export type IntegrationConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IntegrationConfigs to delete
+     */
+    where?: IntegrationConfigWhereInput
+    /**
+     * Limit how many IntegrationConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * IntegrationConfig without action
+   */
+  export type IntegrationConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IntegrationConfig
+     */
+    select?: IntegrationConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IntegrationConfig
+     */
+    omit?: IntegrationConfigOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -18773,6 +19842,16 @@ export namespace Prisma {
   };
 
   export type IfoodWebhookEventScalarFieldEnum = (typeof IfoodWebhookEventScalarFieldEnum)[keyof typeof IfoodWebhookEventScalarFieldEnum]
+
+
+  export const IntegrationConfigScalarFieldEnum: {
+    key: 'key',
+    value: 'value',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type IntegrationConfigScalarFieldEnum = (typeof IntegrationConfigScalarFieldEnum)[keyof typeof IntegrationConfigScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -20080,6 +21159,53 @@ export namespace Prisma {
     processedAt?: DateTimeNullableWithAggregatesFilter<"IfoodWebhookEvent"> | Date | string | null
   }
 
+  export type IntegrationConfigWhereInput = {
+    AND?: IntegrationConfigWhereInput | IntegrationConfigWhereInput[]
+    OR?: IntegrationConfigWhereInput[]
+    NOT?: IntegrationConfigWhereInput | IntegrationConfigWhereInput[]
+    key?: StringFilter<"IntegrationConfig"> | string
+    value?: JsonFilter<"IntegrationConfig">
+    createdAt?: DateTimeFilter<"IntegrationConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"IntegrationConfig"> | Date | string
+  }
+
+  export type IntegrationConfigOrderByWithRelationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationConfigWhereUniqueInput = Prisma.AtLeast<{
+    key?: string
+    AND?: IntegrationConfigWhereInput | IntegrationConfigWhereInput[]
+    OR?: IntegrationConfigWhereInput[]
+    NOT?: IntegrationConfigWhereInput | IntegrationConfigWhereInput[]
+    value?: JsonFilter<"IntegrationConfig">
+    createdAt?: DateTimeFilter<"IntegrationConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"IntegrationConfig"> | Date | string
+  }, "key">
+
+  export type IntegrationConfigOrderByWithAggregationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: IntegrationConfigCountOrderByAggregateInput
+    _max?: IntegrationConfigMaxOrderByAggregateInput
+    _min?: IntegrationConfigMinOrderByAggregateInput
+  }
+
+  export type IntegrationConfigScalarWhereWithAggregatesInput = {
+    AND?: IntegrationConfigScalarWhereWithAggregatesInput | IntegrationConfigScalarWhereWithAggregatesInput[]
+    OR?: IntegrationConfigScalarWhereWithAggregatesInput[]
+    NOT?: IntegrationConfigScalarWhereWithAggregatesInput | IntegrationConfigScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"IntegrationConfig"> | string
+    value?: JsonWithAggregatesFilter<"IntegrationConfig">
+    createdAt?: DateTimeWithAggregatesFilter<"IntegrationConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"IntegrationConfig"> | Date | string
+  }
+
   export type CategoryCreateInput = {
     id?: string
     name: string
@@ -21212,6 +22338,55 @@ export namespace Prisma {
     processingError?: NullableStringFieldUpdateOperationsInput | string | null
     receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type IntegrationConfigCreateInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationConfigUncheckedCreateInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationConfigUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationConfigUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationConfigCreateManyInput = {
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type IntegrationConfigUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IntegrationConfigUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -22386,6 +23561,25 @@ export namespace Prisma {
     processingError?: SortOrder
     receivedAt?: SortOrder
     processedAt?: SortOrder
+  }
+
+  export type IntegrationConfigCountOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationConfigMaxOrderByAggregateInput = {
+    key?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntegrationConfigMinOrderByAggregateInput = {
+    key?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type ProductCreateNestedManyWithoutCategoryInput = {
