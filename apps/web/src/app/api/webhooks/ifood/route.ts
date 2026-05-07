@@ -5,6 +5,17 @@ import { mapIfoodStatusToLocal } from '../../../../lib/integrations/ifood/status
 import { mergeIfoodRefs } from '../../../../lib/integrations/ifood/external-refs'
 import { validateIfoodSignature } from '../../../../lib/integrations/ifood/webhook-security'
 
+type ParsedIfoodWebhookEvent = {
+  eventId?: string
+  eventType?: string
+  fullCode?: string
+  merchantId?: string
+  orderId?: string
+  status?: string
+  payload?: Record<string, unknown>
+  externalOrderId?: string
+}
+
 function statusToLocal(status: string) {
   const normalized = status as
     | 'PLACED'
@@ -16,10 +27,25 @@ function statusToLocal(status: string) {
   return mapIfoodStatusToLocal(normalized)
 }
 
+function errorResponse(status: number, message: string) {
+  return NextResponse.json({ message, error: message }, { status })
+}
+
+function readExternalOrderId(event: ParsedIfoodWebhookEvent): string | undefined {
+  if (typeof event.externalOrderId === 'string' && event.externalOrderId.trim().length > 0) {
+    return event.externalOrderId
+  }
+  const payloadExternalOrderId = event.payload?.externalOrderId
+  if (typeof payloadExternalOrderId === 'string' && payloadExternalOrderId.trim().length > 0) {
+    return payloadExternalOrderId
+  }
+  return undefined
+}
+
 export async function POST(request: Request) {
   const secret = process.env.IFOOD_WEBHOOK_SECRET?.trim()
   if (!secret) {
-    return NextResponse.json({ message: 'ifoood webhook secret missing' }, { status: 500 })
+    return errorResponse(500, 'ifood webhook secret missing')
   }
 
   const rawBody = await request.text()
@@ -31,20 +57,21 @@ export async function POST(request: Request) {
   })
 
   if (!validSignature) {
-    return NextResponse.json({ message: 'invalid signature' }, { status: 401 })
+    return errorResponse(401, 'invalid signature')
   }
 
-  const event = JSON.parse(rawBody) as {
-    eventId?: string
-    eventType?: string
-    merchantId?: string
-    orderId?: string
-    status?: string
-    payload?: unknown
+  let event: ParsedIfoodWebhookEvent
+  try {
+    event = JSON.parse(rawBody) as ParsedIfoodWebhookEvent
+  } catch {
+    return errorResponse(400, 'invalid json payload')
   }
 
-  if (!event.eventId || !event.eventType) {
-    return NextResponse.json({ message: 'invalid payload' }, { status: 400 })
+  const eventType = event.eventType ?? event.fullCode ?? 'UNKNOWN'
+  const eventStatus = event.status ?? event.fullCode
+
+  if (!event.eventId) {
+    return errorResponse(400, 'invalid payload: eventId is required')
   }
 
   const payloadHash = createHash('sha256').update(rawBody).digest('hex')
@@ -58,7 +85,7 @@ export async function POST(request: Request) {
   const audit = await prisma.ifoodWebhookEvent.create({
     data: {
       eventId: event.eventId,
-      eventType: event.eventType,
+      eventType,
       merchantId: event.merchantId,
       ifoodOrderId: event.orderId,
       payload: event.payload ?? event,
@@ -68,19 +95,29 @@ export async function POST(request: Request) {
   })
 
   try {
-    const externalOrderId = (event.payload as Record<string, unknown> | undefined)
-      ?.externalOrderId
-    if (typeof externalOrderId !== 'string') {
-      throw new Error('Evento sem externalOrderId para correlacao')
+    const externalOrderId = readExternalOrderId(event)
+    let order =
+      externalOrderId !== undefined
+        ? await prisma.order.findUnique({ where: { id: externalOrderId } })
+        : null
+
+    if (!order && event.orderId) {
+      order = await prisma.order.findFirst({
+        where: {
+          externalRefs: {
+            path: ['ifood', 'ifoodOrderId'],
+            equals: event.orderId,
+          },
+        },
+      })
     }
 
-    const order = await prisma.order.findUnique({ where: { id: externalOrderId } })
     if (!order) {
-      throw new Error('Pedido local nao encontrado para evento iFood')
+      throw new Error('Pedido local nao encontrado para evento iFood (sem correlacao)')
     }
 
-    if (event.status) {
-      const nextStatus = statusToLocal(event.status)
+    if (eventStatus) {
+      const nextStatus = statusToLocal(eventStatus)
       await prisma.order.update({
         where: { id: order.id },
         data: {
@@ -111,7 +148,7 @@ export async function POST(request: Request) {
         processingError: message.slice(0, 1000),
       },
     })
-    return NextResponse.json({ message }, { status: 422 })
+    return errorResponse(422, message)
   }
 
   return NextResponse.json({ ok: true })

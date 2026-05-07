@@ -1,9 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import 'leaflet/dist/leaflet.css';
 
 :root {
   color-scheme: dark;
+}
+
+.delivery-map-pin span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  background: #ef4444;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 html.theme-white {

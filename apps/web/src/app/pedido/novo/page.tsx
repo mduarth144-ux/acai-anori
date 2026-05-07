@@ -15,6 +15,16 @@ import {
 type GeoStatus = 'idle' | 'pending' | 'ok' | 'denied' | 'error' | 'unavailable'
 const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
 const ORDERS_STORAGE_KEY = 'app.orders.v1'
+type DeliveryReference = {
+  addressHints: {
+    cep: string
+    street: string
+    number: string
+    neighborhood: string
+    city: string
+    state: string
+  } | null
+}
 
 function formatPhoneDisplay(input: string) {
   const digits = input.replace(/\D/g, '').slice(0, 11)
@@ -49,6 +59,8 @@ export default function NovoPedidoPage() {
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle')
   const [cepLoading, setCepLoading] = useState(false)
   const [cepNotFound, setCepNotFound] = useState(false)
+  const [coverageStatus, setCoverageStatus] = useState<'idle' | 'checking' | 'ok' | 'out'>('idle')
+  const [coverageMessage, setCoverageMessage] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [phoneCaptureStatus, setPhoneCaptureStatus] = useState<
     'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported' | 'error'
@@ -58,6 +70,7 @@ export default function NovoPedidoPage() {
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmDataTitle, setShowConfirmDataTitle] = useState(false)
+  const [deliveryReference, setDeliveryReference] = useState<DeliveryReference | null>(null)
   const lastViaCepFetch = useRef('')
 
   useEffect(() => {
@@ -113,6 +126,20 @@ export default function NovoPedidoPage() {
       // Ignore storage quota/availability errors to avoid blocking checkout.
     }
   }, [customerName, customerPhone, customerEmail, cepDigits, street, number, neighborhood])
+
+  useEffect(() => {
+    async function loadDeliveryReference() {
+      try {
+        const response = await fetch('/api/delivery/reference')
+        if (!response.ok) return
+        const data = (await response.json()) as DeliveryReference
+        setDeliveryReference(data)
+      } catch {
+        // non-blocking fallback for checkout
+      }
+    }
+    void loadDeliveryReference()
+  }, [])
 
   const address = useMemo(
     () => buildDeliveryAddressLine({ cepDigits, street, number, neighborhood }),
@@ -186,6 +213,15 @@ export default function NovoPedidoPage() {
       try {
         const data = await fetchViaCep(digits)
         if (!data) {
+          const hints = deliveryReference?.addressHints
+          const hintCep = onlyDigits(hints?.cep ?? '', 8)
+          if (hints && hintCep === digits) {
+            if (hints.street) setStreet(hints.street)
+            if (hints.neighborhood) setNeighborhood(hints.neighborhood)
+            if (hints.number && !number.trim()) setNumber(hints.number)
+            setCepNotFound(false)
+            return
+          }
           setCepNotFound(true)
           return
         }
@@ -198,7 +234,7 @@ export default function NovoPedidoPage() {
         setCepLoading(false)
       }
     },
-    [cepDigits]
+    [cepDigits, deliveryReference, number]
   )
 
   useEffect(() => {
@@ -209,6 +245,68 @@ export default function NovoPedidoPage() {
     }, 450)
     return () => clearTimeout(tid)
   }, [cepDigits, lookupCep])
+
+  useEffect(() => {
+    if (type !== 'DELIVERY') {
+      setCoverageStatus('idle')
+      setCoverageMessage(null)
+      return
+    }
+
+    const d = onlyDigits(cepDigits, 8)
+    if (d.length !== 8 || !street.trim() || !number.trim() || !neighborhood.trim()) {
+      setCoverageStatus('idle')
+      setCoverageMessage(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const tid = setTimeout(() => {
+      setCoverageStatus('checking')
+      void fetch('/api/delivery/coverage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cep: d,
+          street,
+          number,
+          neighborhood,
+        }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          const payload = (await response.json().catch(() => ({}))) as {
+            withinCoverage?: boolean
+            reason?: string
+            reasonCode?: string
+          }
+          if (!response.ok) {
+            setCoverageStatus('out')
+            setCoverageMessage(
+              payload.reason ?? 'Nao foi possivel validar cobertura. Revise o endereco.'
+            )
+            return
+          }
+          if (payload.withinCoverage) {
+            setCoverageStatus('ok')
+            setCoverageMessage('Endereco dentro da area de entrega.')
+            return
+          }
+          setCoverageStatus('out')
+          setCoverageMessage(payload.reason ?? 'Endereco fora da area de entrega.')
+        })
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') return
+          setCoverageStatus('out')
+          setCoverageMessage('Nao foi possivel validar cobertura. Tente novamente.')
+        })
+    }, 450)
+
+    return () => {
+      clearTimeout(tid)
+      controller.abort()
+    }
+  }, [type, cepDigits, street, number, neighborhood])
 
   async function capturePhoneFromContacts() {
     setPhoneCaptureMessage(null)
@@ -313,6 +411,37 @@ export default function NovoPedidoPage() {
         )
         return
       }
+
+      const coverageResponse = await fetch('/api/delivery/coverage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cep: d,
+          street,
+          number,
+          neighborhood,
+        }),
+      })
+      const coveragePayload = (await coverageResponse.json().catch(() => ({}))) as {
+        withinCoverage?: boolean
+        reason?: string
+        reasonCode?: string
+      }
+      if (!coverageResponse.ok || !coveragePayload.withinCoverage) {
+        setCoverageStatus('out')
+        const fallbackByCode: Record<string, string> = {
+          NO_COURIERS_AVAILABLE:
+            'No momento nao ha entregadores disponiveis na sua regiao. Tente novamente em instantes.',
+          MERCHANT_UNAVAILABLE: 'A loja esta temporariamente indisponivel para entregas no iFood.',
+          OUTSIDE_COVERAGE: 'Endereco fora da area de cobertura do iFood para entrega.',
+        }
+        setSubmitError(
+          coveragePayload.reason ??
+            (coveragePayload.reasonCode ? fallbackByCode[coveragePayload.reasonCode] : undefined) ??
+            'Endereco fora da area de entrega. Ajuste o CEP.'
+        )
+        return
+      }
     }
 
     setIsSubmitting(true)
@@ -338,7 +467,12 @@ export default function NovoPedidoPage() {
       })
 
       if (!response.ok) {
-        setSubmitError('Não foi possível confirmar o pedido. Tente novamente.')
+        const errorPayload = (await response.json().catch(() => ({}))) as {
+          message?: string
+        }
+        setSubmitError(
+          errorPayload.message ?? 'Não foi possível confirmar o pedido. Tente novamente.'
+        )
         return
       }
       const data = await response.json()
@@ -408,7 +542,7 @@ export default function NovoPedidoPage() {
   const canContinueToPayment =
     isCustomerDataValid &&
     (type === 'DELIVERY'
-      ? isDeliveryAddressValid
+      ? isDeliveryAddressValid && coverageStatus !== 'out' && coverageStatus !== 'checking'
       : type === 'TABLE'
         ? isTableValid
         : true)
@@ -667,6 +801,15 @@ export default function NovoPedidoPage() {
                       <p className="mt-1 text-xs text-amber-400">
                         CEP não encontrado.
                       </p>
+                    ) : null}
+                    {coverageStatus === 'checking' ? (
+                      <p className="mt-1 text-xs text-acai-300">Validando area de entrega...</p>
+                    ) : null}
+                    {coverageStatus === 'ok' && coverageMessage ? (
+                      <p className="mt-1 text-xs text-emerald-300">{coverageMessage}</p>
+                    ) : null}
+                    {coverageStatus === 'out' && coverageMessage ? (
+                      <p className="mt-1 text-xs text-amber-400">{coverageMessage}</p>
                     ) : null}
                   </div>
 

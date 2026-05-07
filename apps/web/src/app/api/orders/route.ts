@@ -3,11 +3,25 @@ import { prisma } from '../../../lib/prisma'
 import { enqueueOrderCreate, enqueueStatusUpdate, processOutboxBatch } from '../../../lib/integrations/ifood/outbox'
 import { isValidLocalTransition } from '../../../lib/integrations/ifood/status-map'
 import { getIfoodRefs, mergeIfoodRefs } from '../../../lib/integrations/ifood/external-refs'
+import {
+  parseDeliveryAddressText,
+  validateDeliveryCoverage,
+} from '../../../lib/integrations/ifood/delivery-coverage'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')?.trim()
   const phone = searchParams.get('phone')?.trim()
   const email = searchParams.get('email')?.trim().toLowerCase()
+  const includeAll = searchParams.get('includeAll') === 'true'
+
+  if (id) {
+    const order = await prisma.order.findUnique({ where: { id } })
+    if (!order) {
+      return NextResponse.json({ message: 'pedido não encontrado' }, { status: 404 })
+    }
+    return NextResponse.json(order)
+  }
 
   const where =
     phone || email
@@ -19,6 +33,10 @@ export async function GET(request: Request) {
         }
       : undefined
 
+  if (!where && !includeAll) {
+    return NextResponse.json([])
+  }
+
   const data = await prisma.order.findMany({
     where,
     orderBy: { createdAt: 'desc' },
@@ -29,6 +47,25 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
+  if (body.type === 'DELIVERY') {
+    const parsed = parseDeliveryAddressText(typeof body.address === 'string' ? body.address : '')
+    const coverage = await validateDeliveryCoverage({
+      cep: parsed.cep,
+      street: parsed.street,
+      number: parsed.number,
+      neighborhood: parsed.neighborhood,
+    })
+    if (!coverage.withinCoverage) {
+      return NextResponse.json(
+        {
+          message: coverage.reason ?? 'Endereco fora da area de entrega.',
+          coverage,
+        },
+        { status: 422 }
+      )
+    }
+  }
+
   const table = body.tableCode
     ? await prisma.table.findUnique({ where: { code: body.tableCode } })
     : null

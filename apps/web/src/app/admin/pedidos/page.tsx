@@ -16,7 +16,7 @@ export default function AdminPedidosPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/orders').then(async (res) => setOrders(await res.json()))
+    fetch('/api/orders?includeAll=true').then(async (res) => setOrders(await res.json()))
   }, [])
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function AdminPedidosPage() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'Order' },
         () => {
-          fetch('/api/orders').then(async (res) => setOrders(await res.json()))
+          fetch('/api/orders?includeAll=true').then(async (res) => setOrders(await res.json()))
         }
       )
       .subscribe()
@@ -49,7 +49,7 @@ export default function AdminPedidosPage() {
       setSavingOrderId(null)
       return
     }
-    const list = await fetch('/api/orders').then((res) => res.json())
+    const list = await fetch('/api/orders?includeAll=true').then((res) => res.json())
     setOrders(list)
     setSavingOrderId(null)
   }

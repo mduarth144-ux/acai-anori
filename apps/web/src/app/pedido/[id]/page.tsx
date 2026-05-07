@@ -33,10 +33,10 @@ export default function PedidoStatusPage({ params }: Props) {
 
   useEffect(() => {
     if (!orderId) return
-    fetch('/api/orders')
+    fetch(`/api/orders?id=${encodeURIComponent(orderId)}`)
       .then(async (res) => {
-        const all = (await res.json()) as OrderData[]
-        const found = all.find((item) => item.id === orderId) ?? null
+        if (!res.ok) return
+        const found = (await res.json()) as OrderData
         if (!found) return
         setOrder(found)
         setStatus(String(found.status ?? 'PENDING'))

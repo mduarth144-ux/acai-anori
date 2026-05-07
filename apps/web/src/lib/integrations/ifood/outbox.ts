@@ -7,7 +7,12 @@ import {
 import { randomUUID } from 'node:crypto'
 import { prisma } from '../../prisma'
 import { mapLocalStatusToIfood } from './status-map'
-import { requestIfoodDelivery, updateIfoodOrderStatus } from './client'
+import {
+  getIfoodDeliveryAvailabilities,
+  getIfoodMerchantDetails,
+  requestIfoodDelivery,
+  updateIfoodOrderStatus,
+} from './client'
 import { logIntegration } from './logging'
 import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
 import { getIfoodDeliveryAreaConfig } from './delivery-area-config'
@@ -34,6 +39,28 @@ function nextAttemptDate(attempts: number): Date {
   return new Date(Date.now() + seconds * 1000)
 }
 
+function extractIfoodErrorCode(message: string): string | null {
+  const match = message.match(/"code"\s*:\s*"([^"]+)"/)
+  return match?.[1] ?? null
+}
+
+function getNonRetryableIfoodError(message: string): string | null {
+  const code = extractIfoodErrorCode(message)
+  if (code === 'DeliveryDistanceTooHigh') {
+    return 'Endereco fora da area de cobertura do iFood para entrega.'
+  }
+  if (code === 'UnavailableFleet' || code === 'NRELimitExceeded') {
+    return 'No momento nao ha entregadores disponiveis na sua regiao. Tente novamente em instantes.'
+  }
+  if (code === 'MerchantStatusAvailability') {
+    return 'A loja esta temporariamente indisponivel para entregas no iFood.'
+  }
+  if (message.includes('deliveryAvailabilities vazio')) {
+    return 'No momento nao ha entregadores disponiveis na sua regiao. Tente novamente em instantes.'
+  }
+  return null
+}
+
 function ensureNumber(value: Prisma.Decimal | number): number {
   if (typeof value === 'number') return value
   return Number(value)
@@ -50,7 +77,56 @@ function parseCustomerPhone(phone: string | null | undefined) {
   }
 }
 
-function parseDeliveryAddress(
+async function geocodeDeliveryAddress(params: {
+  postalCode: string
+  streetName: string
+  streetNumber: string
+  neighborhood: string
+  city: string
+  state: string
+}): Promise<{ latitude: number; longitude: number } | null> {
+  const query = [
+    params.streetName,
+    params.streetNumber,
+    params.neighborhood,
+    params.city,
+    params.state,
+    params.postalCode,
+    'Brasil',
+  ]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(', ')
+
+  if (!query) return null
+
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/search')
+    url.searchParams.set('format', 'jsonv2')
+    url.searchParams.set('limit', '1')
+    url.searchParams.set('countrycodes', 'br')
+    url.searchParams.set('q', query)
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'User-Agent': 'CardapioDigital/1.0 (cardapio-digital; ifood-shipping-geocode)',
+      },
+      next: { revalidate: 0 },
+    })
+    if (!response.ok) return null
+
+    const data = (await response.json()) as Array<{ lat?: string; lon?: string }>
+    const first = data[0]
+    const latitude = Number(first?.lat)
+    const longitude = Number(first?.lon)
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+    return { latitude, longitude }
+  } catch {
+    return null
+  }
+}
+
+async function parseDeliveryAddress(
   address: string | null | undefined,
   config: {
     city: string
@@ -66,18 +142,31 @@ function parseDeliveryAddress(
   const postalCode = (lines[0]?.match(/\d{5}-?\d{3}/)?.[0] ?? '69000000').replace(/\D/g, '')
   const streetLine = lines[1] ?? 'Rua Tito Bittencourt, 83'
   const [streetNameRaw, streetNumberRaw] = streetLine.split(',').map((part) => part?.trim() ?? '')
+  const streetName = streetNameRaw || 'Rua nao informada'
+  const streetNumber = streetNumberRaw || 'S/N'
+  const neighborhood = lines[2] || 'Centro'
+  const coordinates =
+    (await geocodeDeliveryAddress({
+      postalCode,
+      streetName,
+      streetNumber,
+      neighborhood,
+      city: config.city,
+      state: config.state,
+    })) ?? {
+      latitude: config.defaultLatitude,
+      longitude: config.defaultLongitude,
+    }
+
   return {
     postalCode,
-    streetNumber: streetNumberRaw || 'S/N',
-    streetName: streetNameRaw || 'Rua nao informada',
-    neighborhood: lines[2] || 'Centro',
+    streetNumber,
+    streetName,
+    neighborhood,
     city: config.city,
     state: config.state,
     country: 'BR',
-    coordinates: {
-      latitude: config.defaultLatitude,
-      longitude: config.defaultLongitude,
-    },
+    coordinates,
   }
 }
 
@@ -90,6 +179,40 @@ async function buildOrderContext() {
   return {
     merchantId,
   }
+}
+
+async function getEffectiveDeliveryAreaConfig(baseConfig: {
+  city: string
+  state: string
+  defaultLatitude: number
+  defaultLongitude: number
+}) {
+  try {
+    const context = await buildOrderContext()
+    const merchant = await getIfoodMerchantDetails({ merchantId: context.merchantId })
+    const address =
+      merchant.address && typeof merchant.address === 'object'
+        ? (merchant.address as Record<string, unknown>)
+        : {}
+    const city = typeof address.city === 'string' ? address.city : ''
+    const state = typeof address.state === 'string' ? address.state : ''
+    const latitude =
+      typeof address.latitude === 'number' ? address.latitude : Number(address.latitude)
+    const longitude =
+      typeof address.longitude === 'number' ? address.longitude : Number(address.longitude)
+    if (city && state && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return {
+        ...baseConfig,
+        city,
+        state,
+        defaultLatitude: latitude,
+        defaultLongitude: longitude,
+      }
+    }
+  } catch {
+    // keep local config when merchant endpoint is unavailable
+  }
+  return baseConfig
 }
 
 export async function enqueueOrderCreate(orderId: string) {
@@ -150,14 +273,22 @@ export async function enqueueStatusUpdate(params: {
   })
 }
 
-async function markFailed(itemId: string, attempts: number, error: string) {
+async function markFailed(
+  itemId: string,
+  attempts: number,
+  error: string,
+  options?: { forceFailed?: boolean }
+) {
   const outbox = getIntegrationOutboxDelegate()
   if (!outbox) return
 
   await outbox.update({
     where: { id: itemId },
     data: {
-      status: attempts >= 6 ? IntegrationOutboxStatus.FAILED : IntegrationOutboxStatus.PENDING,
+      status:
+        options?.forceFailed || attempts >= 6
+          ? IntegrationOutboxStatus.FAILED
+          : IntegrationOutboxStatus.PENDING,
       attempts,
       lastError: error.slice(0, 1000),
       nextAttemptAt: nextAttemptDate(attempts),
@@ -210,7 +341,9 @@ export async function processOutboxBatch(limit = 20) {
 
       if (item.topic === IntegrationOutboxTopic.IFOOD_ORDER_CREATE) {
         const context = await buildOrderContext()
-        const deliveryAreaConfig = await getIfoodDeliveryAreaConfig()
+        const deliveryAreaConfig = await getEffectiveDeliveryAreaConfig(
+          await getIfoodDeliveryAreaConfig()
+        )
         let deliveryQuoteId: string | undefined
         let deliveryId: string | undefined
         let deliveryStatus: string | undefined
@@ -226,7 +359,41 @@ export async function processOutboxBatch(limit = 20) {
           const optionsPrice = Math.max(0, ensureNumber(order.total) - price)
           const totalPrice = ensureNumber(order.total)
 
-          const deliveryAddress = parseDeliveryAddress(order.address, deliveryAreaConfig)
+          const deliveryAddress = await parseDeliveryAddress(order.address, deliveryAreaConfig)
+          let availabilities = await getIfoodDeliveryAvailabilities({
+            merchantId: context.merchantId,
+            latitude: deliveryAddress.coordinates.latitude,
+            longitude: deliveryAddress.coordinates.longitude,
+          }).catch(async (error) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Falha ao consultar disponibilidade de entrega iFood'
+            const shouldFallback = message.includes('DeliveryDistanceTooHigh')
+            if (!shouldFallback) {
+              throw error
+            }
+
+            logIntegration('warn', 'Endereco fora da area no iFood; tentando fallback com ponto padrao', {
+              orderId: order.id,
+              latitude: deliveryAddress.coordinates.latitude,
+              longitude: deliveryAddress.coordinates.longitude,
+              fallbackLatitude: deliveryAreaConfig.defaultLatitude,
+              fallbackLongitude: deliveryAreaConfig.defaultLongitude,
+            })
+
+            return getIfoodDeliveryAvailabilities({
+              merchantId: context.merchantId,
+              latitude: deliveryAreaConfig.defaultLatitude,
+              longitude: deliveryAreaConfig.defaultLongitude,
+            })
+          })
+          const availability = availabilities[0]
+          if (!availability?.id) {
+            throw new Error(
+              'iFood sem disponibilidade para coordenadas informadas (deliveryAvailabilities vazio)'
+            )
+          }
 
           const shipping = await requestIfoodDelivery({
             idempotencyKey: item.idempotencyKey,
@@ -239,6 +406,7 @@ export async function processOutboxBatch(limit = 20) {
               },
               delivery: {
                 merchantFee: 0,
+                quoteId: availability.id,
                 deliveryAddress,
               },
               items: [
@@ -335,13 +503,36 @@ export async function processOutboxBatch(limit = 20) {
       processed += 1
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido no outbox'
+      const nonRetryableError = getNonRetryableIfoodError(message)
       logIntegration('error', 'Falha ao processar outbox', {
         outboxId: item.id,
         orderId: item.orderId,
         topic: item.topic,
         error: message,
       })
-      await markFailed(item.id, item.attempts + 1, message)
+      await markFailed(item.id, item.attempts + 1, message, {
+        forceFailed: Boolean(nonRetryableError),
+      })
+
+      if (nonRetryableError && item.topic === IntegrationOutboxTopic.IFOOD_ORDER_CREATE) {
+        const order = await prisma.order.findUnique({
+          where: { id: item.orderId },
+          select: { externalRefs: true },
+        })
+        if (order) {
+          await prisma.order.update({
+            where: { id: item.orderId },
+            data: {
+              externalRefs: mergeIfoodRefs(order.externalRefs, {
+                syncState: 'failed',
+                syncError: nonRetryableError,
+                source: 'internal',
+                lastSyncAt: new Date().toISOString(),
+              }),
+            },
+          })
+        }
+      }
     }
   }
 

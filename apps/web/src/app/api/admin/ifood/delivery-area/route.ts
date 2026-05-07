@@ -15,6 +15,7 @@ export async function PUT(request: Request) {
     state?: string
     defaultLatitude?: number
     defaultLongitude?: number
+    radiusKm?: number
     allowedCities?: string[]
     allowedNeighborhoods?: string[]
   }
@@ -28,6 +29,7 @@ export async function PUT(request: Request) {
     state: body.state,
     defaultLatitude: Number(body.defaultLatitude),
     defaultLongitude: Number(body.defaultLongitude),
+    radiusKm: Number(body.radiusKm),
     allowedCities: Array.isArray(body.allowedCities) ? body.allowedCities : [],
     allowedNeighborhoods: Array.isArray(body.allowedNeighborhoods) ? body.allowedNeighborhoods : [],
   })

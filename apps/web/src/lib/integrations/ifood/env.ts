@@ -8,6 +8,8 @@ type IfoodEnv = {
   shippingEnabled: boolean
   shippingQuotePath: string
   shippingOrderPath: string
+  shippingAvailabilityPath: string
+  shippingDeliveryAreaPath: string
 }
 
 function requiredEnv(name: string): string {
@@ -30,5 +32,11 @@ export function getIfoodEnv(): IfoodEnv {
     shippingQuotePath: process.env.IFOOD_SHIPPING_QUOTE_PATH?.trim() || '/shipping/v1.0/quotes',
     shippingOrderPath:
       process.env.IFOOD_SHIPPING_ORDER_PATH?.trim() || '/shipping/v1.0/merchants/{merchantId}/orders',
+    shippingAvailabilityPath:
+      process.env.IFOOD_SHIPPING_AVAILABILITY_PATH?.trim() ||
+      '/shipping/v1.0/merchants/{merchantId}/deliveryAvailabilities',
+    shippingDeliveryAreaPath:
+      process.env.IFOOD_SHIPPING_DELIVERY_AREA_PATH?.trim() ||
+      '/shipping/v1.0/merchants/{merchantId}/deliveryArea',
   }
 }

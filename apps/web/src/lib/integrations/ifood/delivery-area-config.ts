@@ -7,6 +7,7 @@ export type IfoodDeliveryAreaConfig = {
   state: string
   defaultLatitude: number
   defaultLongitude: number
+  radiusKm: number
   allowedCities: string[]
   allowedNeighborhoods: string[]
 }
@@ -24,6 +25,7 @@ function fromUnknown(raw: unknown): IfoodDeliveryAreaConfig {
     state: String(payload.state ?? process.env.IFOOD_DELIVERY_STATE?.trim() ?? 'AM'),
     defaultLatitude: Number(payload.defaultLatitude ?? process.env.IFOOD_DEFAULT_LATITUDE ?? '-3.1190275'),
     defaultLongitude: Number(payload.defaultLongitude ?? process.env.IFOOD_DEFAULT_LONGITUDE ?? '-60.0217314'),
+    radiusKm: Number(payload.radiusKm ?? process.env.IFOOD_DELIVERY_RADIUS_KM ?? '7'),
     allowedCities: Array.isArray(payload.allowedCities)
       ? normalizeList(payload.allowedCities.map((item) => String(item)))
       : [],
@@ -59,6 +61,7 @@ export async function saveIfoodDeliveryAreaConfig(
     state: config.state.trim().toUpperCase(),
     defaultLatitude: Number(config.defaultLatitude),
     defaultLongitude: Number(config.defaultLongitude),
+    radiusKm: Number(config.radiusKm) > 0 ? Number(config.radiusKm) : 1,
     allowedCities: normalizeList(config.allowedCities),
     allowedNeighborhoods: normalizeList(config.allowedNeighborhoods),
   }

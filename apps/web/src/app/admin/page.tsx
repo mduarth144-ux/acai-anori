@@ -60,7 +60,7 @@ export default function AdminPage() {
     let mounted = true
     async function loadOrders() {
       try {
-        const response = await fetch('/api/orders')
+        const response = await fetch('/api/orders?includeAll=true')
         if (!response.ok) throw new Error('Falha ao buscar pedidos')
         const data = (await response.json()) as DashboardOrder[]
         if (!mounted) return

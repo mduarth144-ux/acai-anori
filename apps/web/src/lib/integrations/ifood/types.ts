@@ -53,6 +53,21 @@ export type IfoodShippingQuotePayload = {
   deliveryAddress: string
 }
 
+export type IfoodDeliveryAvailability = {
+  id: string
+  distance?: number
+  expirationAt?: string
+  quote?: {
+    grossValue?: number
+    discount?: number
+    netValue?: number
+  }
+  deliveryTime?: {
+    min?: number
+    max?: number
+  }
+}
+
 export type IfoodShippingOrderPayload = {
   customer: {
     name: string

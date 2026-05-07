@@ -1,6 +1,7 @@
 import { getIfoodEnv } from './env'
 import { logIntegration } from './logging'
 import type {
+  IfoodDeliveryAvailability,
   IfoodOrderCreatePayload,
   IfoodOrderStatus,
   IfoodShippingOrderPayload,
@@ -209,4 +210,240 @@ export async function requestIfoodDelivery(params: {
     status: orderData.status ?? 'REQUESTED',
     trackingUrl: orderData.trackingUrl,
   }
+}
+
+function replacePathParam(path: string, paramName: string, value: string): string {
+  return path.includes(`{${paramName}}`)
+    ? path.replace(`{${paramName}}`, encodeURIComponent(value))
+    : path
+}
+
+function parseAvailabilities(raw: unknown): IfoodDeliveryAvailability[] {
+  if (Array.isArray(raw)) return raw as IfoodDeliveryAvailability[]
+  if (raw && typeof raw === 'object') {
+    const payload = raw as Record<string, unknown>
+    if (Array.isArray(payload.deliveryAvailabilities)) {
+      return payload.deliveryAvailabilities as IfoodDeliveryAvailability[]
+    }
+    if (Array.isArray(payload.items)) {
+      return payload.items as IfoodDeliveryAvailability[]
+    }
+    if (typeof payload.id === 'string' && payload.id.trim().length > 0) {
+      return [payload as unknown as IfoodDeliveryAvailability]
+    }
+  }
+  return []
+}
+
+export async function getIfoodDeliveryAvailabilities(params: {
+  merchantId: string
+  latitude: number
+  longitude: number
+}): Promise<IfoodDeliveryAvailability[]> {
+  const env = getIfoodEnv()
+  const basePath = replacePathParam(env.shippingAvailabilityPath, 'merchantId', params.merchantId)
+  const query = new URLSearchParams({
+    latitude: String(params.latitude),
+    longitude: String(params.longitude),
+  })
+  const response = await ifoodRequest(`${basePath}?${query.toString()}`, {
+    method: 'GET',
+  })
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha ao consultar disponibilidade de entrega iFood: ${response.status} ${body}`)
+  }
+  const data = await response.json()
+  return parseAvailabilities(data)
+}
+
+export async function getIfoodDeliveryArea(params: {
+  merchantId: string
+}): Promise<Record<string, unknown>> {
+  const env = getIfoodEnv()
+  const candidatePaths = [
+    env.shippingDeliveryAreaPath,
+    '/shipping/v1.0/merchants/{merchantId}/delivery-area',
+    '/shipping/v1.0/merchants/{merchantId}/coverage-area',
+    '/shipping/v1.0/coverage-area/merchants/{merchantId}',
+  ].map((path) => replacePathParam(path, 'merchantId', params.merchantId))
+
+  let lastError: string | null = null
+
+  for (const path of candidatePaths) {
+    const response = await ifoodRequest(path, {
+      method: 'GET',
+    })
+
+    if (response.status === 404) {
+      const body = await response.text()
+      lastError = `${path} -> 404 ${body}`
+      continue
+    }
+
+    if (!response.ok) {
+      const body = await response.text()
+      throw new Error(`Falha ao consultar area de entrega iFood: ${response.status} ${body}`)
+    }
+
+    const data = (await response.json()) as unknown
+    if (!data || typeof data !== 'object') {
+      return {}
+    }
+    return data as Record<string, unknown>
+  }
+
+  throw new Error(
+    `Nao foi possivel localizar endpoint de area de entrega no iFood (rotas testadas: ${candidatePaths.join(', ')}). Ultimo erro: ${lastError ?? '404 sem detalhes'}`
+  )
+}
+
+export async function getIfoodMerchantDetails(params: {
+  merchantId: string
+}): Promise<Record<string, unknown>> {
+  const response = await ifoodRequest(`/merchant/v1.0/merchants/${encodeURIComponent(params.merchantId)}`, {
+    method: 'GET',
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha ao consultar dados da loja no iFood: ${response.status} ${body}`)
+  }
+
+  const data = (await response.json()) as unknown
+  if (!data || typeof data !== 'object') {
+    return {}
+  }
+  return data as Record<string, unknown>
+}
+
+export async function publishIfoodDeliveryArea(params: {
+  merchantId: string
+  city: string
+  state: string
+  latitude: number
+  longitude: number
+  radiusKm: number
+  allowedNeighborhoods?: string[]
+}): Promise<{
+  path: string
+  method: 'PUT' | 'POST' | 'PATCH'
+  payload: Record<string, unknown>
+  response: Record<string, unknown>
+}> {
+  const env = getIfoodEnv()
+  const basePaths = Array.from(
+    new Set(
+      [
+        env.shippingDeliveryAreaPath,
+        '/shipping/v1.0/merchants/{merchantId}/delivery-area',
+        '/shipping/v1.0/merchants/{merchantId}/deliveryArea',
+        '/shipping/v1.0/merchants/{merchantId}/coverage-area',
+        '/shipping/v1.0/coverage-area/merchants/{merchantId}',
+      ].map((path) => replacePathParam(path, 'merchantId', params.merchantId))
+    )
+  )
+
+  const methods: Array<'PUT' | 'POST' | 'PATCH'> = ['PUT', 'POST', 'PATCH']
+  const payloadCandidates: Record<string, unknown>[] = [
+    {
+      city: params.city,
+      state: params.state,
+      center: {
+        latitude: params.latitude,
+        longitude: params.longitude,
+      },
+      radiusKm: params.radiusKm,
+      neighborhoods: params.allowedNeighborhoods ?? [],
+    },
+    {
+      city: params.city,
+      state: params.state,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      maxDistanceKm: params.radiusKm,
+      allowedNeighborhoods: params.allowedNeighborhoods ?? [],
+    },
+    {
+      deliveryArea: {
+        city: params.city,
+        state: params.state,
+        center: {
+          lat: params.latitude,
+          lng: params.longitude,
+        },
+        radius: params.radiusKm,
+      },
+      neighborhoods: params.allowedNeighborhoods ?? [],
+    },
+  ]
+
+  const attempts: Array<{
+    method: 'PUT' | 'POST' | 'PATCH'
+    path: string
+    status: number
+    body: string
+  }> = []
+
+  for (const path of basePaths) {
+    for (const method of methods) {
+      for (const payload of payloadCandidates) {
+        const response = await ifoodRequest(path, {
+          method,
+          body: JSON.stringify(payload),
+        })
+
+        const text = await response.text()
+        attempts.push({
+          method,
+          path,
+          status: response.status,
+          body: text,
+        })
+
+        if (response.status === 404 || response.status === 405) {
+          continue
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            `Falha ao publicar area de entrega no iFood: ${response.status} ${text} | tentativa: ${method} ${path}`
+          )
+        }
+
+        let parsed: Record<string, unknown> = {}
+        try {
+          parsed = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+        } catch {
+          parsed = { raw: text }
+        }
+
+        return {
+          path,
+          method,
+          payload,
+          response: parsed,
+        }
+      }
+    }
+  }
+
+  const notFoundLike = attempts.filter((attempt) => attempt.status === 404 || attempt.status === 405)
+  if (attempts.length > 0 && notFoundLike.length === attempts.length) {
+    const routes = Array.from(new Set(attempts.map((attempt) => attempt.path))).join(', ')
+    throw new Error(
+      `Conta iFood sem endpoint de publicacao de area de entrega habilitado para este merchant. Rotas testadas: ${routes}.`
+    )
+  }
+
+  const firstNonNotFound = attempts.find((attempt) => attempt.status !== 404 && attempt.status !== 405)
+  if (firstNonNotFound) {
+    throw new Error(
+      `Falha ao publicar area de entrega no iFood: ${firstNonNotFound.status} ${firstNonNotFound.body} | tentativa: ${firstNonNotFound.method} ${firstNonNotFound.path}`
+    )
+  }
+
+  throw new Error(
+    'Nao foi possivel publicar area de entrega no iFood.'
+  )
 }

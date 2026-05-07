@@ -229,15 +229,20 @@ export function MenuPage({ categories, products, tableCode }: Props) {
         if (checkout.customerPhone?.trim()) params.set('phone', checkout.customerPhone.trim())
         if (checkout.customerEmail?.trim()) params.set('email', checkout.customerEmail.trim())
 
-        const url = params.size > 0 ? `/api/orders?${params.toString()}` : '/api/orders'
-        const response = await fetch(url)
-        if (!response.ok) return
-        const serverOrders = (await response.json()) as Array<{ id: string; status: string }>
-
         const rawHistory = window.localStorage.getItem(ORDERS_STORAGE_KEY)
         const historyIds = rawHistory
           ? (JSON.parse(rawHistory) as Array<{ id: string }>).map((item) => String(item.id))
           : []
+
+        if (params.size === 0 && historyIds.length === 0) {
+          if (isMounted) setActiveOrder(null)
+          return
+        }
+
+        const url = params.size > 0 ? `/api/orders?${params.toString()}` : '/api/orders?includeAll=false'
+        const response = await fetch(url)
+        if (!response.ok) return
+        const serverOrders = (await response.json()) as Array<{ id: string; status: string }>
 
         const candidateOrders = historyIds.length
           ? historyIds
