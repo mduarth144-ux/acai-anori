@@ -11,6 +11,7 @@ import {
   formatCepDisplay,
   onlyDigits,
 } from '../../../lib/cep-viacep'
+import { persistDeliveryConfirmToken } from '../../../lib/order-delivery-confirm-client'
 
 type GeoStatus = 'idle' | 'pending' | 'ok' | 'denied' | 'error' | 'unavailable'
 const CHECKOUT_PROFILE_STORAGE_KEY = 'checkout.profile.v1'
@@ -475,18 +476,33 @@ export default function NovoPedidoPage() {
         )
         return
       }
-      const data = await response.json()
+      const data = (await response.json()) as {
+        id: string
+        customerDeliveryToken?: string
+      }
       if (typeof window !== 'undefined') {
+        if (data.customerDeliveryToken) {
+          persistDeliveryConfirmToken(String(data.id), data.customerDeliveryToken)
+        }
         try {
           const current = JSON.parse(
             window.localStorage.getItem(ORDERS_STORAGE_KEY) ?? '[]'
-          ) as Array<{ id: string; createdAt: string; status: string; total?: number }>
+          ) as Array<{
+            id: string
+            createdAt: string
+            status: string
+            total?: number
+            deliveryConfirmToken?: string
+          }>
           const next = [
             {
               id: String(data.id),
               createdAt: new Date().toISOString(),
               status: 'Pendente',
               total: Number(total().toFixed(2)),
+              ...(data.customerDeliveryToken
+                ? { deliveryConfirmToken: data.customerDeliveryToken }
+                : {}),
             },
             ...current.filter((order) => order.id !== String(data.id)),
           ].slice(0, 20)
@@ -496,7 +512,11 @@ export default function NovoPedidoPage() {
         }
       }
       clearCart()
-      router.push(`/pedido/${data.id}`)
+      const tokenQuery =
+        typeof data.customerDeliveryToken === 'string' && data.customerDeliveryToken.length > 0
+          ? `?c=${encodeURIComponent(data.customerDeliveryToken)}`
+          : ''
+      router.push(`/pedido/${data.id}${tokenQuery}`)
     } catch (error) {
       if (error instanceof TypeError) {
         setSubmitError(

@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
 import { enqueueOrderCreate, enqueueStatusUpdate, processOutboxBatch } from '../../../lib/integrations/ifood/outbox'
+import { runAdminDeliveredIfoodWebhookSimulation } from '../../../lib/integrations/ifood/webhook-processor'
 import { isValidLocalTransition } from '../../../lib/integrations/ifood/status-map'
 import { getIfoodRefs, mergeIfoodRefs } from '../../../lib/integrations/ifood/external-refs'
 import {
   parseDeliveryAddressText,
   validateDeliveryCoverage,
 } from '../../../lib/integrations/ifood/delivery-coverage'
+import { createCustomerDeliveryToken } from '../../../lib/customer-delivery-token'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -157,9 +159,13 @@ export async function POST(request: Request) {
 
   const ifoodRefs = getIfoodRefs(latestOrderState?.externalRefs ?? created.externalRefs)
 
+  const customerDeliveryToken =
+    created.type === 'DELIVERY' ? createCustomerDeliveryToken(created.id) : null
+
   return NextResponse.json({
     ...created,
     externalRefs: latestOrderState?.externalRefs ?? created.externalRefs,
+    ...(customerDeliveryToken ? { customerDeliveryToken } : {}),
     integration: {
       ifood: {
         syncState: ifoodRefs.syncState ?? 'pending',
@@ -222,6 +228,16 @@ export async function PATCH(request: Request) {
     status: body.status,
     source: body.source ?? 'INTERNAL',
   })
+
+  const simEnabled =
+    (process.env.IFOOD_SIMULATE_WEBHOOK_ON_ADMIN_DELIVERED?.trim() || '').toLowerCase() === 'true'
+  if (
+    simEnabled &&
+    body.status === 'DELIVERED' &&
+    (body.source ?? 'INTERNAL') === 'INTERNAL'
+  ) {
+    await runAdminDeliveredIfoodWebhookSimulation(id)
+  }
 
   return NextResponse.json(updated)
 }

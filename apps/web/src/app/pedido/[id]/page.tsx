@@ -1,9 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createSupabaseClient } from '../../../lib/supabase-client'
 import { orderStatusLabel } from '../../../lib/order-labels'
+import {
+  getStoredDeliveryConfirmToken,
+  persistDeliveryConfirmToken,
+} from '../../../lib/order-delivery-confirm-client'
 
 type Props = { params: Promise<{ id: string }> }
 type OrderData = {
@@ -26,10 +30,26 @@ export default function PedidoStatusPage({ params }: Props) {
   const [orderId, setOrderId] = useState('')
   const [order, setOrder] = useState<OrderData | null>(null)
   const [status, setStatus] = useState('PENDING')
+  const [deliveryConfirmToken, setDeliveryConfirmToken] = useState<string | null>(null)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
 
   useEffect(() => {
     params.then((p) => setOrderId(p.id))
   }, [params])
+
+  useEffect(() => {
+    if (!orderId || typeof window === 'undefined') return
+    const query = new URLSearchParams(window.location.search)
+    const c = query.get('c')
+    if (c) {
+      persistDeliveryConfirmToken(orderId, c)
+      setDeliveryConfirmToken(c)
+      window.history.replaceState(null, '', `/pedido/${orderId}`)
+      return
+    }
+    setDeliveryConfirmToken(getStoredDeliveryConfirmToken(orderId))
+  }, [orderId])
 
   useEffect(() => {
     if (!orderId) return
@@ -40,6 +60,7 @@ export default function PedidoStatusPage({ params }: Props) {
         if (!found) return
         setOrder(found)
         setStatus(String(found.status ?? 'PENDING'))
+        setDeliveryConfirmToken((prev) => prev ?? getStoredDeliveryConfirmToken(orderId))
       })
       .catch(() => {
         // Keep UI usable even when initial fetch fails.
@@ -77,6 +98,35 @@ export default function PedidoStatusPage({ params }: Props) {
       supabase.removeChannel(channel)
     }
   }, [orderId])
+
+  const confirmReceived = useCallback(async () => {
+    if (!orderId || !deliveryConfirmToken) return
+    setConfirmLoading(true)
+    setConfirmError(null)
+    try {
+      const response = await fetch('/api/orders/customer-confirm-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, token: deliveryConfirmToken }),
+      })
+      const payload = (await response.json().catch(() => ({}))) as { message?: string }
+      if (!response.ok) {
+        setConfirmError(payload.message ?? 'Nao foi possivel registrar a entrega.')
+        return
+      }
+      setStatus('DELIVERED')
+      setOrder((prev) => (prev ? { ...prev, status: 'DELIVERED' } : prev))
+    } catch {
+      setConfirmError('Erro de conexao. Tente novamente.')
+    } finally {
+      setConfirmLoading(false)
+    }
+  }, [orderId, deliveryConfirmToken])
+
+  const showCustomerConfirmDelivery =
+    order?.type === 'DELIVERY' &&
+    status === 'READY' &&
+    Boolean(deliveryConfirmToken)
 
   const currentIndex = (() => {
     if (status === 'CONFIRMED') return 1
@@ -172,6 +222,27 @@ export default function PedidoStatusPage({ params }: Props) {
         ) : null}
         {order?.address ? (
           <p className="order-status-muted text-acai-300 text-sm">Entrega em: {order.address}</p>
+        ) : null}
+
+        {showCustomerConfirmDelivery ? (
+          <div className="border-fuchsia-700/50 bg-fuchsia-950/30 rounded-xl border p-4">
+            <p className="text-acai-100 mb-2 text-sm font-medium">Ja recebeu o pedido?</p>
+            <p className="text-acai-400 mb-3 text-xs">
+              Se o status nao atualizar sozinho (por exemplo, se o entregador estiver sem internet),
+              voce pode confirmar aqui que o pedido chegou ate voce.
+            </p>
+            {confirmError ? (
+              <p className="text-amber-300 mb-2 text-xs">{confirmError}</p>
+            ) : null}
+            <button
+              type="button"
+              disabled={confirmLoading}
+              onClick={() => void confirmReceived()}
+              className="w-full rounded-lg bg-fuchsia-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {confirmLoading ? 'Registrando…' : 'Confirmar que recebi o pedido'}
+            </button>
+          </div>
         ) : null}
       </div>
       <div className="fixed inset-x-0 bottom-16 z-40">
