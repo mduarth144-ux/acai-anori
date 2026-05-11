@@ -92,17 +92,28 @@ async function getAccessToken(): Promise<string> {
   return authCache.token
 }
 
-async function ifoodRequest(path: string, init: RequestInit): Promise<Response> {
+export async function merchantApiRequest(path: string, init: RequestInit): Promise<Response> {
   const env = getIfoodEnv()
   const token = await getAccessToken()
+  const baseHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    ...(init.headers as Record<string, string>),
+  }
+  if (init.body !== undefined && init.body !== null) {
+    baseHeaders['Content-Type'] = baseHeaders['Content-Type'] ?? 'application/json'
+  }
   return fetchWithRetry(`${env.apiBaseUrl}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
+    headers: baseHeaders,
   })
+}
+
+function okOrAccepted(response: Response): boolean {
+  return response.ok || response.status === 202
+}
+
+async function ifoodRequest(path: string, init: RequestInit): Promise<Response> {
+  return merchantApiRequest(path, init)
 }
 
 export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempotencyKey: string) {
@@ -114,12 +125,20 @@ export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempot
     body: JSON.stringify(payload),
   })
 
-  if (!response.ok) {
+  if (!okOrAccepted(response)) {
     const body = await response.text()
     throw new Error(`Falha ao criar pedido iFood: ${response.status} ${body}`)
   }
 
-  const data = (await response.json()) as { id?: string; orderId?: string }
+  const text = await response.text()
+  let data = {} as { id?: string; orderId?: string }
+  if (text?.trim()) {
+    try {
+      data = JSON.parse(text) as { id?: string; orderId?: string }
+    } catch {
+      throw new Error('Resposta de criacao de pedido iFood com JSON invalido')
+    }
+  }
   const ifoodOrderId = data.orderId ?? data.id
   if (!ifoodOrderId) {
     throw new Error('Resposta de criacao de pedido iFood sem orderId')
@@ -147,7 +166,7 @@ export async function updateIfoodOrderStatus(params: {
     }),
   })
 
-  if (!response.ok) {
+  if (!okOrAccepted(response)) {
     const body = await response.text()
     throw new Error(`Falha ao atualizar status no iFood: ${response.status} ${body}`)
   }
@@ -181,7 +200,7 @@ export async function requestIfoodDelivery(params: {
     body: JSON.stringify(params.orderPayload),
   })
 
-  if (!orderResponse.ok) {
+  if (!okOrAccepted(orderResponse)) {
     const body = await orderResponse.text()
     throw new Error(`Falha ao solicitar entregador iFood: ${orderResponse.status} ${body}`)
   }
@@ -193,7 +212,14 @@ export async function requestIfoodDelivery(params: {
     status?: string
     trackingUrl?: string
   }
-  const deliveryId = orderData.deliveryId ?? orderData.orderId ?? orderData.id
+  const shippingOrderId =
+    typeof orderData.orderId === 'string' && orderData.orderId.trim().length > 0
+      ? orderData.orderId.trim()
+      : undefined
+  const deliveryId =
+    typeof orderData.deliveryId === 'string' && orderData.deliveryId.trim().length > 0
+      ? orderData.deliveryId.trim()
+      : shippingOrderId ?? (typeof orderData.id === 'string' ? orderData.id : undefined)
   if (!deliveryId) {
     throw new Error('Resposta da solicitacao de entrega iFood sem deliveryId')
   }
@@ -201,12 +227,14 @@ export async function requestIfoodDelivery(params: {
   logIntegration('info', 'Entregador iFood solicitado', {
     externalOrderId: params.externalOrderId,
     deliveryId,
+    shippingOrderId,
   })
 
   return {
     skipped: false as const,
-    quoteId: undefined,
+    quoteId: params.orderPayload.delivery.quoteId,
     deliveryId,
+    shippingOrderId,
     status: orderData.status ?? 'REQUESTED',
     trackingUrl: orderData.trackingUrl,
   }
@@ -315,6 +343,185 @@ export async function getIfoodMerchantDetails(params: {
     return {}
   }
   return data as Record<string, unknown>
+}
+
+export async function getIfoodOrderDetails(ifoodOrderId: string): Promise<unknown> {
+  const response = await ifoodRequest(
+    `/order/v1.0/orders/${encodeURIComponent(ifoodOrderId)}`,
+    { method: 'GET' }
+  )
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha ao consultar pedido no iFood: ${response.status} ${body}`)
+  }
+  return response.json() as Promise<unknown>
+}
+
+async function postOrderSubresource(params: {
+  ifoodOrderId: string
+  pathSuffix: string
+  idempotencyKey: string
+  body?: unknown
+}): Promise<void> {
+  const response = await ifoodRequest(
+    `/order/v1.0/orders/${encodeURIComponent(params.ifoodOrderId)}/${params.pathSuffix}`,
+    {
+      method: 'POST',
+      headers: {
+        'x-idempotency-key': params.idempotencyKey,
+      },
+      body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
+    }
+  )
+  if (!okOrAccepted(response)) {
+    const text = await response.text()
+    throw new Error(`Falha Order API iFood (${params.pathSuffix}): ${response.status} ${text}`)
+  }
+}
+
+export async function confirmIfoodOrder(params: {
+  ifoodOrderId: string
+  idempotencyKey: string
+}) {
+  await postOrderSubresource({
+    ifoodOrderId: params.ifoodOrderId,
+    pathSuffix: 'confirm',
+    idempotencyKey: params.idempotencyKey,
+  })
+  logIntegration('info', 'Pedido confirmado no iFood', { ifoodOrderId: params.ifoodOrderId })
+}
+
+export async function startPreparationIfoodOrder(params: {
+  ifoodOrderId: string
+  idempotencyKey: string
+}) {
+  await postOrderSubresource({
+    ifoodOrderId: params.ifoodOrderId,
+    pathSuffix: 'startPreparation',
+    idempotencyKey: params.idempotencyKey,
+  })
+  logIntegration('info', 'Preparo iniciado no iFood', { ifoodOrderId: params.ifoodOrderId })
+}
+
+export async function readyToPickupIfoodOrder(params: {
+  ifoodOrderId: string
+  idempotencyKey: string
+}) {
+  await postOrderSubresource({
+    ifoodOrderId: params.ifoodOrderId,
+    pathSuffix: 'readyToPickup',
+    idempotencyKey: params.idempotencyKey,
+  })
+  logIntegration('info', 'Pronto para retirada no iFood', { ifoodOrderId: params.ifoodOrderId })
+}
+
+export async function dispatchIfoodOrder(params: {
+  ifoodOrderId: string
+  idempotencyKey: string
+}) {
+  await postOrderSubresource({
+    ifoodOrderId: params.ifoodOrderId,
+    pathSuffix: 'dispatch',
+    idempotencyKey: params.idempotencyKey,
+  })
+  logIntegration('info', 'Despacho (saida para entrega) no iFood', { ifoodOrderId: params.ifoodOrderId })
+}
+
+export type IfoodCancellationReasonEntry = {
+  cancelCodeId: string
+  description?: string
+}
+
+export async function getIfoodCancellationReasons(
+  ifoodOrderId: string
+): Promise<IfoodCancellationReasonEntry[]> {
+  const response = await ifoodRequest(
+    `/order/v1.0/orders/${encodeURIComponent(ifoodOrderId)}/cancellationReasons`,
+    { method: 'GET' }
+  )
+  if (response.status === 204) {
+    return []
+  }
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha ao listar motivos de cancelamento iFood: ${response.status} ${body}`)
+  }
+  const data = (await response.json()) as unknown
+  if (!Array.isArray(data)) return []
+  return data.map((row) => {
+    const r = row as Record<string, unknown>
+    const cancelCodeId = typeof r.cancelCodeId === 'string' ? r.cancelCodeId : ''
+    const description = typeof r.description === 'string' ? r.description : undefined
+    return { cancelCodeId, description }
+  }).filter((x) => x.cancelCodeId.length > 0)
+}
+
+export async function requestIfoodOrderCancellation(params: {
+  ifoodOrderId: string
+  cancellationCode: string
+  reason: string
+  idempotencyKey: string
+}) {
+  await postOrderSubresource({
+    ifoodOrderId: params.ifoodOrderId,
+    pathSuffix: 'requestCancellation',
+    idempotencyKey: params.idempotencyKey,
+    body: {
+      cancellationCode: params.cancellationCode,
+      reason: params.reason,
+    },
+  })
+  logIntegration('info', 'Cancelamento solicitado no iFood', { ifoodOrderId: params.ifoodOrderId })
+}
+
+export async function pollOrderEvents(params?: {
+  categories?: string
+}): Promise<unknown[]> {
+  const query = new URLSearchParams()
+  if (params?.categories?.trim()) {
+    query.set('categories', params.categories.trim())
+  }
+  const suffix = query.toString()
+  const path = `/events/v1.0/events:polling${suffix ? `?${suffix}` : ''}`
+  const response = await merchantApiRequest(path, { method: 'GET' })
+  if (response.status === 204) {
+    return []
+  }
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha no polling de eventos iFood: ${response.status} ${body}`)
+  }
+  const data = (await response.json()) as unknown
+  return Array.isArray(data) ? data : []
+}
+
+export async function acknowledgeOrderEvents(
+  events: Array<{ id: string }>
+): Promise<void> {
+  if (events.length === 0) return
+  const response = await merchantApiRequest(`/events/v1.0/events/acknowledgment`, {
+    method: 'POST',
+    body: JSON.stringify(events.map((e) => ({ id: e.id }))),
+  })
+  if (!okOrAccepted(response)) {
+    const body = await response.text()
+    throw new Error(`Falha ao reconhecer eventos iFood: ${response.status} ${body}`)
+  }
+}
+
+export async function getShippingOrderTracking(ifoodOrderId: string): Promise<unknown | null> {
+  const response = await ifoodRequest(
+    `/shipping/v1.0/orders/${encodeURIComponent(ifoodOrderId)}/tracking`,
+    { method: 'GET' }
+  )
+  if (response.status === 404) {
+    return null
+  }
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Falha ao consultar tracking Shipping iFood: ${response.status} ${body}`)
+  }
+  return response.json() as Promise<unknown>
 }
 
 export async function publishIfoodDeliveryArea(params: {

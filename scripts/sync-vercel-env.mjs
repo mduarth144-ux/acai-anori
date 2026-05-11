@@ -15,11 +15,19 @@
  *
  * Nota: em `development`, a Vercel não aceita --sensitive; o script envia o mesmo valor
  * sem essa flag (limitação da plataforma).
+ *
+ * Se no painel aparecerem como "Sensitive" variáveis que são só flags/paths (ex.:
+ * IFOOD_ORDER_API_ON_CREATE), corre `npm run vercel:env:resync-plain` — remove e recria
+ * sem a flag Sensitive (só Production por omissão; ver script).
+ *
+ * Cada `vercel env add/update` fala com a API (vários segundos por chamada). O script
+ * regista duração e corta após VERCEL_CMD_TIMEOUT_MS (default 90000) para não ficar
+ * indefinidamente se a rede ou o login falharem.
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { spawnSync } from 'node:child_process'
+import { vercelSpawn } from './vercel-cmd.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
@@ -35,9 +43,9 @@ const ALLOWLIST = [
   { key: 'SUPABASE_JWT_SECRET', sensitive: true },
   { key: 'NEXT_PUBLIC_SITE_URL' },
   { key: 'SUPABASE_PROJECT_ID' },
-  { key: 'IFOOD_CLIENT_ID', sensitive: true },
+  { key: 'IFOOD_CLIENT_ID' },
   { key: 'IFOOD_CLIENT_SECRET', sensitive: true },
-  { key: 'IFOOD_MERCHANT_ID', sensitive: true },
+  { key: 'IFOOD_MERCHANT_ID' },
   { key: 'IFOOD_WEBHOOK_SECRET', sensitive: true },
   { key: 'IFOOD_API_BASE_URL' },
   { key: 'IFOOD_AUTH_URL' },
@@ -45,6 +53,14 @@ const ALLOWLIST = [
   { key: 'IFOOD_SHIPPING_QUOTE_PATH' },
   { key: 'IFOOD_SHIPPING_ORDER_PATH' },
   { key: 'IFOOD_PICKUP_ADDRESS' },
+  { key: 'CUSTOMER_ORDER_ACTION_SECRET', sensitive: true },
+  { key: 'IFOOD_ORDER_API_ON_CREATE' },
+  { key: 'IFOOD_ORDER_USE_DEDICATED_ENDPOINTS' },
+  { key: 'IFOOD_DEFAULT_CANCEL_CODE' },
+  { key: 'IFOOD_EVENTS_POLLING_ENABLED' },
+  { key: 'IFOOD_EVENTS_POLLING_CATEGORIES' },
+  { key: 'INTERNAL_JOB_SECRET', sensitive: true },
+  { key: 'CRON_SECRET', sensitive: true },
 ]
 
 function parseEnvFile(filePath) {
@@ -79,23 +95,47 @@ function vercelEnvUpsert(key, vercelTarget, value, sensitive) {
   // Na Vercel, --sensitive só é permitido em production e preview (não em development).
   const allowSensitive = sensitive && vercelTarget !== 'development'
 
-  const run = (args) =>
-    spawnSync(process.execPath, args, {
-      cwd: root,
-      encoding: 'utf8',
-      shell: false,
-      stdio: 'inherit',
-    })
+  const labelBase = `${key}@${vercelTarget}`
 
   // Preferir add --force (evita erro da API em update de variável sensitive).
-  const addArgs = [vercelBin, 'env', 'add', key, vercelTarget, ...branchSuffix, '--value', value, '--yes', '--force']
+  const addArgs = [
+    'env',
+    'add',
+    key,
+    vercelTarget,
+    ...branchSuffix,
+    '--value',
+    value,
+    '--yes',
+    '--force',
+  ]
   if (allowSensitive) addArgs.push('--sensitive')
-  const added = run(addArgs)
+  const added = vercelSpawn({
+    root,
+    vercelBin,
+    argv: addArgs,
+    label: `add ${labelBase}`,
+  })
   if (added.status === 0) return true
 
-  const updateArgs = [vercelBin, 'env', 'update', key, vercelTarget, ...branchSuffix, '--value', value, '--yes']
+  const updateArgs = [
+    'env',
+    'update',
+    key,
+    vercelTarget,
+    ...branchSuffix,
+    '--value',
+    value,
+    '--yes',
+  ]
   if (allowSensitive) updateArgs.push('--sensitive')
-  return run(updateArgs).status === 0
+  const updated = vercelSpawn({
+    root,
+    vercelBin,
+    argv: updateArgs,
+    label: `update ${labelBase}`,
+  })
+  return updated.status === 0
 }
 
 const projectJson = path.join(root, '.vercel', 'project.json')
@@ -107,6 +147,15 @@ if (!fs.existsSync(projectJson)) {
 
 const envPath = path.join(root, '.env')
 const parsed = parseEnvFile(envPath)
+
+/** Filtrar só algumas chaves (ex.: ONLY_KEYS=IFOOD_ORDER_API_ON_CREATE,INTERNAL_JOB_SECRET). */
+const onlyKeys = process.env.ONLY_KEYS?.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+const allowlistFiltered =
+  onlyKeys?.length > 0
+    ? ALLOWLIST.filter(({ key }) => onlyKeys.includes(key))
+    : ALLOWLIST
 
 const targets = (
   process.env.SYNC_VERCEL_ENVS || 'production,development'
@@ -122,10 +171,21 @@ if (targets.includes('preview') && !process.env.VERCEL_PREVIEW_GIT_BRANCH?.trim(
   process.exit(1)
 }
 
+let planned = 0
+for (const { key } of allowlistFiltered) {
+  const value = parsed[key]
+  if (value === undefined || value === '') continue
+  if (key === 'NEXT_PUBLIC_SITE_URL' && /localhost|127\.0\.0\.1/i.test(value)) continue
+  planned += targets.length
+}
+console.error(
+  `\n[sync-vercel-env] ${planned} chamada(s) à API Vercel (timeout ${process.env.VERCEL_CMD_TIMEOUT_MS || '90000'}ms cada). Isto pode levar vários minutos; não é um loop infinito.\n`
+)
+
 let ok = 0
 let skipped = 0
 
-for (const { key, sensitive } of ALLOWLIST) {
+for (const { key, sensitive } of allowlistFiltered) {
   const value = parsed[key]
   if (value === undefined || value === '') {
     console.warn(`[skip] ${key} — vazio no .env`)

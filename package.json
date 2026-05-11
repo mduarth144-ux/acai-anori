@@ -19,6 +19,7 @@
     "sync-db-types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > apps/web/src/lib/database.types.ts",
     "vercel:link": "vercel link",
     "vercel:env:sync": "node scripts/sync-vercel-env.mjs",
+    "vercel:env:resync-plain": "node scripts/vercel-resync-plain-env.mjs",
     "vercel:env:pull": "vercel env pull apps/web/.env.vercel.pull --yes",
     "vercel:preflight": "node --env-file=.env scripts/vercel-preflight.mjs",
     "supabase:login": "supabase login",

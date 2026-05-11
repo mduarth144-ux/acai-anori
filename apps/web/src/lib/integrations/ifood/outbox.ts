@@ -6,13 +6,15 @@ import {
 } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
 import { prisma } from '../../prisma'
-import { mapLocalStatusToIfood } from './status-map'
 import {
+  createIfoodOrder,
   getIfoodDeliveryAvailabilities,
   getIfoodMerchantDetails,
   requestIfoodDelivery,
-  updateIfoodOrderStatus,
 } from './client'
+import { isIfoodOrderApiOnCreateEnabled } from './integration-flags'
+import { buildIfoodOrderCreatePayload } from './order-create-payload'
+import { syncLocalStatusToIfoodApi } from './order-status-sync'
 import { logIntegration } from './logging'
 import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
 import { getIfoodDeliveryAreaConfig } from './delivery-area-config'
@@ -347,6 +349,14 @@ export async function processOutboxBatch(limit = 20) {
         let deliveryQuoteId: string | undefined
         let deliveryId: string | undefined
         let deliveryStatus: string | undefined
+        let shippingOrderId: string | undefined
+        let ifoodOrderId: string | undefined
+
+        if (isIfoodOrderApiOnCreateEnabled()) {
+          const payload = buildIfoodOrderCreatePayload(order, context.merchantId)
+          const created = await createIfoodOrder(payload, item.idempotencyKey)
+          ifoodOrderId = created.ifoodOrderId
+        }
 
         if (order.type === 'DELIVERY' && order.address?.trim()) {
           const paymentMethod =
@@ -444,6 +454,7 @@ export async function processOutboxBatch(limit = 20) {
             deliveryQuoteId = shipping.quoteId
             deliveryId = shipping.deliveryId
             deliveryStatus = shipping.status
+            shippingOrderId = shipping.shippingOrderId
           }
         }
 
@@ -451,6 +462,8 @@ export async function processOutboxBatch(limit = 20) {
           where: { id: order.id },
           data: {
             externalRefs: mergeIfoodRefs(order.externalRefs, {
+              ifoodOrderId,
+              shippingOrderId,
               deliveryQuoteId,
               deliveryId,
               deliveryStatus,
@@ -467,21 +480,25 @@ export async function processOutboxBatch(limit = 20) {
           throw new Error('Payload de status invalido')
         }
         const ifoodRefs = getIfoodRefs(order.externalRefs)
-        const ifoodOrderId = ifoodRefs.ifoodOrderId
-        if (typeof ifoodOrderId !== 'string' || !ifoodOrderId) {
+        const ifoodOrderIdForSync = ifoodRefs.ifoodOrderId
+        if (typeof ifoodOrderIdForSync !== 'string' || !ifoodOrderIdForSync) {
           throw new Error('Pedido sem ifoodOrderId para sync de status')
         }
-        await updateIfoodOrderStatus({
-          ifoodOrderId,
-          status: mapLocalStatusToIfood(
-            status as 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
-          ),
+        const extraRefs = await syncLocalStatusToIfoodApi({
+          order: {
+            id: order.id,
+            type: order.type,
+            status: order.status,
+            externalRefs: order.externalRefs,
+          },
+          newStatus: status as 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED',
           idempotencyKey: item.idempotencyKey,
         })
         await prisma.order.update({
           where: { id: order.id },
           data: {
             externalRefs: mergeIfoodRefs(order.externalRefs, {
+              ...extraRefs,
               syncState: 'synced',
               syncError: null,
               lastStatusSyncedAt: new Date().toISOString(),
