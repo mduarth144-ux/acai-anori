@@ -159,16 +159,24 @@ export function AdminAreaGate({ children }: { children: React.ReactNode }) {
               sessão demonstração
             </span>
           </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="border-acai-600 bg-acai-950 text-acai-100 hover:bg-acai-800 shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition hover:border-fuchsia-700 hover:text-fuchsia-100"
-          >
-            Sair
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/"
+              className="text-acai-300 hover:text-fuchsia-200 rounded-lg border border-acai-600 bg-acai-950 px-3 py-2 text-sm font-medium transition hover:border-fuchsia-700"
+            >
+              Cardápio
+            </Link>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="border-acai-600 bg-acai-950 text-acai-100 hover:bg-acai-800 shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition hover:border-fuchsia-700 hover:text-fuchsia-100"
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </div>
-      <nav className="border-acai-800/80 bg-acai-900/60 border-b backdrop-blur-sm">
+      <nav className="border-acai-800/80 bg-acai-900/60 relative z-10 border-b backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5">
           {[
             { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },

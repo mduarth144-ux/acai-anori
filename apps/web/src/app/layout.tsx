@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { BottomNav } from '../components/BottomNav'
-import { SiteHeader } from '../components/SiteHeader'
+import { AppChrome } from '../components/AppChrome'
 import './global.css'
 
 export const metadata: Metadata = {
@@ -41,9 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <SiteHeader />
-        {children}
-        <BottomNav />
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   )

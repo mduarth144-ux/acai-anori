@@ -1,11 +1,6 @@
 /**
- * Flags opcionais para não alterar comportamento em deploys existentes.
- * Documentar em `.env.local.example`.
+ * Flags opcionais. Documentar em `.env.local.example`.
  */
-
-export function isIfoodOrderApiOnCreateEnabled(): boolean {
-  return (process.env.IFOOD_ORDER_API_ON_CREATE?.trim() || 'false').toLowerCase() === 'true'
-}
 
 export function isIfoodDedicatedOrderEndpointsEnabled(): boolean {
   return (process.env.IFOOD_ORDER_USE_DEDICATED_ENDPOINTS?.trim() || 'true').toLowerCase() !== 'false'

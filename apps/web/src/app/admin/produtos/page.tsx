@@ -50,6 +50,29 @@ type ReusableGroupTemplate = { id: string; name: string }
 
 const PRODUCTS_BATCH_SIZE = 12
 
+/** Evita `Unexpected end of JSON input` quando a API devolve corpo vazio ou HTML de erro. */
+async function fetchAdminJsonList(url: string): Promise<unknown[]> {
+  const res = await fetch(url)
+  const text = await res.text()
+  if (!res.ok) {
+    let msg = `${url} → HTTP ${res.status}`
+    try {
+      const j = JSON.parse(text) as { message?: string }
+      if (typeof j?.message === 'string' && j.message.trim()) msg = j.message
+    } catch {
+      if (text.trim()) msg = `${msg}: ${text.slice(0, 160)}`
+    }
+    throw new Error(msg)
+  }
+  if (!text.trim()) return []
+  try {
+    const data = JSON.parse(text) as unknown
+    return Array.isArray(data) ? data : []
+  } catch {
+    throw new Error(`${url}: resposta não é JSON válido (prévia: ${text.slice(0, 120)})`)
+  }
+}
+
 export default function AdminProdutosPage() {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -77,18 +100,24 @@ export default function AdminProdutosPage() {
 
   const load = useCallback(async () => {
     setIsLoading(true)
+    setFeedback(null)
     try {
       const [categoriesResp, productsResp, reusableTemplatesResp] = await Promise.all([
-        fetch('/api/categories').then((res) => res.json()),
-        fetch('/api/products?admin=1').then((res) => res.json()),
-        fetch('/api/customization-group-templates').then((res) => res.json()),
+        fetchAdminJsonList('/api/categories'),
+        fetchAdminJsonList('/api/products?admin=1'),
+        fetchAdminJsonList('/api/customization-group-templates'),
       ])
-      setCategories(categoriesResp)
-      setProducts(productsResp)
-      setReusableGroupTemplates(reusableTemplatesResp)
+      setCategories(categoriesResp as Category[])
+      setProducts(productsResp as Product[])
+      setReusableGroupTemplates(reusableTemplatesResp as ReusableGroupTemplate[])
       if (categoriesResp.length > 0) {
-        setCategoryId((current) => current || categoriesResp[0].id)
+        setCategoryId((current) => current || (categoriesResp[0] as Category).id)
       }
+    } catch (e) {
+      setFeedback(e instanceof Error ? e.message : 'Não foi possível carregar dados.')
+      setCategories([])
+      setProducts([])
+      setReusableGroupTemplates([])
     } finally {
       setIsLoading(false)
     }
@@ -333,8 +362,12 @@ export default function AdminProdutosPage() {
     setIsDeletingId(null)
   }
 
-  const accompanimentProducts = products.filter(
-    (product) => product.type === 'ACCOMPANIMENT' && product.id !== editingProductId
+  const accompanimentProducts = useMemo(
+    () =>
+      products.filter(
+        (product) => product.type === 'ACCOMPANIMENT' && product.id !== editingProductId
+      ),
+    [products, editingProductId]
   )
   const accompanimentByNormalizedName = useMemo(() => {
     const map = new Map<string, string>()
@@ -388,18 +421,27 @@ export default function AdminProdutosPage() {
   }, [filteredProducts.length, hasMoreProducts])
 
   useEffect(() => {
+    if (!showForm) return
     if (accompanimentByNormalizedName.size === 0) return
-    setCustomizationGroups((prev) =>
-      prev.map((group) => ({
+    setCustomizationGroups((prev) => {
+      let changed = false
+      const next = prev.map((group) => ({
         ...group,
         options: group.options.map((option) => {
           if (option.optionProductId) return option
-          const byName = accompanimentByNormalizedName.get(String(option.optionName ?? '').trim().toLowerCase())
-          return byName ? { ...option, optionProductId: byName } : option
+          const byName = accompanimentByNormalizedName.get(
+            String(option.optionName ?? '').trim().toLowerCase()
+          )
+          if (byName) {
+            changed = true
+            return { ...option, optionProductId: byName }
+          }
+          return option
         }),
       }))
-    )
-  }, [accompanimentByNormalizedName])
+      return changed ? next : prev
+    })
+  }, [accompanimentByNormalizedName, showForm])
 
   return (
     <main className="w-full">

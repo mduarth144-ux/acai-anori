@@ -16,8 +16,8 @@
  * Nota: em `development`, a Vercel não aceita --sensitive; o script envia o mesmo valor
  * sem essa flag (limitação da plataforma).
  *
- * Se no painel aparecerem como "Sensitive" variáveis que são só flags/paths (ex.:
- * IFOOD_ORDER_API_ON_CREATE), corre `npm run vercel:env:resync-plain` — remove e recria
+ * Se no painel aparecerem como "Sensitive" variáveis que são só flags/paths,
+ * corre `npm run vercel:env:resync-plain` — remove e recria
  * sem a flag Sensitive (só Production por omissão; ver script).
  *
  * Cada `vercel env add/update` fala com a API (vários segundos por chamada). O script
@@ -54,7 +54,6 @@ const ALLOWLIST = [
   { key: 'IFOOD_SHIPPING_ORDER_PATH' },
   { key: 'IFOOD_PICKUP_ADDRESS' },
   { key: 'CUSTOMER_ORDER_ACTION_SECRET', sensitive: true },
-  { key: 'IFOOD_ORDER_API_ON_CREATE' },
   { key: 'IFOOD_ORDER_USE_DEDICATED_ENDPOINTS' },
   { key: 'IFOOD_DEFAULT_CANCEL_CODE' },
   { key: 'IFOOD_EVENTS_POLLING_ENABLED' },
@@ -148,7 +147,7 @@ if (!fs.existsSync(projectJson)) {
 const envPath = path.join(root, '.env')
 const parsed = parseEnvFile(envPath)
 
-/** Filtrar só algumas chaves (ex.: ONLY_KEYS=IFOOD_ORDER_API_ON_CREATE,INTERNAL_JOB_SECRET). */
+/** Filtrar só algumas chaves (ex.: ONLY_KEYS=INTERNAL_JOB_SECRET,CRON_SECRET). */
 const onlyKeys = process.env.ONLY_KEYS?.split(',')
   .map((s) => s.trim())
   .filter(Boolean)

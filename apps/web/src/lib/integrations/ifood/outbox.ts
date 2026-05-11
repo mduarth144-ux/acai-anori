@@ -12,7 +12,6 @@ import {
   getIfoodMerchantDetails,
   requestIfoodDelivery,
 } from './client'
-import { isIfoodOrderApiOnCreateEnabled } from './integration-flags'
 import { buildIfoodOrderCreatePayload } from './order-create-payload'
 import { syncLocalStatusToIfoodApi } from './order-status-sync'
 import { logIntegration } from './logging'
@@ -352,11 +351,9 @@ export async function processOutboxBatch(limit = 20) {
         let shippingOrderId: string | undefined
         let ifoodOrderId: string | undefined
 
-        if (isIfoodOrderApiOnCreateEnabled()) {
-          const payload = buildIfoodOrderCreatePayload(order, context.merchantId)
-          const created = await createIfoodOrder(payload, item.idempotencyKey)
-          ifoodOrderId = created.ifoodOrderId
-        }
+        const payload = buildIfoodOrderCreatePayload(order, context.merchantId)
+        const created = await createIfoodOrder(payload, item.idempotencyKey)
+        ifoodOrderId = created.ifoodOrderId
 
         if (order.type === 'DELIVERY' && order.address?.trim()) {
           const paymentMethod =

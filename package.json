@@ -16,6 +16,7 @@
     "menu:upload-product-images": "node --env-file=.env scripts/upload-product-images-to-supabase.mjs",
     "catalog:download": "node scripts/download-catalog-images.mjs",
     "catalog:upload": "node --env-file=.env scripts/upload-catalog-to-supabase.mjs",
+    "ifood:portal-smoke": "node --env-file=.env scripts/ifood-portal-smoke.mjs",
     "sync-db-types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > apps/web/src/lib/database.types.ts",
     "vercel:link": "vercel link",
     "vercel:env:sync": "node scripts/sync-vercel-env.mjs",
@@ -23,7 +24,10 @@
     "vercel:env:pull": "vercel env pull apps/web/.env.vercel.pull --yes",
     "vercel:preflight": "node --env-file=.env scripts/vercel-preflight.mjs",
     "supabase:login": "supabase login",
-    "supabase:link": "supabase link"
+    "supabase:link": "supabase link",
+    "supabase:db:push": "supabase db push --linked --yes",
+    "supabase:functions:deploy": "supabase functions deploy ifood-webhook --no-verify-jwt --yes",
+    "supabase:deploy": "npm run supabase:db:push && npm run supabase:functions:deploy"
   },
   "private": true,
   "prisma": {

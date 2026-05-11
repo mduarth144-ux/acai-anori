@@ -1,5 +1,14 @@
 import type { IfoodOrderStatus, LocalOrderStatus } from './types'
 
+const LOCAL_STATUS_FLOW: Record<LocalOrderStatus, LocalOrderStatus[]> = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['PREPARING', 'CANCELLED'],
+  PREPARING: ['READY', 'CANCELLED'],
+  READY: ['DELIVERED', 'CANCELLED'],
+  DELIVERED: [],
+  CANCELLED: [],
+}
+
 const LOCAL_TO_IFOOD: Record<LocalOrderStatus, IfoodOrderStatus> = {
   PENDING: 'PLACED',
   CONFIRMED: 'CONFIRMED',
@@ -49,14 +58,13 @@ export function isValidLocalTransition(
 ): boolean {
   if (currentStatus === nextStatus) return true
 
-  const flow: Record<LocalOrderStatus, LocalOrderStatus[]> = {
-    PENDING: ['CONFIRMED', 'CANCELLED'],
-    CONFIRMED: ['PREPARING', 'CANCELLED'],
-    PREPARING: ['READY', 'CANCELLED'],
-    READY: ['DELIVERED', 'CANCELLED'],
-    DELIVERED: [],
-    CANCELLED: [],
-  }
+  return LOCAL_STATUS_FLOW[currentStatus].includes(nextStatus)
+}
 
-  return flow[currentStatus].includes(nextStatus)
+/** Próximos estados permitidos a partir do atual (admin / UI). */
+export function getValidNextLocalStatuses(currentStatus: string): LocalOrderStatus[] {
+  if (!Object.prototype.hasOwnProperty.call(LOCAL_STATUS_FLOW, currentStatus)) {
+    return []
+  }
+  return [...LOCAL_STATUS_FLOW[currentStatus as LocalOrderStatus]]
 }

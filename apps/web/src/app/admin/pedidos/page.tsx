@@ -7,6 +7,7 @@ import {
   orderStatusLabel,
   orderTypeLabel,
 } from '../../../lib/order-labels'
+import { getValidNextLocalStatuses } from '../../../lib/integrations/ifood/status-map'
 
 type Order = { id: string; status: string; type: string; total: string }
 
@@ -45,7 +46,8 @@ export default function AdminPedidosPage() {
       body: JSON.stringify({ status }),
     })
     if (!response.ok) {
-      setError('Não foi possível atualizar o status do pedido.')
+      const data = (await response.json().catch(() => null)) as { message?: string } | null
+      setError(data?.message ?? 'Não foi possível atualizar o status do pedido.')
       setSavingOrderId(null)
       return
     }
@@ -61,7 +63,9 @@ export default function AdminPedidosPage() {
       </h1>
       {error ? <p className="mb-3 text-sm text-amber-400">{error}</p> : null}
       <div className="space-y-3">
-        {orders.map((order) => (
+        {orders.map((order) => {
+          const nextStatuses = getValidNextLocalStatuses(order.status)
+          return (
           <article
             key={order.id}
             className="border-acai-600 bg-acai-800/90 rounded-xl border p-4 shadow-lg"
@@ -76,21 +80,34 @@ export default function AdminPedidosPage() {
                 {orderStatusLabel(order.status)}
               </span>
             </p>
+            <p className="text-acai-400 mt-1 text-xs">
+              Transições: após confirmado, use &quot;Em preparo&quot; antes de &quot;Pronto&quot;
+              (alinhado ao iFood).
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {ORDER_STATUS_OPTIONS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  disabled={savingOrderId === order.id || order.status === value}
-                  onClick={() => setStatus(order.id, value)}
-                  className="border-acai-600 bg-acai-900 hover:bg-acai-800 rounded-md border px-3 py-1 text-xs text-fuchsia-200 hover:border-fuchsia-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {label}
-                </button>
-              ))}
+              {nextStatuses.length === 0 ? (
+                <span className="text-acai-500 text-xs">Sem ações neste estado.</span>
+              ) : (
+                nextStatuses.map((value) => {
+                  const opt = ORDER_STATUS_OPTIONS.find((o) => o.value === value)
+                  if (!opt) return null
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={savingOrderId === order.id}
+                      onClick={() => setStatus(order.id, value)}
+                      className="border-acai-600 bg-acai-900 hover:bg-acai-800 rounded-md border px-3 py-1 text-xs text-fuchsia-200 hover:border-fuchsia-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })
+              )}
             </div>
           </article>
-        ))}
+          )
+        })}
       </div>
     </main>
   )
