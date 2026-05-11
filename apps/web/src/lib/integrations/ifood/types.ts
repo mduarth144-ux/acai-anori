@@ -15,8 +15,12 @@ export type IfoodOrderStatus =
   | 'CANCELLED'
 
 export type IfoodWebhookEvent = {
-  eventId: string
-  eventType: string
+  /** Na API iFood o identificador único do evento vem em `id`; `eventId` pode aparecer em outros contextos. */
+  id?: string
+  eventId?: string
+  eventType?: string
+  code?: string
+  fullCode?: string
   merchantId?: string
   orderId?: string
   status?: string

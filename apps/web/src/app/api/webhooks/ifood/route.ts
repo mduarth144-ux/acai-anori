@@ -7,14 +7,28 @@ import { mergeIfoodRefs } from '../../../../lib/integrations/ifood/external-refs
 import { validateIfoodSignature } from '../../../../lib/integrations/ifood/webhook-security'
 
 type ParsedIfoodWebhookEvent = {
+  /** Legado / logs internos; na API oficial o campo é `id`. */
   eventId?: string
+  /** Identificador único do evento conforme documentação iFood (webhook de pedidos). */
+  id?: string
   eventType?: string
+  code?: string
   fullCode?: string
   merchantId?: string
   orderId?: string
   status?: string
   payload?: Record<string, unknown>
   externalOrderId?: string
+}
+
+function resolveWebhookEventId(event: ParsedIfoodWebhookEvent): string | undefined {
+  const fromEventId =
+    typeof event.eventId === 'string' && event.eventId.trim().length > 0
+      ? event.eventId.trim()
+      : undefined
+  if (fromEventId) return fromEventId
+  const fromId = typeof event.id === 'string' && event.id.trim().length > 0 ? event.id.trim() : undefined
+  return fromId
 }
 
 function statusToLocal(status: string) {
@@ -68,16 +82,17 @@ export async function POST(request: Request) {
     return errorResponse(400, 'invalid json payload')
   }
 
-  const eventType = event.eventType ?? event.fullCode ?? 'UNKNOWN'
-  const eventStatus = event.status ?? event.fullCode
+  const eventType = event.eventType ?? event.code ?? event.fullCode ?? 'UNKNOWN'
+  const eventStatus = event.status ?? event.code ?? event.fullCode
 
-  if (!event.eventId) {
-    return errorResponse(400, 'invalid payload: eventId is required')
+  const webhookEventId = resolveWebhookEventId(event)
+  if (!webhookEventId) {
+    return errorResponse(400, 'invalid payload: event id is required (id or eventId)')
   }
 
   const payloadHash = createHash('sha256').update(rawBody).digest('hex')
   const existing = await prisma.ifoodWebhookEvent.findUnique({
-    where: { eventId: event.eventId },
+    where: { eventId: webhookEventId },
   })
   if (existing) {
     return NextResponse.json({ ok: true, deduplicated: true })
@@ -85,7 +100,7 @@ export async function POST(request: Request) {
 
   const audit = await prisma.ifoodWebhookEvent.create({
     data: {
-      eventId: event.eventId,
+      eventId: webhookEventId,
       eventType,
       merchantId: event.merchantId,
       ifoodOrderId: event.orderId,
@@ -126,7 +141,7 @@ export async function POST(request: Request) {
           externalRefs: mergeIfoodRefs(order.externalRefs, {
             ifoodOrderId: event.orderId,
             source: 'ifood-webhook',
-            lastWebhookEventId: event.eventId,
+            lastWebhookEventId: webhookEventId,
             lastSyncAt: new Date().toISOString(),
           }),
         },

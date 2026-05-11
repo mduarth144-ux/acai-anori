@@ -42,13 +42,33 @@ Deno.serve(async (request) => {
     return new Response(JSON.stringify({ message: 'Invalid signature' }), { status: 401 })
   }
 
-  const event = JSON.parse(rawBody)
+  const event = JSON.parse(rawBody) as Record<string, unknown>
+
+  const eventId =
+    typeof event.eventId === 'string' && event.eventId.trim().length > 0
+      ? event.eventId.trim()
+      : typeof event.id === 'string' && event.id.trim().length > 0
+        ? event.id.trim()
+        : null
+
+  if (!eventId) {
+    return new Response(JSON.stringify({ message: 'Missing event id (id or eventId)' }), { status: 400 })
+  }
+
+  const eventType =
+    typeof event.eventType === 'string'
+      ? event.eventType
+      : typeof event.code === 'string'
+        ? event.code
+        : typeof event.fullCode === 'string'
+          ? event.fullCode
+          : 'UNKNOWN'
 
   const { error } = await supabase.from('IfoodWebhookEvent').insert({
-    eventId: event.eventId,
-    eventType: event.eventType,
-    merchantId: event.merchantId ?? null,
-    ifoodOrderId: event.orderId ?? null,
+    eventId,
+    eventType,
+    merchantId: typeof event.merchantId === 'string' ? event.merchantId : null,
+    ifoodOrderId: typeof event.orderId === 'string' ? event.orderId : null,
     payload: event,
     payloadHash: expected,
     processingStatus: 'RECEIVED',
