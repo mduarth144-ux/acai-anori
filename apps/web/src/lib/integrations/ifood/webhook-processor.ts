@@ -56,7 +56,19 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
   }
 
   const eventType = event.eventType ?? event.code ?? event.fullCode ?? 'UNKNOWN'
+  /** Preferir status explícito; senão code; fullCode costuma ser ORDER_* (ex.: ORDER_CONCLUDED). */
   const eventStatus = event.status ?? event.code ?? event.fullCode
+
+  function resolveNextLocalStatus(): ReturnType<typeof mapIfoodStatusToLocalOptional> {
+    const chain = [event.status, event.code, event.fullCode].filter(
+      (x): x is string => typeof x === 'string' && x.trim().length > 0
+    )
+    for (const raw of chain) {
+      const mapped = mapIfoodStatusToLocalOptional(raw)
+      if (mapped !== undefined) return mapped
+    }
+    return undefined
+  }
 
   const webhookEventId = resolveWebhookEventId(event)
   if (!webhookEventId) {
@@ -116,8 +128,8 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
       throw new Error('Pedido local nao encontrado para evento iFood (sem correlacao)')
     }
 
-    if (eventStatus) {
-      const nextStatus = mapIfoodStatusToLocalOptional(eventStatus)
+    if (eventStatus || event.code || event.fullCode || event.status) {
+      const nextStatus = resolveNextLocalStatus()
       if (nextStatus !== undefined) {
         await prisma.order.update({
           where: { id: order.id },

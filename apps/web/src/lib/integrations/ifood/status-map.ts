@@ -28,8 +28,17 @@ export function mapIfoodStatusToLocal(status: IfoodOrderStatus): LocalOrderStatu
 
 /** Quando o webhook envia `code` que nao existe no mapa (ex.: eventos so de logistica). */
 export function mapIfoodStatusToLocalOptional(status: string): LocalOrderStatus | undefined {
-  if (Object.prototype.hasOwnProperty.call(IFOOD_TO_LOCAL, status)) {
-    return IFOOD_TO_LOCAL[status as IfoodOrderStatus]
+  const normalized = status.trim()
+  if (Object.prototype.hasOwnProperty.call(IFOOD_TO_LOCAL, normalized)) {
+    return IFOOD_TO_LOCAL[normalized as IfoodOrderStatus]
+  }
+  /** Evento de fim de ciclo na API de eventos iFood (ex.: fullCode ORDER_CONCLUDED, code CONCLUDED). */
+  if (
+    normalized === 'CONCLUDED' ||
+    normalized === 'ORDER_CONCLUDED' ||
+    (normalized.endsWith('_CONCLUDED') && !normalized.includes('CANCEL'))
+  ) {
+    return 'DELIVERED'
   }
   return undefined
 }
