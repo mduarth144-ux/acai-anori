@@ -22,6 +22,9 @@ const vercelBin = path.join(root, 'node_modules', 'vercel', 'dist', 'vc.js')
 /** Chaves que no código são configuração pública ou operacional — não usar --sensitive. */
 const PLAIN_KEYS = [
   'IFOOD_ORDER_USE_DEDICATED_ENDPOINTS',
+  'IFOOD_ORDER_SALES_CHANNEL',
+  'IFOOD_ORDER_TIMING',
+  'IFOOD_ORDER_CATEGORY',
   'IFOOD_EVENTS_POLLING_ENABLED',
   'IFOOD_EVENTS_POLLING_CATEGORIES',
   'IFOOD_PICKUP_ADDRESS',

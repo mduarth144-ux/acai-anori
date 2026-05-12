@@ -14014,7 +14014,8 @@ export namespace Prisma {
     address: number
     notes: number
     total: number
-    externalRefs: number
+    ifoodResponse: number
+    integrationMeta: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -14081,7 +14082,8 @@ export namespace Prisma {
     address?: true
     notes?: true
     total?: true
-    externalRefs?: true
+    ifoodResponse?: true
+    integrationMeta?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -14187,7 +14189,8 @@ export namespace Prisma {
     address: string | null
     notes: string | null
     total: Decimal
-    externalRefs: JsonValue | null
+    ifoodResponse: JsonValue | null
+    integrationMeta: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: OrderCountAggregateOutputType | null
@@ -14225,7 +14228,8 @@ export namespace Prisma {
     address?: boolean
     notes?: boolean
     total?: boolean
-    externalRefs?: boolean
+    ifoodResponse?: boolean
+    integrationMeta?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     table?: boolean | Order$tableArgs<ExtArgs>
@@ -14248,7 +14252,8 @@ export namespace Prisma {
     address?: boolean
     notes?: boolean
     total?: boolean
-    externalRefs?: boolean
+    ifoodResponse?: boolean
+    integrationMeta?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     table?: boolean | Order$tableArgs<ExtArgs>
@@ -14268,7 +14273,8 @@ export namespace Prisma {
     address?: boolean
     notes?: boolean
     total?: boolean
-    externalRefs?: boolean
+    ifoodResponse?: boolean
+    integrationMeta?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     table?: boolean | Order$tableArgs<ExtArgs>
@@ -14288,12 +14294,13 @@ export namespace Prisma {
     address?: boolean
     notes?: boolean
     total?: boolean
-    externalRefs?: boolean
+    ifoodResponse?: boolean
+    integrationMeta?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "status" | "type" | "paymentMethod" | "changeFor" | "pixProvider" | "tableId" | "customerName" | "customerPhone" | "customerEmail" | "address" | "notes" | "total" | "externalRefs" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "status" | "type" | "paymentMethod" | "changeFor" | "pixProvider" | "tableId" | "customerName" | "customerPhone" | "customerEmail" | "address" | "notes" | "total" | "ifoodResponse" | "integrationMeta" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     table?: boolean | Order$tableArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
@@ -14328,7 +14335,14 @@ export namespace Prisma {
       address: string | null
       notes: string | null
       total: Prisma.Decimal
-      externalRefs: Prisma.JsonValue | null
+      /**
+       * * Respostas e metadados da integração iFood (Order + Shipping) para este pedido.
+       */
+      ifoodResponse: Prisma.JsonValue | null
+      /**
+       * * Outras integrações / confirmações (ex.: `integrationReady`, confirmação de entrega pelo cliente).
+       */
+      integrationMeta: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["order"]>
@@ -14770,7 +14784,8 @@ export namespace Prisma {
     readonly address: FieldRef<"Order", 'String'>
     readonly notes: FieldRef<"Order", 'String'>
     readonly total: FieldRef<"Order", 'Decimal'>
-    readonly externalRefs: FieldRef<"Order", 'Json'>
+    readonly ifoodResponse: FieldRef<"Order", 'Json'>
+    readonly integrationMeta: FieldRef<"Order", 'Json'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
     readonly updatedAt: FieldRef<"Order", 'DateTime'>
   }
@@ -19786,7 +19801,8 @@ export namespace Prisma {
     address: 'address',
     notes: 'notes',
     total: 'total',
-    externalRefs: 'externalRefs',
+    ifoodResponse: 'ifoodResponse',
+    integrationMeta: 'integrationMeta',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -20804,7 +20820,8 @@ export namespace Prisma {
     address?: StringNullableFilter<"Order"> | string | null
     notes?: StringNullableFilter<"Order"> | string | null
     total?: DecimalFilter<"Order"> | Decimal | DecimalJsLike | number | string
-    externalRefs?: JsonNullableFilter<"Order">
+    ifoodResponse?: JsonNullableFilter<"Order">
+    integrationMeta?: JsonNullableFilter<"Order">
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     table?: XOR<TableNullableScalarRelationFilter, TableWhereInput> | null
@@ -20826,7 +20843,8 @@ export namespace Prisma {
     address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     total?: SortOrder
-    externalRefs?: SortOrderInput | SortOrder
+    ifoodResponse?: SortOrderInput | SortOrder
+    integrationMeta?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     table?: TableOrderByWithRelationInput
@@ -20851,7 +20869,8 @@ export namespace Prisma {
     address?: StringNullableFilter<"Order"> | string | null
     notes?: StringNullableFilter<"Order"> | string | null
     total?: DecimalFilter<"Order"> | Decimal | DecimalJsLike | number | string
-    externalRefs?: JsonNullableFilter<"Order">
+    ifoodResponse?: JsonNullableFilter<"Order">
+    integrationMeta?: JsonNullableFilter<"Order">
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     table?: XOR<TableNullableScalarRelationFilter, TableWhereInput> | null
@@ -20873,7 +20892,8 @@ export namespace Prisma {
     address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     total?: SortOrder
-    externalRefs?: SortOrderInput | SortOrder
+    ifoodResponse?: SortOrderInput | SortOrder
+    integrationMeta?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: OrderCountOrderByAggregateInput
@@ -20900,7 +20920,8 @@ export namespace Prisma {
     address?: StringNullableWithAggregatesFilter<"Order"> | string | null
     notes?: StringNullableWithAggregatesFilter<"Order"> | string | null
     total?: DecimalWithAggregatesFilter<"Order"> | Decimal | DecimalJsLike | number | string
-    externalRefs?: JsonNullableWithAggregatesFilter<"Order">
+    ifoodResponse?: JsonNullableWithAggregatesFilter<"Order">
+    integrationMeta?: JsonNullableWithAggregatesFilter<"Order">
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
   }
@@ -21929,7 +21950,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     table?: TableCreateNestedOneWithoutOrdersInput
@@ -21951,7 +21973,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -21971,7 +21994,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     table?: TableUpdateOneWithoutOrdersNestedInput
@@ -21993,7 +22017,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -22014,7 +22039,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22032,7 +22058,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22051,7 +22078,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23175,7 +23203,8 @@ export namespace Prisma {
     address?: SortOrder
     notes?: SortOrder
     total?: SortOrder
-    externalRefs?: SortOrder
+    ifoodResponse?: SortOrder
+    integrationMeta?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -26285,7 +26314,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemCreateNestedManyWithoutOrderInput
@@ -26305,7 +26335,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -26355,7 +26386,8 @@ export namespace Prisma {
     address?: StringNullableFilter<"Order"> | string | null
     notes?: StringNullableFilter<"Order"> | string | null
     total?: DecimalFilter<"Order"> | Decimal | DecimalJsLike | number | string
-    externalRefs?: JsonNullableFilter<"Order">
+    ifoodResponse?: JsonNullableFilter<"Order">
+    integrationMeta?: JsonNullableFilter<"Order">
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
   }
@@ -26539,7 +26571,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     table?: TableCreateNestedOneWithoutOrdersInput
@@ -26560,7 +26593,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     integrationOutbox?: IntegrationOutboxUncheckedCreateNestedManyWithoutOrderInput
@@ -26640,7 +26674,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     table?: TableUpdateOneWithoutOrdersNestedInput
@@ -26661,7 +26696,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     integrationOutbox?: IntegrationOutboxUncheckedUpdateManyWithoutOrderNestedInput
@@ -26731,7 +26767,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     table?: TableCreateNestedOneWithoutOrdersInput
@@ -26752,7 +26789,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -26787,7 +26825,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     table?: TableUpdateOneWithoutOrdersNestedInput
@@ -26808,7 +26847,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -27211,7 +27251,8 @@ export namespace Prisma {
     address?: string | null
     notes?: string | null
     total: Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27229,7 +27270,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUpdateManyWithoutOrderNestedInput
@@ -27249,7 +27291,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -27269,7 +27312,8 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    externalRefs?: NullableJsonNullValueInput | InputJsonValue
+    ifoodResponse?: NullableJsonNullValueInput | InputJsonValue
+    integrationMeta?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

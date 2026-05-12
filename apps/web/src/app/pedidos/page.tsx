@@ -30,7 +30,7 @@ export default function MeusPedidosPage() {
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const fetchOrders = useCallback(async (nextPhone: string, nextEmail: string) => {
+  const fetchOrders = useCallback(async (nextPhone: string, nextEmail: string, opts?: { silent?: boolean }) => {
     const cleanPhone = nextPhone.trim()
     const cleanEmail = nextEmail.trim().toLowerCase()
     if (!cleanPhone && !cleanEmail) {
@@ -40,7 +40,9 @@ export default function MeusPedidosPage() {
       return
     }
 
-    setLoading(true)
+    if (!opts?.silent) {
+      setLoading(true)
+    }
     setError(null)
     try {
       const params = new URLSearchParams()
@@ -48,18 +50,20 @@ export default function MeusPedidosPage() {
       if (cleanEmail) params.set('email', cleanEmail)
       const response = await fetch(`/api/orders?${params.toString()}`)
       if (!response.ok) {
-        setError('Não foi possível buscar seus pedidos agora.')
+        if (!opts?.silent) setError('Não foi possível buscar seus pedidos agora.')
         setOrders([])
         return
       }
       const data = (await response.json()) as Order[]
       setOrders(data)
     } catch {
-      setError('Falha ao consultar pedidos. Tente novamente.')
+      if (!opts?.silent) setError('Falha ao consultar pedidos. Tente novamente.')
       setOrders([])
     } finally {
       setHasSearched(true)
-      setLoading(false)
+      if (!opts?.silent) {
+        setLoading(false)
+      }
     }
   }, [])
 
@@ -83,6 +87,25 @@ export default function MeusPedidosPage() {
       // Ignore localStorage parse errors and keep manual fields.
     }
   }, [fetchOrders])
+
+  useEffect(() => {
+    if (!hasSearched || orders.length === 0) return
+    const cleanPhone = phone.trim()
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanPhone && !cleanEmail) return
+    const tick = () => {
+      void fetchOrders(phone, email, { silent: true })
+    }
+    const id = window.setInterval(tick, 60_000)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [hasSearched, orders.length, phone, email, fetchOrders])
 
   return (
     <main className="orders-page mx-auto max-w-3xl p-4">

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '../../../../../lib/prisma'
-import { getIfoodRefs } from '../../../../../lib/integrations/ifood/external-refs'
+import { getIfoodRefs } from '../../../../../lib/integrations/ifood/ifood-response'
 import { getShippingOrderTracking } from '../../../../../lib/integrations/ifood/client'
 
 function isAuthorized(request: Request): boolean {
@@ -38,9 +38,9 @@ export async function GET(request: Request) {
 
   const row = await prisma.order.findUnique({
     where: { id: localOrderId },
-    select: { externalRefs: true },
+    select: { ifoodResponse: true },
   })
-  const refs = getIfoodRefs(row?.externalRefs)
+  const refs = getIfoodRefs(row?.ifoodResponse)
   const ifoodOrderId =
     typeof refs.ifoodOrderId === 'string' && refs.ifoodOrderId.trim().length > 0
       ? refs.ifoodOrderId.trim()

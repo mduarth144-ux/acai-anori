@@ -9,33 +9,35 @@ import {
   startPreparationIfoodOrder,
   updateIfoodOrderStatus,
 } from './client'
-import type { IfoodExternalRefs } from './external-refs'
-import { getIfoodRefs } from './external-refs'
+import type { IfoodResponseJson } from './ifood-response'
+import { getIfoodRefs } from './ifood-response'
 import { isIfoodDedicatedOrderEndpointsEnabled } from './integration-flags'
 import { logIntegration } from './logging'
 import { mapLocalStatusToIfood } from './status-map'
 import type { LocalOrderStatus } from './types'
 
+/** Sincroniza transicoes de status do app com a Order API iFood (pedido ja existe no iFood). */
+
 type OrderRow = {
   id: string
   type: OrderType
   status: OrderStatus
-  externalRefs: unknown
+  ifoodResponse: unknown
 }
 
 export async function syncLocalStatusToIfoodApi(params: {
   order: OrderRow
   newStatus: LocalOrderStatus
   idempotencyKey: string
-}): Promise<Partial<IfoodExternalRefs>> {
-  const refs = getIfoodRefs(params.order.externalRefs)
+}): Promise<Partial<IfoodResponseJson>> {
+  const refs = getIfoodRefs(params.order.ifoodResponse)
   const ifoodOrderId = refs.ifoodOrderId
   if (!ifoodOrderId || typeof ifoodOrderId !== 'string') {
-    throw new Error('Pedido sem ifoodOrderId para sincronizar com iFood')
+    throw new Error('Pedido ainda sem ifoodOrderId (Order API iFood); aguarde a criacao na fila ou corrija a integracao.')
   }
 
   const dedicated = isIfoodDedicatedOrderEndpointsEnabled()
-  const patch: Partial<IfoodExternalRefs> = {}
+  const patch: Partial<IfoodResponseJson> = {}
 
   if (params.newStatus === 'CANCELLED') {
     const reasons = await getIfoodCancellationReasons(ifoodOrderId)

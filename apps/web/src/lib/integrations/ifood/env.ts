@@ -5,6 +5,8 @@ type IfoodEnv = {
   webhookSecret: string
   apiBaseUrl: string
   authUrl: string
+  /** Path absoluto (começa com `/`) para POST de criação de pedido na Order API. */
+  orderCreatePath: string
   shippingEnabled: boolean
   shippingQuotePath: string
   shippingOrderPath: string
@@ -21,13 +23,21 @@ function requiredEnv(name: string): string {
 }
 
 export function getIfoodEnv(): IfoodEnv {
+  const rawBase =
+    process.env.IFOOD_API_BASE_URL?.trim() || 'https://merchant-api.ifood.com.br'
+  const apiBaseUrl = rawBase.replace(/\/+$/, '')
+  const rawCreate =
+    process.env.IFOOD_ORDER_CREATE_PATH?.trim() || '/order/v1.0/orders'
+  const orderCreatePath = rawCreate.startsWith('/') ? rawCreate : `/${rawCreate}`
+
   return {
     clientId: requiredEnv('IFOOD_CLIENT_ID'),
     clientSecret: requiredEnv('IFOOD_CLIENT_SECRET'),
     merchantId: requiredEnv('IFOOD_MERCHANT_ID'),
     webhookSecret: requiredEnv('IFOOD_WEBHOOK_SECRET'),
-    apiBaseUrl: process.env.IFOOD_API_BASE_URL?.trim() || 'https://merchant-api.ifood.com.br',
+    apiBaseUrl,
     authUrl: process.env.IFOOD_AUTH_URL?.trim() || 'https://merchant-api.ifood.com.br/authentication/v1.0/oauth/token',
+    orderCreatePath,
     shippingEnabled: (process.env.IFOOD_SHIPPING_ENABLED?.trim() || 'true').toLowerCase() !== 'false',
     shippingQuotePath: process.env.IFOOD_SHIPPING_QUOTE_PATH?.trim() || '/shipping/v1.0/quotes',
     shippingOrderPath:

@@ -102,7 +102,9 @@ export async function merchantApiRequest(path: string, init: RequestInit): Promi
   if (init.body !== undefined && init.body !== null) {
     baseHeaders['Content-Type'] = baseHeaders['Content-Type'] ?? 'application/json'
   }
-  return fetchWithRetry(`${env.apiBaseUrl}${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const url = `${env.apiBaseUrl}${normalizedPath}`
+  return fetchWithRetry(url, {
     ...init,
     headers: baseHeaders,
   })
@@ -117,7 +119,8 @@ async function ifoodRequest(path: string, init: RequestInit): Promise<Response> 
 }
 
 export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempotencyKey: string) {
-  const response = await ifoodRequest('/order/v1.0/orders', {
+  const env = getIfoodEnv()
+  const response = await ifoodRequest(env.orderCreatePath, {
     method: 'POST',
     headers: {
       'x-idempotency-key': idempotencyKey,
@@ -127,7 +130,17 @@ export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempot
 
   if (!okOrAccepted(response)) {
     const body = await response.text()
-    throw new Error(`Falha ao criar pedido iFood: ${response.status} ${body}`)
+    const url = `${env.apiBaseUrl}${env.orderCreatePath.startsWith('/') ? env.orderCreatePath : `/${env.orderCreatePath}`}`
+    logIntegration('error', 'Falha HTTP ao criar pedido iFood', {
+      status: response.status,
+      url,
+      idPedidoPlataforma: payload.externalOrderId,
+    })
+    const hint404 =
+      response.status === 404 && body.includes('no Route matched')
+        ? ' Rota inexistente neste host: confira IFOOD_API_BASE_URL e IFOOD_ORDER_CREATE_PATH; no portal iFood a criação de pedido (Cardápio Digital / Order) pode precisar de habilitação para esta aplicação OAuth.'
+        : ''
+    throw new Error(`Falha ao criar pedido iFood: ${response.status} ${body}${hint404}`)
   }
 
   const text = await response.text()
@@ -151,7 +164,7 @@ export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempot
   }
 
   logIntegration('info', 'Pedido publicado no iFood', {
-    localOrderId: payload.externalOrderId,
+    idPedidoPlataforma: payload.externalOrderId,
     ifoodOrderId,
   })
   return { ifoodOrderId, orderCreateResponse }

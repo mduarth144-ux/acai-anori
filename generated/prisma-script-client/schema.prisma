@@ -163,7 +163,14 @@ model Order {
   notes             String?
   total             Decimal             @db.Decimal(10, 2)
   items             OrderItem[]
-  externalRefs      Json?
+  /**
+   * Respostas e metadados da integração iFood (Order + Shipping) para este pedido.
+   */
+  ifoodResponse     Json?
+  /**
+   * Outras integrações / confirmações (ex.: `integrationReady`, confirmação de entrega pelo cliente).
+   */
+  integrationMeta   Json?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   integrationOutbox IntegrationOutbox[]

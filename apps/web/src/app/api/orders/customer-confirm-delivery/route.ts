@@ -4,28 +4,7 @@ import { verifyCustomerDeliveryToken, getCustomerOrderActionSecret } from '../..
 import { isValidLocalTransition } from '../../../../lib/integrations/ifood/status-map'
 import type { LocalOrderStatus } from '../../../../lib/integrations/ifood/types'
 import { enqueueStatusUpdate } from '../../../../lib/integrations/ifood/outbox'
-import type { Prisma } from '@prisma/client'
-
-function mergeCustomerDeliveryConfirm(currentExternalRefs: unknown): Prisma.InputJsonValue {
-  const base =
-    currentExternalRefs &&
-    typeof currentExternalRefs === 'object' &&
-    !Array.isArray(currentExternalRefs)
-      ? { ...(currentExternalRefs as Record<string, unknown>) }
-      : {}
-  const prevCustomer =
-    base.customer && typeof base.customer === 'object' && !Array.isArray(base.customer)
-      ? { ...(base.customer as Record<string, unknown>) }
-      : {}
-  return {
-    ...base,
-    customer: {
-      ...prevCustomer,
-      confirmedDelivery: true,
-      confirmedDeliveryAt: new Date().toISOString(),
-    },
-  } as Prisma.InputJsonValue
-}
+import { mergeCustomerDeliveryConfirmation } from '../../../../lib/order-integration-meta'
 
 export async function POST(request: Request) {
   if (!getCustomerOrderActionSecret()) {
@@ -75,7 +54,7 @@ export async function POST(request: Request) {
     where: { id: orderId },
     data: {
       status: 'DELIVERED',
-      externalRefs: mergeCustomerDeliveryConfirm(order.externalRefs),
+      integrationMeta: mergeCustomerDeliveryConfirmation(order.integrationMeta),
     },
   })
 

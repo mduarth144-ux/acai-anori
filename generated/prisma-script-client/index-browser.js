@@ -231,7 +231,8 @@ exports.Prisma.OrderScalarFieldEnum = {
   address: 'address',
   notes: 'notes',
   total: 'total',
-  externalRefs: 'externalRefs',
+  ifoodResponse: 'ifoodResponse',
+  integrationMeta: 'integrationMeta',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

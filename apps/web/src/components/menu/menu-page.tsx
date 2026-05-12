@@ -14,7 +14,7 @@ import {
   Truck,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ThemedSelect } from '../ui/themed-select'
 import { useCartStore } from '../../store/cart-store'
 import { orderStatusLabel } from '../../lib/order-labels'
@@ -214,56 +214,64 @@ export function MenuPage({ categories, products, tableCode }: Props) {
     return () => observer.disconnect()
   }, [filtered.length, hasMoreProducts, visibleCount])
 
-  useEffect(() => {
-    let isMounted = true
+  const loadActiveOrder = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    try {
+      const rawCheckout = window.localStorage.getItem(CHECKOUT_PROFILE_STORAGE_KEY)
+      const checkout = rawCheckout
+        ? (JSON.parse(rawCheckout) as { customerPhone?: string; customerEmail?: string })
+        : {}
 
-    async function loadActiveOrder() {
-      if (typeof window === 'undefined') return
-      try {
-        const rawCheckout = window.localStorage.getItem(CHECKOUT_PROFILE_STORAGE_KEY)
-        const checkout = rawCheckout
-          ? (JSON.parse(rawCheckout) as { customerPhone?: string; customerEmail?: string })
-          : {}
+      const params = new URLSearchParams()
+      if (checkout.customerPhone?.trim()) params.set('phone', checkout.customerPhone.trim())
+      if (checkout.customerEmail?.trim()) params.set('email', checkout.customerEmail.trim())
 
-        const params = new URLSearchParams()
-        if (checkout.customerPhone?.trim()) params.set('phone', checkout.customerPhone.trim())
-        if (checkout.customerEmail?.trim()) params.set('email', checkout.customerEmail.trim())
+      const rawHistory = window.localStorage.getItem(ORDERS_STORAGE_KEY)
+      const historyIds = rawHistory
+        ? (JSON.parse(rawHistory) as Array<{ id: string }>).map((item) => String(item.id))
+        : []
 
-        const rawHistory = window.localStorage.getItem(ORDERS_STORAGE_KEY)
-        const historyIds = rawHistory
-          ? (JSON.parse(rawHistory) as Array<{ id: string }>).map((item) => String(item.id))
-          : []
-
-        if (params.size === 0 && historyIds.length === 0) {
-          if (isMounted) setActiveOrder(null)
-          return
-        }
-
-        const url = params.size > 0 ? `/api/orders?${params.toString()}` : '/api/orders?includeAll=false'
-        const response = await fetch(url)
-        if (!response.ok) return
-        const serverOrders = (await response.json()) as Array<{ id: string; status: string }>
-
-        const candidateOrders = historyIds.length
-          ? historyIds
-              .map((id) => serverOrders.find((order) => order.id === id))
-              .filter((order): order is { id: string; status: string } => Boolean(order))
-          : serverOrders
-
-        const found = candidateOrders.find((order) => ACTIVE_ORDER_STATUS.has(String(order.status)))
-        if (isMounted) {
-          setActiveOrder(found ? { id: String(found.id), status: String(found.status) } : null)
-        }
-      } catch {
-        if (isMounted) setActiveOrder(null)
+      if (params.size === 0 && historyIds.length === 0) {
+        setActiveOrder(null)
+        return
       }
-    }
 
-    void loadActiveOrder()
-    return () => {
-      isMounted = false
+      const url = params.size > 0 ? `/api/orders?${params.toString()}` : '/api/orders?includeAll=false'
+      const response = await fetch(url)
+      if (!response.ok) return
+      const serverOrders = (await response.json()) as Array<{ id: string; status: string }>
+
+      const candidateOrders = historyIds.length
+        ? historyIds
+            .map((id) => serverOrders.find((order) => order.id === id))
+            .filter((order): order is { id: string; status: string } => Boolean(order))
+        : serverOrders
+
+      const found = candidateOrders.find((order) => ACTIVE_ORDER_STATUS.has(String(order.status)))
+      setActiveOrder(found ? { id: String(found.id), status: String(found.status) } : null)
+    } catch {
+      setActiveOrder(null)
     }
   }, [])
+
+  useEffect(() => {
+    void loadActiveOrder()
+  }, [loadActiveOrder])
+
+  useEffect(() => {
+    if (!activeOrder?.id) return
+    const id = window.setInterval(() => {
+      void loadActiveOrder()
+    }, 60_000)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void loadActiveOrder()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [activeOrder?.id, loadActiveOrder])
 
   function closeWizard() {
     setWizardProduct(null)

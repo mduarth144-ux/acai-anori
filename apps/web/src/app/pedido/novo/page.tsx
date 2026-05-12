@@ -1012,9 +1012,9 @@ export default function NovoPedidoPage() {
         </div>
       )}
       <p className="checkout-helper text-acai-400 mt-4 text-xs">
-        Preparado para integração futura com provedores de PIX online e
-        marketplaces (iFood/99Food) através do campo externalRefs da entidade
-        Order.
+        Pedidos feitos aqui são criados na Order API do iFood (canal cardápio digital). Metadados
+        e ids ficam em <code className="text-acai-300">ifoodResponse</code> na entidade Order; outras
+        flags em <code className="text-acai-300">integrationMeta</code>.
       </p>
       <div className="fixed inset-x-0 bottom-16 z-40">
         <div className="w-full">

@@ -210,8 +210,8 @@ export default function IfoodIntegrationSettingsPage() {
           iFood Shipping - Área de entrega
         </h1>
         <p className="mt-1 text-sm text-acai-300">
-          Configure cidade/estado e coordenadas padrão usadas no payload do Shipping externo.
-          A cobertura final sempre é validada pelo iFood.
+          Configure cidade/estado e coordenadas padrão usadas no payload da **Shipping API** do
+          iFood (entrega). A cobertura final sempre é validada pelo iFood.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button

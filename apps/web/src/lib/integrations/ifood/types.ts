@@ -29,8 +29,15 @@ export type IfoodWebhookEvent = {
 }
 
 export type IfoodOrderCreatePayload = {
+  /** Id do pedido na tua plataforma — na Order API iFood é a referência do lojista (pedido continua sendo pedido iFood). */
   externalOrderId: string
   merchantId: string
+  /** Canal na Order API iFood. Pedidos do site → `DIGITAL_CATALOG` (pedido criado **dentro** do iFood). */
+  salesChannel?: string
+  /** IMMEDIATE ou SCHEDULED (doc iFood). */
+  orderTiming?: string
+  /** FOOD, GROCERY, … conforme contrato do merchant. */
+  category?: string
   customer: {
     name?: string | null
     phone?: string | null
@@ -110,7 +117,8 @@ export type IfoodShippingOrderPayload = {
   }>
   payments: {
     methods: Array<{
-      method: 'CASH' | 'CREDIT' | 'DEBIT' | 'PIX'
+      /** Na Shipping API (merchants/.../orders) só CASH ou cartão são aceites; PIX não. */
+      method: 'CASH' | 'CREDIT' | 'DEBIT'
       type: 'OFFLINE'
       value: number
       card?: { brand: string }

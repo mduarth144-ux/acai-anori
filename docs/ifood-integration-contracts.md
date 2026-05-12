@@ -1,17 +1,17 @@
-# Contratos de Integracao iFood (Outbound)
+# Contratos de Integracao iFood
 
-Este documento define os contratos funcionais e tecnicos usados pela integracao outbound com iFood.
+Este documento define os contratos funcionais e tecnicos da integracao com a **Order API** e **Shipping API** do iFood: cada pedido da plataforma e publicado como pedido iFood (canal `DIGITAL_CATALOG`).
 
 ## Fluxos cobertos
 
-- Criacao de pedido no iFood a partir de pedido criado na plataforma.
-- Atualizacao de status no iFood quando o status muda no sistema interno.
+- Criacao do pedido na **Order API do iFood** a partir do pedido criado no app (outbox).
+- Atualizacao de status na Order API quando o status muda no **app / painel**.
 - Recebimento de webhook/callback de eventos do iFood para sincronizacao no banco local.
 - Reconciliacao periodica para pedidos sem confirmacao de webhook.
 
 ## Estados suportados
 
-### Estados internos (`OrderStatus`)
+### Estados no app (`OrderStatus`)
 
 - `PENDING`
 - `CONFIRMED`
@@ -20,7 +20,7 @@ Este documento define os contratos funcionais e tecnicos usados pela integracao 
 - `DELIVERED`
 - `CANCELLED`
 
-### Estados externos normalizados (`IfoodOrderStatus`)
+### Estados na Order API iFood (`IfoodOrderStatus`)
 
 - `PLACED`
 - `CONFIRMED`
@@ -37,6 +37,11 @@ Este documento define os contratos funcionais e tecnicos usados pela integracao 
 - `READY` -> `READY_FOR_DELIVERY`
 - `DELIVERED` -> `DELIVERED`
 - `CANCELLED` -> `CANCELLED`
+
+## Armazenamento no modelo `Order`
+
+- `ifoodResponse` (`jsonb`): respostas e estado da integração iFood (ids, `orderCreateApiResponse`, shipping, `syncState`, etc.).
+- `integrationMeta` (`jsonb`): outras chaves (ex.: `integrationReady`, confirmação de entrega pelo cliente em `customer`).
 
 ## Eventos de webhook esperados
 

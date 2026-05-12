@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { createSupabaseClient } from '../../../lib/supabase-client'
 import {
   ORDER_STATUS_OPTIONS,
@@ -14,6 +15,7 @@ type Order = { id: string; status: string; type: string; total: string }
 export default function AdminPedidosPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null)
+  const [ifoodSyncOrderId, setIfoodSyncOrderId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -56,6 +58,37 @@ export default function AdminPedidosPage() {
     setSavingOrderId(null)
   }
 
+  async function refreshFromIfood(orderId: string) {
+    setIfoodSyncOrderId(orderId)
+    setError(null)
+    try {
+      const response = await fetch('/api/admin/orders/refresh-ifood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean
+        message?: string
+        updated?: boolean
+        newStatus?: string
+        ifoodRawStatus?: string
+      } | null
+      if (!response.ok) {
+        setError(data?.message ?? 'Falha ao sincronizar com o iFood.')
+        setIfoodSyncOrderId(null)
+        return
+      }
+      const list = await fetch('/api/orders?includeAll=true').then((res) => res.json())
+      setOrders(list)
+      setError(data?.updated ? null : data?.message ?? null)
+    } catch {
+      setError('Erro de rede ao falar com o iFood.')
+    } finally {
+      setIfoodSyncOrderId(null)
+    }
+  }
+
   return (
     <main className="w-full">
       <h1 className="mb-4 text-2xl font-bold text-fuchsia-100">
@@ -84,6 +117,21 @@ export default function AdminPedidosPage() {
               Transições: após confirmado, use &quot;Em preparo&quot; antes de &quot;Pronto&quot;
               (alinhado ao iFood).
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                title="Buscar status atual deste pedido na Order API do iFood e atualizar aqui se estiver à frente"
+                disabled={ifoodSyncOrderId === order.id || savingOrderId === order.id}
+                onClick={() => void refreshFromIfood(order.id)}
+                className="border-fuchsia-700/60 bg-acai-950/80 text-fuchsia-200 hover:border-fuchsia-500 hover:bg-acai-900 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={ifoodSyncOrderId === order.id ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                  aria-hidden
+                />
+                {ifoodSyncOrderId === order.id ? 'Sincronizando…' : 'Sincronizar com iFood'}
+              </button>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {nextStatuses.length === 0 ? (
                 <span className="text-acai-500 text-xs">Sem ações neste estado.</span>

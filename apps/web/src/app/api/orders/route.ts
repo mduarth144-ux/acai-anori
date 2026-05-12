@@ -3,12 +3,17 @@ import { prisma } from '../../../lib/prisma'
 import { enqueueOrderCreate, enqueueStatusUpdate, processOutboxBatch } from '../../../lib/integrations/ifood/outbox'
 import { runAdminDeliveredIfoodWebhookSimulation } from '../../../lib/integrations/ifood/webhook-processor'
 import { isValidLocalTransition } from '../../../lib/integrations/ifood/status-map'
-import { getIfoodRefs, mergeIfoodRefs } from '../../../lib/integrations/ifood/external-refs'
+import { getIfoodRefs, mergeIfoodRefs } from '../../../lib/integrations/ifood/ifood-response'
 import {
   parseDeliveryAddressText,
   validateDeliveryCoverage,
 } from '../../../lib/integrations/ifood/delivery-coverage'
 import { createCustomerDeliveryToken } from '../../../lib/customer-delivery-token'
+
+/** Entrega ao domicílio no app (endereço + cobertura). Não confundir com `orderType` na Order API iFood. */
+function isHomeDeliveryOrderType(type: unknown): type is 'DELIVERY' {
+  return type === 'DELIVERY'
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -47,9 +52,10 @@ export async function GET(request: Request) {
   return NextResponse.json(data)
 }
 
+/** Cria pedido na base local e enfileira criação na **Order API do iFood** (outbox). */
 export async function POST(request: Request) {
   const body = await request.json()
-  if (body.type === 'DELIVERY') {
+  if (isHomeDeliveryOrderType(body.type)) {
     const parsed = parseDeliveryAddressText(typeof body.address === 'string' ? body.address : '')
     const coverage = await validateDeliveryCoverage({
       cep: parsed.cep,
@@ -106,10 +112,8 @@ export async function POST(request: Request) {
         0
       ),
       pixProvider: null,
-      externalRefs: {
-        integrationReady: { pix: true, ifood: true, food99: true },
-        ifood: { syncState: 'pending', source: 'internal' },
-      },
+      ifoodResponse: { syncState: 'pending', source: 'internal' },
+      integrationMeta: { integrationReady: { pix: true, ifood: true, food99: true } },
       items: {
         create: body.items.map((item: { productId: string; quantity: number; unitPrice: number; notes?: string; choices?: unknown[] }) => ({
           productId: item.productId,
@@ -138,7 +142,7 @@ export async function POST(request: Request) {
   const [latestOrderState, latestOutbox] = await Promise.all([
     prisma.order.findUnique({
       where: { id: created.id },
-      select: { externalRefs: true },
+      select: { ifoodResponse: true, integrationMeta: true },
     }),
     prisma.integrationOutbox.findFirst({
       where: {
@@ -157,14 +161,15 @@ export async function POST(request: Request) {
     }),
   ])
 
-  const ifoodRefs = getIfoodRefs(latestOrderState?.externalRefs ?? created.externalRefs)
+  const ifoodRefs = getIfoodRefs(latestOrderState?.ifoodResponse ?? created.ifoodResponse)
 
   const customerDeliveryToken =
-    created.type === 'DELIVERY' ? createCustomerDeliveryToken(created.id) : null
+    isHomeDeliveryOrderType(created.type) ? createCustomerDeliveryToken(created.id) : null
 
   return NextResponse.json({
     ...created,
-    externalRefs: latestOrderState?.externalRefs ?? created.externalRefs,
+    ifoodResponse: latestOrderState?.ifoodResponse ?? created.ifoodResponse,
+    integrationMeta: latestOrderState?.integrationMeta ?? created.integrationMeta,
     ...(customerDeliveryToken ? { customerDeliveryToken } : {}),
     integration: {
       ifood: {
@@ -218,7 +223,7 @@ export async function PATCH(request: Request) {
     where: { id },
     data: {
       status: body.status,
-      externalRefs: mergeIfoodRefs(current.externalRefs, {
+      ifoodResponse: mergeIfoodRefs(current.ifoodResponse, {
         source: body.source === 'IFOOD_WEBHOOK' ? 'ifood-webhook' : 'internal',
         lastSyncAt: new Date().toISOString(),
       }),

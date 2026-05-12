@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../prisma'
 import { mapIfoodStatusToLocalOptional } from './status-map'
-import { getIfoodRefs, mergeIfoodRefs } from './external-refs'
+import { getIfoodRefs, mergeIfoodRefs } from './ifood-response'
 import { logIntegration } from './logging'
 
 export type ParsedIfoodWebhookEvent = {
@@ -39,7 +39,7 @@ function readExternalOrderId(event: ParsedIfoodWebhookEvent): string | undefined
   return undefined
 }
 
-/** Eco do evento iFood e metadados para resposta HTTP (webhook / polling interno). */
+/** Eco do evento iFood e metadados para resposta HTTP (webhook ou simulacao no painel). */
 export type IfoodWebhookHttpEcho = {
   inbound: Record<string, unknown>
   eventId: string
@@ -150,8 +150,8 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
     if (!order && event.orderId) {
       order = await prisma.order.findFirst({
         where: {
-          externalRefs: {
-            path: ['ifood', 'ifoodOrderId'],
+          ifoodResponse: {
+            path: ['ifoodOrderId'],
             equals: event.orderId,
           },
         },
@@ -161,8 +161,8 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
     if (!order && event.orderId) {
       order = await prisma.order.findFirst({
         where: {
-          externalRefs: {
-            path: ['ifood', 'deliveryId'],
+          ifoodResponse: {
+            path: ['deliveryId'],
             equals: event.orderId,
           },
         },
@@ -182,7 +182,7 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
           where: { id: order.id },
           data: {
             status: nextStatus,
-            externalRefs: mergeIfoodRefs(order.externalRefs, {
+            ifoodResponse: mergeIfoodRefs(order.ifoodResponse, {
               ifoodOrderId: event.orderId,
               source: 'ifood-webhook',
               lastWebhookEventId: webhookEventId,
@@ -244,9 +244,9 @@ export async function runAdminDeliveredIfoodWebhookSimulation(orderId: string): 
 
   const row = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { externalRefs: true },
+    select: { ifoodResponse: true },
   })
-  const refs = getIfoodRefs(row?.externalRefs)
+  const refs = getIfoodRefs(row?.ifoodResponse)
   const orderIdForWebhook = typeof refs.deliveryId === 'string' && refs.deliveryId.trim().length > 0 ? refs.deliveryId.trim() : orderId
 
   const payload: ParsedIfoodWebhookEvent = {

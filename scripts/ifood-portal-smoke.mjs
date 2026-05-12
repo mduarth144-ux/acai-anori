@@ -13,7 +13,11 @@ import process from 'node:process'
 const AUTH_URL =
   process.env.IFOOD_AUTH_URL?.trim() ||
   'https://merchant-api.ifood.com.br/authentication/v1.0/oauth/token'
-const API = process.env.IFOOD_API_BASE_URL?.trim() || 'https://merchant-api.ifood.com.br'
+const API = (
+  process.env.IFOOD_API_BASE_URL?.trim() || 'https://merchant-api.ifood.com.br'
+).replace(/\/+$/, '')
+const ORDER_CREATE_PATH =
+  process.env.IFOOD_ORDER_CREATE_PATH?.trim() || '/order/v1.0/orders'
 const merchantId = process.env.IFOOD_MERCHANT_ID?.trim()
 const clientId = process.env.IFOOD_CLIENT_ID?.trim()
 const clientSecret = process.env.IFOOD_CLIENT_SECRET?.trim()
@@ -82,6 +86,7 @@ async function main() {
   }
 
   console.log('\n[iFood portal smoke] API base:', API)
+  console.log('[iFood portal smoke] POST criação (diagnóstico):', ORDER_CREATE_PATH)
   console.log('[iFood portal smoke] merchantId:', merchantId)
   console.log('[iFood portal smoke] Não imprimimos client_secret nem accessToken completo.\n')
 
@@ -159,6 +164,26 @@ async function main() {
         'GET',
         `/catalog/v2.0/merchants/${encodeURIComponent(merchantId)}/catalogs`
       )
+  )
+
+  const createPath = ORDER_CREATE_PATH.startsWith('/') ? ORDER_CREATE_PATH : `/${ORDER_CREATE_PATH}`
+
+  await runStep(
+    '7c) Diagnóstico POST criação de pedido (corpo `{}` — não cria pedido válido)',
+    `${curlModel('POST', createPath, "-H 'Content-Type: application/json' -H 'x-idempotency-key: ifood-portal-smoke-create'")} -d '{}'`,
+    () =>
+      api(token, 'POST', createPath, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-idempotency-key': 'ifood-portal-smoke-create',
+        },
+        body: '{}',
+      })
+  )
+
+  console.log(
+    '\n[7c] Leitura rápida: 404 + "no Route matched" → o gateway não expõe este POST (confira app no portal iFood e env IFOOD_API_BASE_URL / IFOOD_ORDER_CREATE_PATH). ' +
+      '4xx com mensagem de validação/campos → a rota existe; `{}` não é um pedido válido (esperado).'
   )
 
   if (smokeOrderId) {

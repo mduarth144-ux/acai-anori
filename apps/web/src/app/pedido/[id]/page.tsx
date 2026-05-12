@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { RefreshCw } from 'lucide-react'
 import { createSupabaseClient } from '../../../lib/supabase-client'
 import { orderStatusLabel } from '../../../lib/order-labels'
+import { useOrderLiveSync } from '../../../lib/use-order-live-sync'
 import {
   getStoredDeliveryConfirmToken,
   persistDeliveryConfirmToken,
@@ -51,21 +53,16 @@ export default function PedidoStatusPage({ params }: Props) {
     setDeliveryConfirmToken(getStoredDeliveryConfirmToken(orderId))
   }, [orderId])
 
-  useEffect(() => {
-    if (!orderId) return
-    fetch(`/api/orders?id=${encodeURIComponent(orderId)}`)
-      .then(async (res) => {
-        if (!res.ok) return
-        const found = (await res.json()) as OrderData
-        if (!found) return
-        setOrder(found)
-        setStatus(String(found.status ?? 'PENDING'))
-        setDeliveryConfirmToken((prev) => prev ?? getStoredDeliveryConfirmToken(orderId))
-      })
-      .catch(() => {
-        // Keep UI usable even when initial fetch fails.
-      })
-  }, [orderId])
+  const applyOrderFromServer = useCallback((found: OrderData) => {
+    setOrder(found)
+    setStatus(String(found.status ?? 'PENDING'))
+    setDeliveryConfirmToken((prev) => prev ?? getStoredDeliveryConfirmToken(found.id))
+  }, [])
+
+  const { delivery, lastSyncedAt, syncError: pollError, refetch } = useOrderLiveSync(
+    orderId || null,
+    applyOrderFromServer
+  )
 
   useEffect(() => {
     if (!orderId) return
@@ -145,10 +142,28 @@ export default function PedidoStatusPage({ params }: Props) {
 
   return (
     <main className="order-status-page mx-auto max-w-2xl p-4 pb-[calc(14rem+env(safe-area-inset-bottom))]">
-      <h1 className="order-status-title text-2xl font-bold text-fuchsia-100">
-        Acompanhamento do pedido
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="order-status-title text-2xl font-bold text-fuchsia-100">
+          Acompanhamento do pedido
+        </h1>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="border-acai-500 bg-acai-900/80 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium text-fuchsia-200 transition hover:border-fuchsia-500 hover:bg-acai-800"
+          title="Atualizar pedido e rastreio iFood"
+        >
+          <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
+          Atualizar
+        </button>
+      </div>
       <p className="order-status-subtitle text-acai-300 mt-3 text-sm">Pedido: {orderId}</p>
+      {lastSyncedAt ? (
+        <p className="text-acai-500 mt-1 text-[11px]">
+          Última sincronização:{' '}
+          {new Date(lastSyncedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+        </p>
+      ) : null}
+      {pollError ? <p className="mt-1 text-xs text-amber-400">{pollError}</p> : null}
       <div className="order-status-card border-acai-600 bg-acai-800/90 mt-4 space-y-4 rounded-xl border p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -214,6 +229,25 @@ export default function PedidoStatusPage({ params }: Props) {
             })}
           </ol>
         </div>
+
+        {delivery?.ok && delivery.tracking != null ? (
+          <div className="border-acai-600 bg-acai-900/40 rounded-lg border p-3">
+            <p className="text-acai-300 mb-1 text-xs font-medium uppercase tracking-wide">
+              Rastreio da entrega (iFood)
+            </p>
+            <p className="text-acai-400 font-mono text-[11px] leading-relaxed break-all">
+              {typeof delivery.tracking === 'object'
+                ? JSON.stringify(delivery.tracking).slice(0, 420)
+                : String(delivery.tracking)}
+              {typeof delivery.tracking === 'object' &&
+              JSON.stringify(delivery.tracking).length > 420
+                ? '…'
+                : ''}
+            </p>
+          </div>
+        ) : delivery && !delivery.ok && order?.type === 'DELIVERY' ? (
+          <p className="text-acai-500 text-[11px]">{delivery.message}</p>
+        ) : null}
 
         {order?.total ? (
           <p className="order-status-muted text-acai-300 text-sm">
