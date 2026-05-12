@@ -131,15 +131,21 @@ export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempot
   }
 
   const text = await response.text()
-  let data = {} as { id?: string; orderId?: string }
+  let orderCreateResponse = {} as Record<string, unknown>
   if (text?.trim()) {
     try {
-      data = JSON.parse(text) as { id?: string; orderId?: string }
+      orderCreateResponse = JSON.parse(text) as Record<string, unknown>
     } catch {
       throw new Error('Resposta de criacao de pedido iFood com JSON invalido')
     }
   }
-  const ifoodOrderId = data.orderId ?? data.id
+  const rawOrderId =
+    typeof orderCreateResponse.orderId === 'string'
+      ? orderCreateResponse.orderId.trim()
+      : typeof orderCreateResponse.id === 'string'
+        ? orderCreateResponse.id.trim()
+        : ''
+  const ifoodOrderId = rawOrderId.length > 0 ? rawOrderId : undefined
   if (!ifoodOrderId) {
     throw new Error('Resposta de criacao de pedido iFood sem orderId')
   }
@@ -148,7 +154,7 @@ export async function createIfoodOrder(payload: IfoodOrderCreatePayload, idempot
     localOrderId: payload.externalOrderId,
     ifoodOrderId,
   })
-  return { ifoodOrderId }
+  return { ifoodOrderId, orderCreateResponse }
 }
 
 export async function updateIfoodOrderStatus(params: {
@@ -237,6 +243,7 @@ export async function requestIfoodDelivery(params: {
     shippingOrderId,
     status: orderData.status ?? 'REQUESTED',
     trackingUrl: orderData.trackingUrl,
+    shippingApiResponse: orderData as Record<string, unknown>,
   }
 }
 

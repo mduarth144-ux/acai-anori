@@ -20,6 +20,13 @@ function sign(secret: string, body: string): Promise<string> {
     )
 }
 
+async function sha256Hex(body: string): Promise<string> {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body))
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 Deno.serve(async (request) => {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ message: 'Method not allowed' }), { status: 405 })
@@ -64,13 +71,15 @@ Deno.serve(async (request) => {
           ? event.fullCode
           : 'UNKNOWN'
 
+  const payloadHash = await sha256Hex(rawBody)
+
   const { error } = await supabase.from('IfoodWebhookEvent').insert({
     eventId,
     eventType,
     merchantId: typeof event.merchantId === 'string' ? event.merchantId : null,
     ifoodOrderId: typeof event.orderId === 'string' ? event.orderId : null,
     payload: event,
-    payloadHash: expected,
+    payloadHash,
     processingStatus: 'RECEIVED',
   })
 

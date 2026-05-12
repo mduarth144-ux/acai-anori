@@ -354,7 +354,9 @@ export async function processOutboxBatch(limit = 20) {
         const payload = buildIfoodOrderCreatePayload(order, context.merchantId)
         const created = await createIfoodOrder(payload, item.idempotencyKey)
         ifoodOrderId = created.ifoodOrderId
+        const orderCreateApiResponse = created.orderCreateResponse
 
+        let shippingOrderApiResponse: Record<string, unknown> | undefined
         if (order.type === 'DELIVERY' && order.address?.trim()) {
           const paymentMethod =
             order.paymentMethod === 'CREDIT' || order.paymentMethod === 'DEBIT'
@@ -452,6 +454,7 @@ export async function processOutboxBatch(limit = 20) {
             deliveryId = shipping.deliveryId
             deliveryStatus = shipping.status
             shippingOrderId = shipping.shippingOrderId
+            shippingOrderApiResponse = shipping.shippingApiResponse
           }
         }
 
@@ -460,6 +463,8 @@ export async function processOutboxBatch(limit = 20) {
           data: {
             externalRefs: mergeIfoodRefs(order.externalRefs, {
               ifoodOrderId,
+              orderCreateApiResponse,
+              ...(shippingOrderApiResponse !== undefined ? { shippingOrderApiResponse } : {}),
               shippingOrderId,
               deliveryQuoteId,
               deliveryId,

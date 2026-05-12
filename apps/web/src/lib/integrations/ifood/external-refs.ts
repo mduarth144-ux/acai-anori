@@ -4,6 +4,10 @@ type IntegrationSyncState = 'pending' | 'processing' | 'synced' | 'failed'
 
 export type IfoodExternalRefs = {
   ifoodOrderId?: string
+  /** Corpo JSON devolvido por `POST /order/v1.0/orders` (Order API). */
+  orderCreateApiResponse?: Record<string, unknown>
+  /** Corpo JSON devolvido pelo POST de pedido no Shipping API (entrega). */
+  shippingOrderApiResponse?: Record<string, unknown>
   shippingOrderId?: string
   deliveryQuoteId?: string
   deliveryId?: string

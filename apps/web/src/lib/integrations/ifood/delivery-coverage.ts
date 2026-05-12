@@ -159,9 +159,22 @@ export function parseDeliveryAddressText(address: string | null | undefined) {
   }
 }
 
+/** CEP fictício para testes (UI + curl); só aceito em dev ou com `IFOOD_ALLOW_TEST_COVERAGE_CEP=true`. */
+const TEST_COVERAGE_CEP_DIGITS = '12345678'
+
+function shouldAcceptTestCoverageCep(): boolean {
+  if (process.env.NODE_ENV === 'development') return true
+  return (process.env.IFOOD_ALLOW_TEST_COVERAGE_CEP?.trim().toLowerCase() ?? '') === 'true'
+}
+
 export async function validateDeliveryCoverage(
   input: ValidateCoverageInput
 ): Promise<DeliveryCoverageResult> {
+  const cepDigits = input.cep.replace(/\D/g, '')
+  if (cepDigits === TEST_COVERAGE_CEP_DIGITS && shouldAcceptTestCoverageCep()) {
+    return { withinCoverage: true, distanceKm: 0 }
+  }
+
   const config = await getIfoodDeliveryAreaConfig()
   let effectiveConfig = config
   try {

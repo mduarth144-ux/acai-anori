@@ -39,22 +39,50 @@ function readExternalOrderId(event: ParsedIfoodWebhookEvent): string | undefined
   return undefined
 }
 
+/** Eco do evento iFood e metadados para resposta HTTP (webhook / polling interno). */
+export type IfoodWebhookHttpEcho = {
+  inbound: Record<string, unknown>
+  eventId: string
+  eventType: string
+  ifoodOrderId?: string
+  merchantId?: string
+  localOrderId?: string
+  processingStatus: 'PROCESSED' | 'DEDUPLICATED' | 'FAILED'
+  orderStatusChanged?: boolean
+}
+
 export type ProcessTrustedWebhookResult =
-  | { ok: true; deduplicated?: boolean }
-  | { ok: false; status: number; message: string }
+  | { ok: true; deduplicated?: boolean; ifood: IfoodWebhookHttpEcho }
+  | { ok: false; status: number; message: string; ifood?: IfoodWebhookHttpEcho }
+
+function buildIfoodEcho(
+  inbound: Record<string, unknown>,
+  event: ParsedIfoodWebhookEvent,
+  webhookEventId: string,
+  eventTypeLabel: string
+): Pick<IfoodWebhookHttpEcho, 'inbound' | 'eventId' | 'eventType' | 'ifoodOrderId' | 'merchantId'> {
+  return {
+    inbound,
+    eventId: webhookEventId,
+    eventType: eventTypeLabel,
+    ifoodOrderId: typeof event.orderId === 'string' ? event.orderId : undefined,
+    merchantId: typeof event.merchantId === 'string' ? event.merchantId : undefined,
+  }
+}
 
 /**
  * Processa o body de um webhook iFood já validado (assinatura verificada na rota HTTP
  * ou chamada interna confiável como simulação de desenvolvimento).
  */
 export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promise<ProcessTrustedWebhookResult> {
-  let event: ParsedIfoodWebhookEvent
+  let inbound: Record<string, unknown>
   try {
-    event = JSON.parse(rawBody) as ParsedIfoodWebhookEvent
+    inbound = JSON.parse(rawBody) as Record<string, unknown>
   } catch {
     return { ok: false, status: 400, message: 'invalid json payload' }
   }
 
+  const event = inbound as ParsedIfoodWebhookEvent
   const eventType = event.eventType ?? event.code ?? event.fullCode ?? 'UNKNOWN'
   /** Preferir status explícito; senão code; fullCode costuma ser ORDER_* (ex.: ORDER_CONCLUDED). */
   const eventStatus = event.status ?? event.code ?? event.fullCode
@@ -72,7 +100,17 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
 
   const webhookEventId = resolveWebhookEventId(event)
   if (!webhookEventId) {
-    return { ok: false, status: 400, message: 'invalid payload: event id is required (id or eventId)' }
+    return {
+      ok: false,
+      status: 400,
+      message: 'invalid payload: event id is required (id or eventId)',
+      ifood: {
+        inbound,
+        eventId: '',
+        eventType,
+        processingStatus: 'FAILED',
+      },
+    }
   }
 
   const payloadHash = createHash('sha256').update(rawBody).digest('hex')
@@ -80,7 +118,14 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
     where: { eventId: webhookEventId },
   })
   if (existing) {
-    return { ok: true, deduplicated: true }
+    return {
+      ok: true,
+      deduplicated: true,
+      ifood: {
+        ...buildIfoodEcho(inbound, event, webhookEventId, eventType),
+        processingStatus: 'DEDUPLICATED',
+      },
+    }
   }
 
   const audit = await prisma.ifoodWebhookEvent.create({
@@ -128,9 +173,11 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
       throw new Error('Pedido local nao encontrado para evento iFood (sem correlacao)')
     }
 
+    let orderStatusChanged = false
     if (eventStatus || event.code || event.fullCode || event.status) {
       const nextStatus = resolveNextLocalStatus()
       if (nextStatus !== undefined) {
+        orderStatusChanged = true
         await prisma.order.update({
           where: { id: order.id },
           data: {
@@ -153,6 +200,16 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
         processedAt: new Date(),
       },
     })
+
+    return {
+      ok: true,
+      ifood: {
+        ...buildIfoodEcho(inbound, event, webhookEventId, eventType),
+        localOrderId: order.id,
+        processingStatus: 'PROCESSED',
+        orderStatusChanged,
+      },
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Falha ao processar webhook'
     await prisma.ifoodWebhookEvent.update({
@@ -162,10 +219,16 @@ export async function processTrustedIfoodWebhookRawBody(rawBody: string): Promis
         processingError: message.slice(0, 1000),
       },
     })
-    return { ok: false, status: 422, message }
+    return {
+      ok: false,
+      status: 422,
+      message,
+      ifood: {
+        ...buildIfoodEcho(inbound, event, webhookEventId, eventType),
+        processingStatus: 'FAILED',
+      },
+    }
   }
-
-  return { ok: true }
 }
 
 /**

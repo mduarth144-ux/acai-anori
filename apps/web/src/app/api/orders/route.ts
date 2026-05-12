@@ -173,6 +173,8 @@ export async function POST(request: Request) {
         ifoodOrderId: ifoodRefs.ifoodOrderId ?? null,
         deliveryId: ifoodRefs.deliveryId ?? null,
         deliveryStatus: ifoodRefs.deliveryStatus ?? null,
+        orderCreateApiResponse: ifoodRefs.orderCreateApiResponse ?? null,
+        shippingOrderApiResponse: ifoodRefs.shippingOrderApiResponse ?? null,
         outbox: latestOutbox
           ? {
               status: latestOutbox.status,
